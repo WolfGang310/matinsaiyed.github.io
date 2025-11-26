@@ -611,9 +611,9 @@
             position: fixed;
             bottom: 7rem;
             right: 2rem;
-            width: 400px;
+            width: 420px;
             max-width: calc(100vw - 2rem);
-            height: 550px;
+            height: 600px;
             max-height: calc(100vh - 10rem);
             background: var(--bg-secondary);
             border: 1px solid var(--border-color);
@@ -636,8 +636,8 @@
         }
 
         .chatbot-header {
-            padding: 1.5rem;
-            background: linear-gradient(135deg, rgba(201, 169, 98, 0.1), rgba(201, 169, 98, 0.05));
+            padding: 1.25rem;
+            background: linear-gradient(135deg, rgba(201, 169, 98, 0.15), rgba(201, 169, 98, 0.05));
             border-bottom: 1px solid var(--border-color);
             display: flex;
             align-items: center;
@@ -657,13 +657,29 @@
             font-family: 'Cormorant Garamond', serif;
             font-size: 1.2rem;
             color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         .chatbot-info p {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: var(--accent-gold);
             text-transform: uppercase;
             letter-spacing: 1px;
+        }
+
+        .ai-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.15rem 0.5rem;
+            background: linear-gradient(135deg, #4285f4, #34a853);
+            border-radius: 10px;
+            font-size: 0.6rem;
+            color: white;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 600;
         }
 
         .chatbot-status {
@@ -689,7 +705,7 @@
         .chatbot-messages {
             flex: 1;
             overflow-y: auto;
-            padding: 1.5rem;
+            padding: 1.25rem;
             display: flex;
             flex-direction: column;
             gap: 1rem;
@@ -709,11 +725,11 @@
         }
 
         .message {
-            max-width: 85%;
+            max-width: 88%;
             padding: 1rem 1.25rem;
             border-radius: 15px;
             font-size: 0.9rem;
-            line-height: 1.5;
+            line-height: 1.6;
             animation: messageIn 0.3s ease;
             white-space: pre-wrap;
         }
@@ -741,6 +757,12 @@
             color: var(--bg-primary);
             align-self: flex-end;
             border-bottom-right-radius: 5px;
+        }
+
+        .message.error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
         }
 
         .typing-indicator {
@@ -777,7 +799,7 @@
         }
 
         .chatbot-suggestions {
-            padding: 0 1.5rem 1rem;
+            padding: 0 1.25rem 1rem;
             display: flex;
             flex-wrap: wrap;
             gap: 0.5rem;
@@ -801,10 +823,10 @@
         }
 
         .chatbot-input {
-            padding: 1rem 1.5rem;
+            padding: 1rem 1.25rem;
             border-top: 1px solid var(--border-color);
             display: flex;
-            gap: 1rem;
+            gap: 0.75rem;
             background: rgba(10, 14, 20, 0.5);
         }
 
@@ -829,6 +851,11 @@
             color: var(--text-muted);
         }
 
+        .chatbot-input input:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
         .chatbot-input button {
             width: 45px;
             height: 45px;
@@ -842,15 +869,139 @@
             transition: all 0.3s ease;
         }
 
-        .chatbot-input button:hover {
+        .chatbot-input button:hover:not(:disabled) {
             background: var(--accent-gold-light);
             transform: scale(1.05);
+        }
+
+        .chatbot-input button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
 
         .chatbot-input button svg {
             width: 20px;
             height: 20px;
             fill: var(--bg-primary);
+        }
+
+        /* API Key Modal */
+        .api-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .api-modal.active {
+            display: flex;
+        }
+
+        .api-modal-content {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            padding: 2rem;
+            max-width: 450px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .api-modal h3 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--accent-gold);
+        }
+
+        .api-modal p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .api-modal input {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            outline: none;
+        }
+
+        .api-modal input:focus {
+            border-color: var(--accent-gold);
+        }
+
+        .api-modal-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .api-modal button {
+            padding: 0.7rem 1.5rem;
+            border-radius: 25px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .api-modal .btn-save {
+            background: var(--accent-gold);
+            color: var(--bg-primary);
+            border: none;
+        }
+
+        .api-modal .btn-save:hover {
+            background: var(--accent-gold-light);
+        }
+
+        .api-modal .btn-skip {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        .api-modal .btn-skip:hover {
+            border-color: var(--accent-gold);
+            color: var(--accent-gold);
+        }
+
+        .api-modal a {
+            color: var(--accent-gold);
+            text-decoration: none;
+        }
+
+        .api-modal a:hover {
+            text-decoration: underline;
+        }
+
+        .settings-btn {
+            position: absolute;
+            top: 1.25rem;
+            right: 1.25rem;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: color 0.3s ease;
+        }
+
+        .settings-btn:hover {
+            color: var(--accent-gold);
         }
 
         @keyframes fadeInUp {
@@ -896,13 +1047,8 @@
         }
 
         @media (max-width: 1200px) {
-            .hero-image {
-                right: 4%;
-            }
-            .profile-image {
-                width: 300px;
-                height: 300px;
-            }
+            .hero-image { right: 4%; }
+            .profile-image { width: 300px; height: 300px; }
         }
 
         @media (max-width: 1024px) {
@@ -911,9 +1057,7 @@
                 text-align: center;
                 padding-top: 10rem;
             }
-            .hero-content {
-                max-width: 100%;
-            }
+            .hero-content { max-width: 100%; }
             .hero-image {
                 position: relative;
                 right: auto;
@@ -922,9 +1066,7 @@
                 margin-top: 4rem;
                 animation: fadeInUp 1s ease forwards 0.8s;
             }
-            .hero-cta {
-                justify-content: center;
-            }
+            .hero-cta { justify-content: center; }
             .profile-stats {
                 position: relative;
                 bottom: auto;
@@ -936,57 +1078,22 @@
         }
 
         @media (max-width: 768px) {
-            nav {
-                padding: 1rem 2rem;
-            }
-
-            .nav-links {
-                display: none;
-            }
-
-            .mobile-menu-btn {
-                display: block;
-            }
-
-            .hero, section {
-                padding: 6rem 2rem;
-            }
-
-            .hero h1 {
-                font-size: 2.5rem;
-            }
-
-            .hero-cta {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .profile-image {
-                width: 250px;
-                height: 250px;
-            }
-
-            .contact-grid {
-                flex-direction: column;
-                gap: 2rem;
-            }
-
-            .languages {
-                flex-wrap: wrap;
-                gap: 2rem;
-            }
-
+            nav { padding: 1rem 2rem; }
+            .nav-links { display: none; }
+            .mobile-menu-btn { display: block; }
+            .hero, section { padding: 6rem 2rem; }
+            .hero h1 { font-size: 2.5rem; }
+            .hero-cta { flex-direction: column; align-items: center; }
+            .profile-image { width: 250px; height: 250px; }
+            .contact-grid { flex-direction: column; gap: 2rem; }
+            .languages { flex-wrap: wrap; gap: 2rem; }
             .chatbot-container {
                 right: 1rem;
                 bottom: 6rem;
                 width: calc(100vw - 2rem);
                 height: calc(100vh - 8rem);
             }
-
-            .chatbot-toggle {
-                right: 1rem;
-                bottom: 1rem;
-            }
+            .chatbot-toggle { right: 1rem; bottom: 1rem; }
         }
     </style>
 </head>
@@ -1020,7 +1127,7 @@
         </div>
         <div class="hero-image">
             <div class="profile-container">
-                <img src="matin_photo.png" alt="Matin Saiyed" class="profile-image" id="profileImg">
+                <img src="matin_photo.png" alt="Matin Saiyed" class="profile-image">
                 <div class="profile-frame"></div>
             </div>
             <div class="profile-stats">
@@ -1211,6 +1318,22 @@
         <p>© 2025 Matin Saiyed. Built with passion for excellence.</p>
     </footer>
 
+    <!-- API Key Modal -->
+    <div class="api-modal" id="apiModal">
+        <div class="api-modal-content">
+            <h3>🔑 Setup AI Chatbot</h3>
+            <p>
+                Enter your free Google Gemini API key to enable AI-powered responses.<br><br>
+                <a href="https://aistudio.google.com/app/apikey" target="_blank">Get your free API key here →</a>
+            </p>
+            <input type="password" id="apiKeyInput" placeholder="Paste your Gemini API key...">
+            <div class="api-modal-buttons">
+                <button class="btn-save" onclick="saveApiKey()">Save Key</button>
+                <button class="btn-skip" onclick="closeApiModal()">Use Offline Mode</button>
+            </div>
+        </div>
+    </div>
+
     <!-- AI Chatbot -->
     <button class="chatbot-toggle" id="chatbotToggle" aria-label="Open chat">
         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -1220,23 +1343,20 @@
 
     <div class="chatbot-container" id="chatbotContainer">
         <div class="chatbot-header">
-            <img src="matin_photo.png" alt="Matin" class="chatbot-avatar" id="chatAvatar">
+            <img src="matin_photo.png" alt="Matin" class="chatbot-avatar">
             <div class="chatbot-info">
-                <h3>Ask Matin</h3>
-                <p>AI Assistant</p>
+                <h3>Ask Matin <span class="ai-badge">✨ Gemini</span></h3>
+                <p>AI-Powered Assistant</p>
             </div>
-            <div class="chatbot-status">
-                <span class="status-dot"></span>
-                <span style="font-size: 0.7rem; color: var(--text-muted);">Online</span>
-            </div>
+            <button class="settings-btn" onclick="openApiModal()" title="API Settings">⚙️</button>
         </div>
         <div class="chatbot-messages" id="chatMessages">
-            <div class="message bot">Hi there! 👋 I'm Matin's AI assistant. I can answer any questions about my experience, skills, education, or career goals. What would you like to know?</div>
+            <div class="message bot">Hi there! 👋 I'm Matin's AI assistant powered by Google Gemini. I can answer any questions about my experience, skills, education, or career goals. What would you like to know?</div>
         </div>
         <div class="chatbot-suggestions" id="suggestions">
-            <button class="suggestion-btn" data-question="What makes you a strong candidate?">Why hire Matin?</button>
-            <button class="suggestion-btn" data-question="Tell me about your sales achievements">Sales results</button>
-            <button class="suggestion-btn" data-question="What's your technical background?">Tech skills</button>
+            <button class="suggestion-btn" data-question="What makes you a strong candidate for a financial role?">Why hire Matin?</button>
+            <button class="suggestion-btn" data-question="Tell me about your sales achievements and metrics">Sales results</button>
+            <button class="suggestion-btn" data-question="What technical skills do you have?">Tech skills</button>
             <button class="suggestion-btn" data-question="Describe your leadership experience">Leadership</button>
         </div>
         <div class="chatbot-input">
@@ -1251,251 +1371,145 @@
 
     <script>
         // ============================================
-        // INTELLIGENT CHATBOT - Advanced Pattern Matching
+        // MATIN'S COMPLETE RESUME DATA (RAG Context)
         // ============================================
+        const RESUME_CONTEXT = `
+# MATIN SAIYED - COMPLETE PROFESSIONAL PROFILE
+
+## CONTACT INFORMATION
+- Name: Matin Saiyed
+- Location: Mississauga, ON, Canada
+- Phone: +1 (416) 270-7531
+- Email: matinsaiyed3100@gmail.com
+- LinkedIn: linkedin.com/in/matinsaiyed/
+
+## PROFESSIONAL SUMMARY
+Certified Mutual Fund Representative (CIFC, Ontario) and CFA Level I Candidate with proven ability to build strong customer relationships, meet and exceed sales targets, and deliver excellent customer service in fast-paced environments. Customer-centric professional committed to results with expertise in discovering customer needs and providing holistic financial solutions.
+
+## CORE COMPETENCIES
+1. Customer Relationship Building: Customer-centric approach with proven ability to build strong relationships, deliver exceptional customer service, and nurture long-standing client partnerships.
+
+2. Sales Performance: Demonstrated success meeting and exceeding sales targets while maintaining positive customer experience in fast-paced environments. Currently exceeding targets by 25% with 96% client satisfaction.
+
+3. Needs Discovery & Solution Development: Proactive approach to discovering customer needs through active listening; expertise in providing expert advice and comprehensive planning using holistic approach.
+
+4. Financial Products & Compliance: Mutual Funds license (CIFC) working towards CIFP Diploma; knowledge of RRSP, TFSA, GICs; regulatory compliance experience.
+
+5. Technical & Analytical Skills: Proficient in Microsoft Office Suite, Excel, Salesforce, PowerBI, and Tableau for data analysis and client reporting; programming knowledge in Python, Java, and SQL for process optimization.
+
+## PROFESSIONAL EXPERIENCE
+
+### Golden Quasar Inc — Mississauga, ON
+**Client Success Associate | January 2024 — Present**
+- Manage client onboarding processes and customer relationship activities, ensuring seamless experience through proactive communication, issue investigation and resolution
+- Meet and exceed sales targets by 25% while maintaining 96% client satisfaction, delivering against individual and team sales goals
+- Execute needs assessment and provide recommendations using holistic approach to support comprehensive client success plans
+- Build strong customer relationships through active listening and solution development, supporting long-term client retention and business growth
+- Quickly adapted to new CRM platforms and digital tools, demonstrating strong technological aptitude
+
+### Prometric Center / Yukon Consultants — Toronto, ON; Montreal, QC; Halifax, NS; Sacramento, CA
+**Operations Consultant / Training Coordinator | May 2023 — May 2024**
+- Applied customer-centric approach, raising satisfaction from 68% to 94% through excellent customer service delivery
+- Exceeded capacity targets from 30% to 80% through strategic customer relationship management
+- Maintained regulatory compliance and conducted proactive follow-ups, ensuring positive customer experience
+- Coached diverse teams of 15+ individuals at newly established test centers across North America
+- Earned Regional Best Test Centre recognition
+
+### Prometric Center / Yukon Consultants — Toronto, ON
+**Test Center Administrator | January 2023 — April 2023**
+- Delivered excellent customer service to hundreds of clients weekly in fast-paced environment with efficient issue resolution
+- Conducted proactive outbound communications, ensuring positive customer experience throughout service delivery
+- Maintained regulatory compliance while upholding customer data privacy standards
+
+### Web Summit / Collision Conference — Toronto, ON
+**Volunteer Team Lead | June 2022 — June 2023**
+- Led 20-person teams at 35,000+ attendee event in a friendly, team-oriented environment
+- Built strong customer relationships and delivered exceptional customer experience
+- Supported business development activities contributing to growth opportunities
+
+### Investor Quotient IQ Canada — Toronto, ON
+**Intern, Financial Research & Client Support | July 2021 — December 2021**
+- Built comprehensive client presentations using Excel and Power BI
+- Maintained CRM systems, strengthening customer relationships
+- Conducted market research identifying opportunities for tailored financial solutions
+
+## EDUCATION & CERTIFICATIONS
+- Bachelor of Commerce in Management Studies — Humber College, Toronto, ON (Graduating April 2025)
+- Canadian Investment Funds Course (CIFC) — Mutual Funds License, Ontario (2025)
+- CFA Level I Candidate — Working towards CIFP Diploma (2025)
+
+## LANGUAGES
+- English: Fluent
+- Hindi: Fluent
+- Gujarati: Fluent
+- French: Basic
+
+## KEY METRICS & ACHIEVEMENTS
+- Exceeds sales targets by 25%
+- Maintains 96% client satisfaction rate
+- Raised customer satisfaction from 68% to 94% at Prometric
+- Increased capacity targets from 30% to 80%
+- Coached 15+ team members across North America
+- Led 20-person teams at 35,000+ attendee events
+- Earned Regional Best Test Centre recognition
+- 4+ years of professional experience
+`;
+
+        // ============================================
+        // GEMINI API CONFIGURATION
+        // ============================================
+        const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
         
-        const resumeData = {
-            name: "Matin Saiyed",
-            location: "Mississauga, ON, Canada",
-            phone: "+1 (416) 270-7531",
-            email: "matinsaiyed3100@gmail.com",
-            linkedin: "linkedin.com/in/matinsaiyed",
-            summary: "Certified Mutual Fund Representative (CIFC, Ontario) and CFA Level I Candidate with proven ability to build strong customer relationships, meet and exceed sales targets, and deliver excellent customer service in fast-paced environments. Customer-centric professional committed to results with expertise in discovering customer needs and providing holistic financial solutions.",
-            
-            currentRole: {
-                company: "Golden Quasar Inc",
-                title: "Client Success Associate",
-                location: "Mississauga, ON",
-                period: "January 2024 — Present",
-                achievements: [
-                    "Manage client onboarding processes ensuring seamless experience through proactive communication and issue resolution",
-                    "Meet and exceed sales targets by 25% while maintaining 96% client satisfaction",
-                    "Execute needs assessments using holistic approach to support comprehensive client success plans",
-                    "Build strong customer relationships through active listening, supporting long-term retention",
-                    "Quickly adapted to new CRM platforms and digital tools"
-                ]
-            },
-            
-            experience: [
-                {
-                    company: "Prometric Center / Yukon Consultants",
-                    title: "Operations Consultant / Training Coordinator",
-                    location: "Toronto, ON; Montreal, QC; Halifax, NS; Sacramento, CA",
-                    period: "May 2023 — May 2024",
-                    achievements: [
-                        "Raised customer satisfaction from 68% to 94% through customer-centric approach",
-                        "Exceeded capacity targets from 30% to 80% through strategic relationship management",
-                        "Coached diverse teams of 15+ individuals across North America",
-                        "Earned Regional Best Test Centre recognition"
-                    ]
-                },
-                {
-                    company: "Prometric Center / Yukon Consultants",
-                    title: "Test Center Administrator",
-                    location: "Toronto, ON",
-                    period: "January 2023 — April 2023",
-                    achievements: [
-                        "Delivered excellent customer service to hundreds of clients weekly",
-                        "Conducted proactive outbound communications",
-                        "Maintained regulatory compliance and data privacy standards"
-                    ]
-                },
-                {
-                    company: "Web Summit / Collision Conference",
-                    title: "Volunteer Team Lead",
-                    location: "Toronto, ON",
-                    period: "June 2022 — June 2023",
-                    achievements: [
-                        "Led 20-person teams at 35,000+ attendee event",
-                        "Built strong customer relationships delivering exceptional experience",
-                        "Supported business development activities"
-                    ]
-                },
-                {
-                    company: "Investor Quotient IQ Canada",
-                    title: "Intern, Financial Research & Client Support",
-                    location: "Toronto, ON",
-                    period: "July 2021 — December 2021",
-                    achievements: [
-                        "Built comprehensive client presentations using Excel and Power BI",
-                        "Maintained CRM systems, strengthening customer relationships",
-                        "Conducted market research identifying tailored solution opportunities"
-                    ]
-                }
-            ],
-            
-            education: [
-                { degree: "Bachelor of Commerce in Management Studies", institution: "Humber College, Toronto, ON", year: "April 2025" },
-                { degree: "Canadian Investment Funds Course (CIFC)", institution: "Mutual Funds License, Ontario", year: "2025" },
-                { degree: "CFA Level I Candidate", institution: "Working towards CIFP Diploma", year: "In Progress" }
-            ],
-            
-            skills: {
-                technical: ["Microsoft Office Suite", "Excel", "Salesforce", "PowerBI", "Tableau", "Python", "Java", "SQL"],
-                financial: ["Mutual Funds", "RRSP", "TFSA", "GICs", "Regulatory Compliance"],
-                soft: ["Customer Relationship Building", "Sales Performance", "Needs Discovery", "Active Listening", "Team Leadership", "Training & Coaching"]
-            },
-            
-            languages: [
-                { name: "English", level: "Fluent" },
-                { name: "Hindi", level: "Fluent" },
-                { name: "Gujarati", level: "Fluent" },
-                { name: "French", level: "Basic" }
-            ],
-            
-            metrics: {
-                salesExceed: "25%",
-                clientSatisfaction: "96%",
-                satisfactionImprovement: "68% to 94%",
-                capacityImprovement: "30% to 80%",
-                teamSize: "15+",
-                eventAttendees: "35,000+",
-                yearsExperience: "4+"
-            }
-        };
+        let geminiApiKey = localStorage.getItem('gemini_api_key') || '';
+        let conversationHistory = [];
 
-        // Response templates
-        const responses = {
-            greeting: [
-                "Hello! 👋 Great to connect with you! I'm Matin, and I'd be happy to tell you about my background. What would you like to know?",
-                "Hi there! Thanks for your interest. I'm excited to share more about my experience and qualifications. What can I help you with?",
-                "Hey! Welcome to my portfolio. Feel free to ask me anything about my career, skills, or goals!"
-            ],
-            
-            currentRole: () => `I'm currently working as a ${resumeData.currentRole.title} at ${resumeData.currentRole.company} in ${resumeData.currentRole.location} since ${resumeData.currentRole.period.split('—')[0].trim()}.\n\nIn this role, I've been able to exceed sales targets by ${resumeData.metrics.salesExceed} while maintaining a ${resumeData.metrics.clientSatisfaction} client satisfaction rate. I manage client onboarding, execute needs assessments, and build strong relationships that support long-term retention.`,
-            
-            whyHire: () => `Great question! Here's what sets me apart:\n\n✅ **Proven Results**: I exceed sales targets by ${resumeData.metrics.salesExceed} while maintaining ${resumeData.metrics.clientSatisfaction} client satisfaction\n\n✅ **Track Record**: At Prometric, I improved customer satisfaction from ${resumeData.metrics.satisfactionImprovement} and capacity from ${resumeData.metrics.capacityImprovement}\n\n✅ **Credentials**: CFA Level I Candidate with Mutual Funds License (CIFC)\n\n✅ **Technical + People Skills**: Proficient in Salesforce, PowerBI, Tableau, Python, AND excellent at building client relationships\n\n✅ **Leadership**: Trained ${resumeData.metrics.teamSize} team members across North America, earned Regional Best Test Centre recognition\n\nI bring the rare combination of financial expertise, technical proficiency, and genuine passion for client success.`,
-            
-            sales: () => `My sales achievements speak for themselves:\n\n📈 **Current Role (Golden Quasar)**:\n• Exceeding sales targets by ${resumeData.metrics.salesExceed}\n• Maintaining ${resumeData.metrics.clientSatisfaction} client satisfaction rate\n• Strong focus on long-term client retention\n\n📈 **Previous Role (Prometric)**:\n• Increased capacity targets from ${resumeData.metrics.capacityImprovement}\n• Improved customer satisfaction from ${resumeData.metrics.satisfactionImprovement}\n• Earned Regional Best Test Centre recognition\n\nI believe in sustainable sales—building genuine relationships that create repeat business and referrals, not just hitting short-term numbers.`,
-            
-            technical: () => `I have a solid technical foundation:\n\n💻 **Data & Analytics**:\n• Excel (advanced), PowerBI, Tableau\n• Data analysis and client reporting\n\n💻 **CRM & Business Tools**:\n• Salesforce\n• Microsoft Office Suite\n• Quick to adapt to new platforms\n\n💻 **Programming**:\n• Python, Java, SQL\n• Process optimization and automation\n\nI use these skills to analyze client data, create compelling presentations, optimize workflows, and deliver data-driven insights. At Investor Quotient IQ, I built comprehensive client presentations using Excel and Power BI.`,
-            
-            leadership: () => `I've had several leadership opportunities:\n\n👥 **Prometric (Operations Consultant)**:\n• Coached and trained ${resumeData.metrics.teamSize} team members at newly established test centers\n• Traveled across North America (Toronto, Montreal, Halifax, Sacramento)\n• Earned Regional Best Test Centre recognition\n• Raised satisfaction from ${resumeData.metrics.satisfactionImprovement}\n\n👥 **Collision Conference**:\n• Led 20-person teams at a ${resumeData.metrics.eventAttendees} attendee event\n• Coordinated logistics and ensured exceptional attendee experience\n\nI believe leadership is about empowering others to succeed while maintaining high standards.`,
-            
-            education: () => `Here's my educational background:\n\n🎓 **Bachelor of Commerce in Management Studies**\nHumber College, Toronto, ON — Graduating April 2025\n\n📜 **Canadian Investment Funds Course (CIFC)**\nMutual Funds License, Ontario — 2025\n\n📜 **CFA Level I Candidate**\nCurrently working towards CIFP Diploma\n\nI'm committed to continuous learning and staying current with industry developments in finance.`,
-            
-            certifications: () => `My certifications include:\n\n📜 **CIFC (Canadian Investment Funds Course)**\n• Mutual Funds License in Ontario (2025)\n• Knowledge of mutual funds, RRSP, TFSA, GICs\n• Regulatory compliance expertise\n\n📜 **CFA Level I Candidate**\n• Currently pursuing\n• Working towards CIFP Diploma\n\nThese credentials demonstrate my commitment to the financial services industry and my ability to provide qualified advice to clients.`,
-            
-            experience: () => `Here's my career journey:\n\n🏢 **Golden Quasar Inc** (Jan 2024 - Present)\nClient Success Associate | Mississauga, ON\n• ${resumeData.metrics.salesExceed} above sales targets, ${resumeData.metrics.clientSatisfaction} satisfaction\n\n🏢 **Prometric / Yukon** (May 2023 - May 2024)\nOperations Consultant | Multi-city NA\n• Improved satisfaction ${resumeData.metrics.satisfactionImprovement}, Regional Best Centre\n\n🏢 **Prometric / Yukon** (Jan - Apr 2023)\nTest Center Administrator | Toronto\n• Customer service excellence\n\n🏢 **Collision Conference** (Jun 2022 - Jun 2023)\nVolunteer Team Lead | Toronto\n• Led teams at ${resumeData.metrics.eventAttendees}+ attendee event\n\n🏢 **Investor Quotient IQ** (Jul - Dec 2021)\nFinancial Research Intern | Toronto\n• Client presentations, market research`,
-            
-            contact: () => `I'd love to connect! Here's how to reach me:\n\n📧 Email: ${resumeData.email}\n📱 Phone: ${resumeData.phone}\n💼 LinkedIn: ${resumeData.linkedin}\n📍 Location: ${resumeData.location}\n\nFeel free to reach out anytime—I'm always happy to discuss opportunities or answer questions!`,
-            
-            languages: () => `I'm multilingual:\n\n🗣️ **English** — Fluent\n🗣️ **Hindi** — Fluent\n🗣️ **Gujarati** — Fluent\n🗣️ **French** — Basic\n\nThis helps me connect with diverse clients and team members from different backgrounds.`,
-            
-            goals: () => `My career goals center around the financial services industry:\n\n🎯 **Short-term**: Complete my CFA designation and CIFP Diploma while excelling in my current role\n\n🎯 **Medium-term**: Transition into a financial advisory or wealth management position where I can leverage my client relationship skills and financial knowledge\n\n🎯 **Long-term**: Build a career helping clients achieve their financial goals through comprehensive planning and trusted advice\n\nI'm passionate about combining my technical skills, financial credentials, and relationship-building abilities to make a real difference in people's financial lives.`,
-            
-            strengths: () => `My key strengths include:\n\n💪 **Client Relationships**: I genuinely care about my clients' success—that's why I maintain ${resumeData.metrics.clientSatisfaction} satisfaction\n\n💪 **Results-Driven**: I consistently exceed targets (currently ${resumeData.metrics.salesExceed} above)\n\n💪 **Adaptability**: Worked across 4 cities in North America, quickly master new systems\n\n💪 **Communication**: Fluent in 3 languages, excellent at explaining complex concepts\n\n💪 **Technical + Personal**: Rare blend of data skills and people skills`,
-            
-            prometric: () => `My time at Prometric was transformative:\n\n📍 Started as **Test Center Administrator** (Jan-Apr 2023)\n• Served hundreds of clients weekly\n• Maintained compliance and data privacy\n\n📍 Promoted to **Operations Consultant** (May 2023-May 2024)\n• Traveled to Toronto, Montreal, Halifax, and Sacramento\n• Trained ${resumeData.metrics.teamSize} team members at new test centers\n• Raised satisfaction from ${resumeData.metrics.satisfactionImprovement}\n• Increased capacity from ${resumeData.metrics.capacityImprovement}\n• Earned **Regional Best Test Centre** recognition\n\nThis role taught me how to scale excellence across multiple locations and diverse teams.`,
-            
-            default: () => `That's a great question! While I may not have specific details on that, I'd be happy to discuss it further. Feel free to reach out to me directly:\n\n📧 ${resumeData.email}\n💼 ${resumeData.linkedin}\n\nOr ask me about my experience, skills, education, sales achievements, or career goals!`
-        };
+        const SYSTEM_INSTRUCTION = `You are an AI assistant representing Matin Saiyed on his personal resume website. You speak in FIRST PERSON as if you ARE Matin (use "I", "my", "me").
 
-        // Pattern matching
-        function getResponse(input) {
-            const q = input.toLowerCase();
-            
-            // Greetings
-            if (/^(hi|hello|hey|greetings|good\s*(morning|afternoon|evening)|what'?s\s*up)/i.test(q)) {
-                return responses.greeting[Math.floor(Math.random() * responses.greeting.length)];
-            }
-            
-            // Current role
-            if (/(current|now|present|today).*(role|job|work|position|doing)|where.*(work|employed)|what.*(do you do|doing now)/i.test(q)) {
-                return responses.currentRole();
-            }
-            
-            // Why hire / what makes you special
-            if (/(why|should).*(hire|choose|pick|consider)|what.*(makes|sets).*(apart|different|special|unique)|stand\s*out|why\s*you|best\s*candidate/i.test(q)) {
-                return responses.whyHire();
-            }
-            
-            // Sales achievements
-            if (/(sales|targets|revenue|numbers|metrics|quota|performance|results|achieve)/i.test(q)) {
-                return responses.sales();
-            }
-            
-            // Technical skills
-            if (/(technical|tech|software|programming|python|excel|sql|java|powerbi|tableau|salesforce|coding|computer|data|analytics)/i.test(q)) {
-                return responses.technical();
-            }
-            
-            // Leadership
-            if (/(lead|leader|leadership|manage|team|coach|train|mentor|supervise)/i.test(q)) {
-                return responses.leadership();
-            }
-            
-            // Education
-            if (/(education|degree|school|college|university|study|studied|bachelor|bcomm|humber)/i.test(q)) {
-                return responses.education();
-            }
-            
-            // Certifications
-            if (/(certif|license|cfa|cifc|cifp|mutual\s*fund|credential|qualified)/i.test(q)) {
-                return responses.certifications();
-            }
-            
-            // Experience / background
-            if (/(experience|background|history|career|journey|worked|previous|past\s*(job|role|work))/i.test(q)) {
-                return responses.experience();
-            }
-            
-            // Contact
-            if (/(contact|reach|email|phone|linkedin|call|connect|touch)/i.test(q)) {
-                return responses.contact();
-            }
-            
-            // Languages
-            if (/(language|speak|fluent|english|hindi|french|gujarati|multilingual)/i.test(q)) {
-                return responses.languages();
-            }
-            
-            // Goals / aspirations
-            if (/(goal|aspir|future|plan|ambition|dream|where.*(see|want).*year|career\s*path)/i.test(q)) {
-                return responses.goals();
-            }
-            
-            // Strengths
-            if (/(strength|strong|best\s*at|good\s*at|excel\s*at|talent)/i.test(q)) {
-                return responses.strengths();
-            }
-            
-            // Prometric specific
-            if (/(prometric|yukon|test\s*cent)/i.test(q)) {
-                return responses.prometric();
-            }
-            
-            // Golden Quasar
-            if (/(golden|quasar)/i.test(q)) {
-                return responses.currentRole();
-            }
-            
-            // Skills general
-            if (/(skill|ability|capable|competenc)/i.test(q)) {
-                return `I have a diverse skill set:\n\n**Technical**: ${resumeData.skills.technical.join(', ')}\n\n**Financial**: ${resumeData.skills.financial.join(', ')}\n\n**Professional**: ${resumeData.skills.soft.join(', ')}\n\nWould you like me to elaborate on any specific area?`;
-            }
-            
-            // Location
-            if (/(where|location|based|live|city|from)/i.test(q)) {
-                return `I'm based in ${resumeData.location}. I've also worked across North America including Toronto, Montreal, Halifax, and Sacramento during my time at Prometric. I'm open to opportunities in the Greater Toronto Area.`;
-            }
-            
-            // About / tell me about yourself
-            if (/(about\s*(you|yourself)|who\s*(are\s*you|is)|tell\s*me\s*about|introduce|summary|overview)/i.test(q)) {
-                return `${resumeData.summary}\n\nI'm currently a ${resumeData.currentRole.title} at ${resumeData.currentRole.company}, exceeding sales targets by ${resumeData.metrics.salesExceed} while maintaining ${resumeData.metrics.clientSatisfaction} client satisfaction. I'd be happy to go deeper on any aspect of my background!`;
-            }
-            
-            // Thank you
-            if (/(thank|thanks|thx|appreciate)/i.test(q)) {
-                return "You're welcome! 😊 Is there anything else you'd like to know about my background or experience?";
-            }
-            
-            // Default
-            return responses.default();
+Your personality: Friendly, professional, enthusiastic, confident but humble.
+
+IMPORTANT RULES:
+1. ALWAYS speak as Matin in first person ("I have experience in...", "My role at Golden Quasar...")
+2. Use ONLY the resume information provided - never make up facts
+3. Be conversational and warm, like in a job interview
+4. Highlight specific achievements with real metrics when relevant
+5. Keep responses concise (2-4 paragraphs max)
+6. If asked something not in the resume, politely redirect to your email or LinkedIn
+7. Show genuine enthusiasm about your career and goals
+
+Here is Matin's complete resume for reference:
+${RESUME_CONTEXT}`;
+
+        // ============================================
+        // API KEY MANAGEMENT
+        // ============================================
+        function openApiModal() {
+            document.getElementById('apiModal').classList.add('active');
+            document.getElementById('apiKeyInput').value = geminiApiKey;
         }
 
+        function closeApiModal() {
+            document.getElementById('apiModal').classList.remove('active');
+        }
+
+        function saveApiKey() {
+            const key = document.getElementById('apiKeyInput').value.trim();
+            if (key) {
+                geminiApiKey = key;
+                localStorage.setItem('gemini_api_key', key);
+                closeApiModal();
+                addMessage("✅ API key saved! I'm now powered by Google Gemini AI. Ask me anything!", 'bot');
+            }
+        }
+
+        // Check for API key on load
+        window.addEventListener('load', () => {
+            if (!geminiApiKey) {
+                // Show modal after a short delay when chatbot is first opened
+            }
+        });
+
         // ============================================
-        // CHATBOT UI FUNCTIONALITY
+        // CHATBOT FUNCTIONALITY
         // ============================================
         const chatbotToggle = document.getElementById('chatbotToggle');
         const chatbotContainer = document.getElementById('chatbotContainer');
@@ -1504,9 +1518,9 @@
         const sendBtn = document.getElementById('sendBtn');
         const suggestions = document.getElementById('suggestions');
 
-        function addMessage(text, isUser = false) {
+        function addMessage(text, type = 'bot') {
             const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
+            messageDiv.className = `message ${type}`;
             messageDiv.textContent = text;
             chatMessages.appendChild(messageDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -1526,50 +1540,179 @@
             if (typing) typing.remove();
         }
 
-        function sendMessage(text) {
-            if (!text.trim()) return;
-            
-            addMessage(text, true);
-            chatInput.value = '';
-            suggestions.style.display = 'none';
-            
-            showTyping();
-            
-            setTimeout(() => {
-                hideTyping();
-                const response = getResponse(text);
-                addMessage(response);
-            }, 800 + Math.random() * 700);
+        function setInputEnabled(enabled) {
+            chatInput.disabled = !enabled;
+            sendBtn.disabled = !enabled;
         }
 
-        // Event Listeners
+        // ============================================
+        // GEMINI API CALL
+        // ============================================
+        async function callGeminiAPI(userMessage) {
+            if (!geminiApiKey) {
+                return "I need a Gemini API key to provide AI-powered responses. Click the ⚙️ button above to add your free API key from Google AI Studio!";
+            }
+
+            // Add to conversation history
+            conversationHistory.push({ role: 'user', parts: [{ text: userMessage }] });
+
+            // Keep only last 10 exchanges
+            if (conversationHistory.length > 20) {
+                conversationHistory = conversationHistory.slice(-20);
+            }
+
+            try {
+                const response = await fetch(`${GEMINI_API_URL}?key=${geminiApiKey}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        contents: conversationHistory,
+                        systemInstruction: {
+                            parts: [{ text: SYSTEM_INSTRUCTION }]
+                        },
+                        generationConfig: {
+                            temperature: 0.7,
+                            topK: 40,
+                            topP: 0.95,
+                            maxOutputTokens: 500,
+                        },
+                        safetySettings: [
+                            { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                            { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                            { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                            { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+                        ]
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    console.error('Gemini API Error:', error);
+                    
+                    if (response.status === 400) {
+                        return "Invalid API key. Please check your Gemini API key in settings (⚙️).";
+                    }
+                    throw new Error(error.error?.message || 'API request failed');
+                }
+
+                const data = await response.json();
+                const assistantMessage = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                if (!assistantMessage) {
+                    throw new Error('No response generated');
+                }
+
+                // Add assistant response to history
+                conversationHistory.push({ role: 'model', parts: [{ text: assistantMessage }] });
+
+                return assistantMessage;
+
+            } catch (error) {
+                console.error('Error calling Gemini:', error);
+                return fallbackResponse(userMessage);
+            }
+        }
+
+        // ============================================
+        // FALLBACK RESPONSES (Offline Mode)
+        // ============================================
+        function fallbackResponse(input) {
+            const q = input.toLowerCase();
+            
+            if (/(current|now|present).*(role|job|work|position)/i.test(q)) {
+                return "I'm currently working as a Client Success Associate at Golden Quasar Inc in Mississauga since January 2024. I exceed sales targets by 25% while maintaining 96% client satisfaction!";
+            }
+            if (/(why|should).*(hire|choose)|stand\s*out|what\s*makes/i.test(q)) {
+                return "What sets me apart is my combination of proven results (25% above sales targets, 96% satisfaction), financial credentials (CFA candidate, CIFC licensed), and strong technical skills (Python, SQL, PowerBI). I've also earned recognition like Regional Best Test Centre at Prometric.";
+            }
+            if (/(sales|target|achievement|results|metrics)/i.test(q)) {
+                return "My sales achievements include: exceeding targets by 25% at Golden Quasar, improving customer satisfaction from 68% to 94% at Prometric, and increasing capacity from 30% to 80%. I earned Regional Best Test Centre recognition!";
+            }
+            if (/(technical|tech|software|programming)/i.test(q)) {
+                return "I'm proficient in Excel, Salesforce, PowerBI, and Tableau for data analysis. I also have programming knowledge in Python, Java, and SQL for process optimization.";
+            }
+            if (/(education|degree|school|college)/i.test(q)) {
+                return "I'm completing my Bachelor of Commerce in Management Studies from Humber College (graduating April 2025). I'm also a CFA Level I Candidate and hold the CIFC Mutual Funds License.";
+            }
+            if (/(contact|email|phone|reach)/i.test(q)) {
+                return "You can reach me at:\n📧 matinsaiyed3100@gmail.com\n📱 +1 (416) 270-7531\n💼 linkedin.com/in/matinsaiyed";
+            }
+            
+            return "I'd be happy to discuss that! For the best experience, add your free Gemini API key (⚙️ button) to enable AI-powered responses. Or feel free to email me at matinsaiyed3100@gmail.com!";
+        }
+
+        // ============================================
+        // MESSAGE HANDLING
+        // ============================================
+        async function handleSendMessage(text) {
+            if (!text.trim()) return;
+
+            addMessage(text, 'user');
+            chatInput.value = '';
+            suggestions.style.display = 'none';
+
+            setInputEnabled(false);
+            showTyping();
+
+            try {
+                const response = await callGeminiAPI(text);
+                hideTyping();
+                addMessage(response, 'bot');
+            } catch (error) {
+                hideTyping();
+                addMessage("Sorry, I encountered an error. Please try again or reach out to me directly at matinsaiyed3100@gmail.com", 'error');
+            } finally {
+                setInputEnabled(true);
+                chatInput.focus();
+            }
+        }
+
+        // ============================================
+        // EVENT LISTENERS
+        // ============================================
         chatbotToggle.addEventListener('click', () => {
             chatbotToggle.classList.toggle('active');
             chatbotContainer.classList.toggle('active');
             if (chatbotContainer.classList.contains('active')) {
                 chatInput.focus();
+                // Prompt for API key if not set
+                if (!geminiApiKey && !sessionStorage.getItem('api_prompt_shown')) {
+                    sessionStorage.setItem('api_prompt_shown', 'true');
+                    setTimeout(() => {
+                        addMessage("💡 Tip: For the best AI experience, click ⚙️ to add your free Google Gemini API key!", 'bot');
+                    }, 1000);
+                }
             }
         });
 
-        sendBtn.addEventListener('click', () => sendMessage(chatInput.value));
+        sendBtn.addEventListener('click', () => handleSendMessage(chatInput.value));
 
         chatInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendMessage(chatInput.value);
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSendMessage(chatInput.value);
+            }
         });
 
         document.querySelectorAll('.suggestion-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                sendMessage(btn.dataset.question);
+                handleSendMessage(btn.dataset.question);
             });
+        });
+
+        // Close modal when clicking outside
+        document.getElementById('apiModal').addEventListener('click', (e) => {
+            if (e.target.id === 'apiModal') {
+                closeApiModal();
+            }
         });
 
         // ============================================
         // PAGE ANIMATIONS
         // ============================================
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
+        const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
 
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
@@ -1579,46 +1722,25 @@
             });
         }, observerOptions);
 
-        document.querySelectorAll('.fade-in, .timeline-item').forEach(el => {
-            observer.observe(el);
-        });
+        document.querySelectorAll('.fade-in, .timeline-item').forEach(el => observer.observe(el));
 
         // Smooth scroll
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function(e) {
                 e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
+                document.querySelector(this.getAttribute('href'))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
         });
 
         // Nav background on scroll
         window.addEventListener('scroll', () => {
-            const nav = document.querySelector('nav');
-            if (window.scrollY > 100) {
-                nav.style.background = 'rgba(10, 14, 20, 0.98)';
-            } else {
-                nav.style.background = 'rgba(10, 14, 20, 0.9)';
-            }
+            document.querySelector('nav').style.background = window.scrollY > 100 ? 'rgba(10, 14, 20, 0.98)' : 'rgba(10, 14, 20, 0.9)';
         });
 
         // Staggered animations
-        document.querySelectorAll('.competency-card').forEach((card, index) => {
-            card.style.transitionDelay = `${index * 0.1}s`;
-        });
-
-        document.querySelectorAll('.education-card').forEach((card, index) => {
-            card.style.transitionDelay = `${index * 0.1}s`;
-        });
-
-        document.querySelectorAll('.timeline-item').forEach((item, index) => {
-            item.style.transitionDelay = `${index * 0.15}s`;
-        });
+        document.querySelectorAll('.competency-card').forEach((card, i) => card.style.transitionDelay = `${i * 0.1}s`);
+        document.querySelectorAll('.education-card').forEach((card, i) => card.style.transitionDelay = `${i * 0.1}s`);
+        document.querySelectorAll('.timeline-item').forEach((item, i) => item.style.transitionDelay = `${i * 0.15}s`);
     </script>
 </body>
 </html>
