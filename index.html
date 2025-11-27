@@ -1,6 +1,5 @@
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,1092 +16,404 @@
             --text-muted: #6b7280;
             --border-color: rgba(201, 169, 98, 0.2);
             --card-bg: rgba(17, 24, 32, 0.8);
+            --shadow-color: rgba(0, 0, 0, 0.3);
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        [data-theme="light"] {
+            --bg-primary: #f8f9fa;
+            --bg-secondary: #ffffff;
+            --accent-gold: #b8860b;
+            --accent-gold-light: #daa520;
+            --text-primary: #1a1a2e;
+            --text-secondary: #4a4a5a;
+            --text-muted: #6b7280;
+            --border-color: rgba(184, 134, 11, 0.25);
+            --card-bg: rgba(255, 255, 255, 0.9);
+            --shadow-color: rgba(0, 0, 0, 0.1);
         }
 
-        html {
-            scroll-behavior: smooth;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
         body {
             font-family: 'DM Sans', sans-serif;
             background: var(--bg-primary);
             color: var(--text-primary);
             line-height: 1.7;
             overflow-x: hidden;
+            transition: background 0.4s ease, color 0.4s ease;
         }
 
         .bg-pattern {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            background: 
-                radial-gradient(ellipse at 20% 20%, rgba(201, 169, 98, 0.08) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 80%, rgba(201, 169, 98, 0.05) 0%, transparent 50%),
-                var(--bg-primary);
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+            background: radial-gradient(ellipse at 20% 20%, rgba(201, 169, 98, 0.08) 0%, transparent 50%),
+                        radial-gradient(ellipse at 80% 80%, rgba(201, 169, 98, 0.05) 0%, transparent 50%),
+                        var(--bg-primary);
+            transition: background 0.4s ease;
         }
 
         .grid-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            background-image: 
-                linear-gradient(rgba(201, 169, 98, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(201, 169, 98, 0.03) 1px, transparent 1px);
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+            background-image: linear-gradient(rgba(201, 169, 98, 0.03) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(201, 169, 98, 0.03) 1px, transparent 1px);
             background-size: 60px 60px;
             animation: gridMove 20s linear infinite;
         }
+        [data-theme="light"] .grid-overlay { opacity: 0.5; }
+        @keyframes gridMove { 0% { transform: translate(0, 0); } 100% { transform: translate(60px, 60px); } }
 
-        @keyframes gridMove {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(60px, 60px); }
+        .particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
+        .particle {
+            position: absolute; width: 4px; height: 4px; background: var(--accent-gold);
+            border-radius: 50%; opacity: 0.3; animation: float 15s infinite ease-in-out;
         }
+        @keyframes float {
+            0%, 100% { transform: translateY(0) translateX(0); opacity: 0.3; }
+            25% { transform: translateY(-100px) translateX(50px); opacity: 0.6; }
+            50% { transform: translateY(-200px) translateX(-30px); opacity: 0.3; }
+            75% { transform: translateY(-100px) translateX(-50px); opacity: 0.6; }
+        }
+
+        .theme-toggle {
+            position: fixed; top: 1.2rem; right: 5.5rem; z-index: 1001;
+            background: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 50px; padding: 0.4rem; cursor: pointer;
+            display: flex; align-items: center; transition: all 0.3s ease; backdrop-filter: blur(10px);
+        }
+        .theme-toggle:hover { border-color: var(--accent-gold); transform: scale(1.05); }
+        .theme-toggle-track {
+            width: 45px; height: 24px; background: var(--bg-primary);
+            border-radius: 12px; position: relative; transition: background 0.3s ease;
+        }
+        .theme-toggle-thumb {
+            position: absolute; top: 2px; left: 2px; width: 20px; height: 20px;
+            background: var(--accent-gold); border-radius: 50%; transition: transform 0.3s ease;
+            display: flex; align-items: center; justify-content: center; font-size: 11px;
+        }
+        [data-theme="light"] .theme-toggle-thumb { transform: translateX(21px); }
 
         nav {
-            position: fixed;
-            top: 0;
-            width: 100%;
-            padding: 1.5rem 4rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 1000;
-            background: rgba(10, 14, 20, 0.9);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border-color);
-            transition: all 0.3s ease;
+            position: fixed; top: 0; width: 100%; padding: 1rem 4rem;
+            display: flex; justify-content: space-between; align-items: center;
+            z-index: 1000; background: rgba(10, 14, 20, 0.9);
+            backdrop-filter: blur(20px); border-bottom: 1px solid var(--border-color); transition: all 0.3s ease;
         }
-
+        [data-theme="light"] nav { background: rgba(255, 255, 255, 0.95); }
         .logo {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 1.8rem;
-            font-weight: 600;
-            color: var(--accent-gold);
-            letter-spacing: 2px;
+            font-family: 'Cormorant Garamond', serif; font-size: 1.8rem; font-weight: 600;
+            color: var(--accent-gold); letter-spacing: 2px; cursor: pointer; transition: transform 0.3s ease;
         }
-
-        .nav-links {
-            display: flex;
-            gap: 3rem;
-            list-style: none;
-        }
-
+        .logo:hover { transform: scale(1.05); }
+        .nav-links { display: flex; gap: 2.5rem; list-style: none; }
         .nav-links a {
-            color: var(--text-secondary);
-            text-decoration: none;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            transition: all 0.3s ease;
-            position: relative;
+            color: var(--text-secondary); text-decoration: none; font-size: 0.85rem;
+            text-transform: uppercase; letter-spacing: 1.5px; transition: all 0.3s ease;
+            position: relative; padding: 0.5rem 0;
         }
-
         .nav-links a::after {
-            content: '';
-            position: absolute;
-            bottom: -5px;
-            left: 0;
-            width: 0;
-            height: 1px;
-            background: var(--accent-gold);
-            transition: width 0.3s ease;
+            content: ''; position: absolute; bottom: 0; left: 0; width: 0; height: 2px;
+            background: var(--accent-gold); transition: width 0.3s ease;
         }
+        .nav-links a:hover { color: var(--accent-gold); }
+        .nav-links a:hover::after { width: 100%; }
 
-        .nav-links a:hover {
-            color: var(--accent-gold);
-        }
-
-        .nav-links a:hover::after {
-            width: 100%;
-        }
-
-        .hero {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            padding: 8rem 4rem 4rem;
-            position: relative;
-        }
-
-        .hero-content {
-            max-width: 650px;
-        }
-
+        .hero { min-height: 100vh; display: flex; align-items: center; padding: 5rem 4rem 3rem; position: relative; }
+        .hero-content { max-width: 620px; }
         .hero-label {
-            display: inline-block;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            color: var(--accent-gold);
-            margin-bottom: 1.5rem;
-            padding: 0.5rem 1rem;
-            border: 1px solid var(--border-color);
-            opacity: 0;
-            animation: fadeInUp 0.8s ease forwards 0.2s;
+            display: inline-block; font-size: 0.75rem; text-transform: uppercase;
+            letter-spacing: 3px; color: var(--accent-gold); margin-bottom: 1rem;
+            padding: 0.5rem 1rem; border: 1px solid var(--border-color);
+            opacity: 0; animation: fadeInUp 0.8s ease forwards 0.2s;
+            position: relative; overflow: hidden;
         }
+        .hero-label::before {
+            content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(201, 169, 98, 0.2), transparent);
+            animation: shimmer 2s infinite;
+        }
+        @keyframes shimmer { 0% { left: -100%; } 100% { left: 100%; } }
 
         .hero h1 {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: clamp(3rem, 6vw, 5.5rem);
-            font-weight: 500;
-            line-height: 1.1;
-            margin-bottom: 2rem;
-            opacity: 0;
-            animation: fadeInUp 0.8s ease forwards 0.4s;
+            font-family: 'Cormorant Garamond', serif; font-size: clamp(2.5rem, 5vw, 4.5rem);
+            font-weight: 500; line-height: 1.1; margin-bottom: 1.2rem;
+            opacity: 0; animation: fadeInUp 0.8s ease forwards 0.4s;
         }
-
-        .hero h1 span {
-            color: var(--accent-gold);
+        .hero h1 span { color: var(--accent-gold); position: relative; }
+        .hero h1 span::after {
+            content: ''; position: absolute; bottom: 5px; left: 0; width: 100%;
+            height: 8px; background: rgba(201, 169, 98, 0.3); z-index: -1;
         }
-
         .hero-description {
-            font-size: 1.15rem;
-            color: var(--text-secondary);
-            max-width: 600px;
-            margin-bottom: 3rem;
-            opacity: 0;
-            animation: fadeInUp 0.8s ease forwards 0.6s;
+            font-size: 1.05rem; color: var(--text-secondary); max-width: 580px;
+            margin-bottom: 1.8rem; opacity: 0; animation: fadeInUp 0.8s ease forwards 0.6s;
         }
-
-        .hero-cta {
-            display: flex;
-            gap: 1.5rem;
-            opacity: 0;
-            animation: fadeInUp 0.8s ease forwards 0.8s;
-        }
+        .hero-cta { display: flex; gap: 1rem; opacity: 0; animation: fadeInUp 0.8s ease forwards 0.8s; }
 
         .btn {
-            padding: 1rem 2.5rem;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            text-decoration: none;
-            transition: all 0.4s ease;
-            cursor: pointer;
-            border: none;
-            font-family: inherit;
+            padding: 0.85rem 1.8rem; font-size: 0.8rem; text-transform: uppercase;
+            letter-spacing: 2px; text-decoration: none; transition: all 0.4s ease;
+            cursor: pointer; border: none; font-family: inherit; position: relative; overflow: hidden;
         }
-
-        .btn-primary {
-            background: var(--accent-gold);
-            color: var(--bg-primary);
+        .btn::before {
+            content: ''; position: absolute; top: 50%; left: 50%; width: 0; height: 0;
+            background: rgba(255, 255, 255, 0.2); border-radius: 50%;
+            transform: translate(-50%, -50%); transition: width 0.6s ease, height 0.6s ease;
         }
+        .btn:hover::before { width: 300px; height: 300px; }
+        .btn-primary { background: var(--accent-gold); color: var(--bg-primary); }
+        .btn-primary:hover { background: var(--accent-gold-light); transform: translateY(-3px); box-shadow: 0 10px 30px rgba(201, 169, 98, 0.4); }
+        .btn-outline { background: transparent; color: var(--text-primary); border: 1px solid var(--border-color); }
+        .btn-outline:hover { border-color: var(--accent-gold); color: var(--accent-gold); transform: translateY(-3px); }
 
-        .btn-primary:hover {
-            background: var(--accent-gold-light);
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(201, 169, 98, 0.3);
-        }
-
-        .btn-outline {
-            background: transparent;
-            color: var(--text-primary);
-            border: 1px solid var(--border-color);
-        }
-
-        .btn-outline:hover {
-            border-color: var(--accent-gold);
-            color: var(--accent-gold);
-        }
-
-        .hero-image {
-            position: absolute;
-            right: 8%;
-            top: 50%;
-            transform: translateY(-50%);
-            opacity: 0;
-            animation: fadeInRight 1s ease forwards 0.6s;
-        }
-
-        .profile-container {
-            position: relative;
-        }
-
+        .hero-image { position: absolute; right: 7%; top: 50%; transform: translateY(-50%); opacity: 0; animation: fadeInRight 1s ease forwards 0.6s; }
+        .profile-container { position: relative; }
         .profile-image {
-            width: 380px;
-            height: 380px;
-            object-fit: cover;
-            object-position: center top;
-            border-radius: 5px;
-            border: 2px solid var(--border-color);
-            filter: grayscale(20%);
-            transition: all 0.4s ease;
+            width: 320px; height: 320px; object-fit: cover; object-position: center top;
+            border-radius: 5px; border: 2px solid var(--border-color); filter: grayscale(20%); transition: all 0.4s ease;
         }
-
-        .profile-image:hover {
-            filter: grayscale(0%);
-            border-color: var(--accent-gold);
-            box-shadow: 0 20px 60px rgba(201, 169, 98, 0.2);
-        }
-
+        .profile-image:hover { filter: grayscale(0%); border-color: var(--accent-gold); box-shadow: 0 20px 60px rgba(201, 169, 98, 0.3); transform: scale(1.02); }
         .profile-frame {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            right: -20px;
-            bottom: -20px;
-            border: 1px solid var(--accent-gold);
-            border-radius: 5px;
-            z-index: -1;
+            position: absolute; top: 12px; left: 12px; right: -12px; bottom: -12px;
+            border: 1px solid var(--accent-gold); border-radius: 5px; z-index: -1; transition: all 0.4s ease;
         }
-
+        .profile-container:hover .profile-frame { top: 18px; left: 18px; right: -18px; bottom: -18px; }
+        .profile-ring {
+            position: absolute; top: -15px; left: -15px; right: -15px; bottom: -15px;
+            border: 2px dashed var(--accent-gold); border-radius: 50%; opacity: 0.3; animation: rotate 20s linear infinite;
+        }
+        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .profile-stats {
-            position: absolute;
-            bottom: -30px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 2rem;
-            background: var(--bg-secondary);
-            padding: 1.5rem 2rem;
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
+            position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 1.2rem; background: var(--bg-secondary); padding: 1rem 1.3rem;
+            border: 1px solid var(--border-color); border-radius: 5px; box-shadow: 0 10px 40px var(--shadow-color);
         }
+        .profile-stat { text-align: center; cursor: pointer; transition: transform 0.3s ease; }
+        .profile-stat:hover { transform: scale(1.1); }
+        .profile-stat-number { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; font-weight: 600; color: var(--accent-gold); line-height: 1; }
+        .profile-stat-label { font-size: 0.55rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-top: 0.15rem; }
 
-        .profile-stat {
-            text-align: center;
-        }
-
-        .profile-stat-number {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 1.8rem;
-            font-weight: 600;
-            color: var(--accent-gold);
-            line-height: 1;
-        }
-
-        .profile-stat-label {
-            font-size: 0.65rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--text-muted);
-            margin-top: 0.3rem;
-        }
-
-        section {
-            padding: 8rem 4rem;
-            position: relative;
-        }
-
-        .section-header {
-            margin-bottom: 4rem;
-        }
-
+        section { padding: 3.5rem 4rem; position: relative; }
+        .section-header { margin-bottom: 2.5rem; }
         .section-label {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            color: var(--accent-gold);
-            margin-bottom: 1rem;
+            font-size: 0.75rem; text-transform: uppercase; letter-spacing: 3px;
+            color: var(--accent-gold); margin-bottom: 0.6rem; display: flex; align-items: center; gap: 1rem;
         }
+        .section-label::after { content: ''; flex: 1; max-width: 100px; height: 1px; background: linear-gradient(90deg, var(--accent-gold), transparent); }
+        .section-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.8rem, 4vw, 3rem); font-weight: 500; }
 
-        .section-title {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: clamp(2.5rem, 5vw, 4rem);
-            font-weight: 500;
-        }
-
-        .competencies-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-        }
-
+        .competencies-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.2rem; }
         .competency-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            padding: 2.5rem;
-            transition: all 0.4s ease;
-            position: relative;
-            overflow: hidden;
+            background: var(--card-bg); border: 1px solid var(--border-color); padding: 1.8rem;
+            transition: all 0.4s ease; position: relative; overflow: hidden; cursor: pointer;
         }
-
         .competency-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 3px;
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 3px;
             background: linear-gradient(90deg, var(--accent-gold), transparent);
-            transform: scaleX(0);
-            transform-origin: left;
-            transition: transform 0.4s ease;
+            transform: scaleX(0); transform-origin: left; transition: transform 0.4s ease;
         }
-
-        .competency-card:hover {
-            transform: translateY(-5px);
-            border-color: var(--accent-gold);
+        .competency-card::after {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(201, 169, 98, 0.1), transparent 50%);
+            opacity: 0; transition: opacity 0.3s ease; pointer-events: none;
         }
-
-        .competency-card:hover::before {
-            transform: scaleX(1);
-        }
-
+        .competency-card:hover { transform: translateY(-6px); border-color: var(--accent-gold); box-shadow: 0 15px 35px var(--shadow-color); }
+        .competency-card:hover::before { transform: scaleX(1); }
+        .competency-card:hover::after { opacity: 1; }
         .competency-icon {
-            width: 50px;
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(201, 169, 98, 0.1);
-            border: 1px solid var(--border-color);
-            margin-bottom: 1.5rem;
-            font-size: 1.2rem;
+            width: 45px; height: 45px; display: flex; align-items: center; justify-content: center;
+            background: rgba(201, 169, 98, 0.1); border: 1px solid var(--border-color);
+            margin-bottom: 1rem; font-size: 1.3rem; transition: all 0.3s ease;
         }
+        .competency-card:hover .competency-icon { transform: scale(1.1) rotate(5deg); background: rgba(201, 169, 98, 0.2); }
+        .competency-title { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; margin-bottom: 0.6rem; color: var(--text-primary); }
+        .competency-desc { color: var(--text-secondary); font-size: 0.85rem; }
+        .skill-bar { margin-top: 0.8rem; height: 4px; background: var(--border-color); border-radius: 2px; overflow: hidden; }
+        .skill-progress { height: 100%; background: linear-gradient(90deg, var(--accent-gold), var(--accent-gold-light)); border-radius: 2px; width: 0; transition: width 1s ease; }
 
-        .competency-title {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 1.4rem;
-            margin-bottom: 1rem;
-            color: var(--text-primary);
-        }
-
-        .competency-desc {
-            color: var(--text-secondary);
-            font-size: 0.95rem;
-        }
-
-        .timeline {
-            position: relative;
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-
-        .timeline::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 1px;
-            height: 100%;
-            background: linear-gradient(to bottom, var(--accent-gold), transparent);
-        }
-
-        .timeline-item {
-            position: relative;
-            padding-left: 4rem;
-            padding-bottom: 4rem;
-            opacity: 0;
-            transform: translateX(-20px);
-            transition: all 0.6s ease;
-        }
-
-        .timeline-item.visible {
-            opacity: 1;
-            transform: translateX(0);
-        }
-
+        .timeline { position: relative; max-width: 850px; margin: 0 auto; }
+        .timeline::before { content: ''; position: absolute; left: 0; top: 0; width: 2px; height: 100%; background: linear-gradient(to bottom, var(--accent-gold), var(--accent-gold-light), transparent); }
+        .timeline-item { position: relative; padding-left: 2.5rem; padding-bottom: 2.5rem; opacity: 0; transform: translateX(-20px); transition: all 0.6s ease; }
+        .timeline-item.visible { opacity: 1; transform: translateX(0); }
         .timeline-item::before {
-            content: '';
-            position: absolute;
-            left: -6px;
-            top: 0;
-            width: 13px;
-            height: 13px;
-            background: var(--bg-primary);
-            border: 2px solid var(--accent-gold);
-            border-radius: 50%;
+            content: ''; position: absolute; left: -5px; top: 0; width: 12px; height: 12px;
+            background: var(--bg-primary); border: 2px solid var(--accent-gold); border-radius: 50%; transition: all 0.3s ease;
         }
-
-        .timeline-date {
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--accent-gold);
-            margin-bottom: 0.5rem;
-        }
-
-        .timeline-company {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 1.8rem;
-            margin-bottom: 0.3rem;
-        }
-
-        .timeline-role {
-            color: var(--text-secondary);
-            font-size: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .timeline-location {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            margin-bottom: 1.5rem;
-        }
-
-        .timeline-achievements {
-            list-style: none;
-        }
-
+        .timeline-item:hover::before { transform: scale(1.5); background: var(--accent-gold); box-shadow: 0 0 20px rgba(201, 169, 98, 0.5); }
+        .timeline-date { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; color: var(--accent-gold); margin-bottom: 0.3rem; }
+        .timeline-company { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; margin-bottom: 0.15rem; }
+        .timeline-role { color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.6rem; }
+        .timeline-location { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.8rem; }
+        .timeline-achievements { list-style: none; }
         .timeline-achievements li {
-            position: relative;
-            padding-left: 1.5rem;
-            margin-bottom: 0.8rem;
-            color: var(--text-secondary);
-            font-size: 0.95rem;
+            position: relative; padding-left: 1.3rem; margin-bottom: 0.5rem;
+            color: var(--text-secondary); font-size: 0.85rem; transition: all 0.3s ease;
         }
+        .timeline-achievements li::before { content: '→'; position: absolute; left: 0; color: var(--accent-gold); transition: transform 0.3s ease; }
+        .timeline-achievements li:hover::before { transform: translateX(5px); }
+        .timeline-achievements li:hover { color: var(--text-primary); }
 
-        .timeline-achievements li::before {
-            content: '→';
-            position: absolute;
-            left: 0;
-            color: var(--accent-gold);
-        }
-
-        .education-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 2rem;
-        }
-
+        .education-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.2rem; }
         .education-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            padding: 2rem;
-            position: relative;
-            transition: all 0.4s ease;
+            background: var(--card-bg); border: 1px solid var(--border-color); padding: 1.5rem;
+            position: relative; transition: all 0.4s ease; overflow: hidden;
         }
-
-        .education-card:hover {
-            border-color: var(--accent-gold);
+        .education-card::before {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: conic-gradient(from 0deg, transparent, var(--accent-gold), transparent);
+            animation: rotateGradient 4s linear infinite; opacity: 0; transition: opacity 0.3s ease;
         }
+        .education-card::after { content: ''; position: absolute; inset: 2px; background: var(--card-bg); z-index: 1; }
+        .education-card:hover::before { opacity: 0.3; }
+        .education-card:hover { transform: translateY(-5px); }
+        @keyframes rotateGradient { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .education-card > * { position: relative; z-index: 2; }
+        .education-year { font-size: 0.65rem; color: var(--accent-gold); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 0.6rem; }
+        .education-title { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; margin-bottom: 0.3rem; }
+        .education-institution { color: var(--text-secondary); font-size: 0.8rem; }
 
-        .education-year {
-            font-size: 0.75rem;
-            color: var(--accent-gold);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 1rem;
-        }
-
-        .education-title {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 1.3rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .education-institution {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-
-        .contact-section {
-            background: var(--bg-secondary);
-            text-align: center;
-        }
-
-        .contact-grid {
-            display: flex;
-            justify-content: center;
-            gap: 4rem;
-            margin-top: 3rem;
-            flex-wrap: wrap;
-        }
-
+        .contact-section { background: var(--bg-secondary); text-align: center; }
+        .contact-grid { display: flex; justify-content: center; gap: 1.5rem; margin-top: 1.8rem; flex-wrap: wrap; }
         .contact-item {
-            text-decoration: none;
-            color: var(--text-secondary);
-            transition: all 0.3s ease;
+            text-decoration: none; color: var(--text-secondary); transition: all 0.3s ease;
+            padding: 1.2rem; border-radius: 10px; background: var(--bg-primary);
+            border: 1px solid transparent; min-width: 160px;
         }
-
-        .contact-item:hover {
-            color: var(--accent-gold);
-        }
-
-        .contact-label {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--text-muted);
-            margin-bottom: 0.5rem;
-        }
-
-        .contact-value {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 1.3rem;
-        }
-
-        .languages {
-            display: flex;
-            gap: 3rem;
-            justify-content: center;
-            margin-top: 4rem;
-            padding-top: 4rem;
-            border-top: 1px solid var(--border-color);
-        }
-
+        .contact-item:hover { color: var(--accent-gold); border-color: var(--accent-gold); transform: translateY(-5px); box-shadow: 0 10px 30px var(--shadow-color); }
+        .contact-icon { font-size: 1.5rem; margin-bottom: 0.4rem; }
+        .contact-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 2px; color: var(--text-muted); margin-bottom: 0.3rem; }
+        .contact-value { font-family: 'Cormorant Garamond', serif; font-size: 1rem; }
+        .languages { display: flex; gap: 1.2rem; justify-content: center; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-color); flex-wrap: wrap; }
         .language {
-            text-align: center;
+            text-align: center; padding: 0.8rem 1.2rem; background: var(--bg-primary);
+            border-radius: 10px; border: 1px solid var(--border-color); transition: all 0.3s ease; cursor: pointer;
         }
+        .language:hover { border-color: var(--accent-gold); transform: scale(1.05); }
+        .language-name { font-size: 0.9rem; margin-bottom: 0.15rem; }
+        .language-level { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 2px; color: var(--text-muted); }
 
-        .language-name {
-            font-size: 1rem;
-            margin-bottom: 0.3rem;
-        }
+        footer { padding: 1.2rem 4rem; text-align: center; color: var(--text-muted); font-size: 0.75rem; border-top: 1px solid var(--border-color); }
 
-        .language-level {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--text-muted);
-        }
-
-        footer {
-            padding: 2rem 4rem;
-            text-align: center;
-            color: var(--text-muted);
-            font-size: 0.85rem;
-            border-top: 1px solid var(--border-color);
-        }
-
-        /* AI Chatbot Styles */
         .chatbot-toggle {
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            width: 65px;
-            height: 65px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--accent-gold), #a88a4a);
-            border: none;
-            cursor: pointer;
-            z-index: 1001;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 5px 30px rgba(201, 169, 98, 0.4);
-            transition: all 0.3s ease;
+            position: fixed; bottom: 1.5rem; right: 1.5rem; width: 55px; height: 55px;
+            border-radius: 50%; background: linear-gradient(135deg, var(--accent-gold), #a88a4a);
+            border: none; cursor: pointer; z-index: 1001; display: flex; align-items: center;
+            justify-content: center; box-shadow: 0 5px 30px rgba(201, 169, 98, 0.4); transition: all 0.3s ease;
         }
-
-        .chatbot-toggle:hover {
-            transform: scale(1.1);
-            box-shadow: 0 10px 40px rgba(201, 169, 98, 0.5);
-        }
-
-        .chatbot-toggle svg {
-            width: 28px;
-            height: 28px;
-            fill: var(--bg-primary);
-        }
-
-        .chatbot-toggle.active svg {
-            display: none;
-        }
-
-        .chatbot-toggle.active::after {
-            content: '✕';
-            font-size: 1.5rem;
-            color: var(--bg-primary);
-        }
+        .chatbot-toggle:hover { transform: scale(1.1); box-shadow: 0 10px 40px rgba(201, 169, 98, 0.5); }
+        .chatbot-toggle svg { width: 24px; height: 24px; fill: var(--bg-primary); }
+        .chatbot-toggle.active svg { display: none; }
+        .chatbot-toggle.active::after { content: '✕'; font-size: 1.3rem; color: var(--bg-primary); }
 
         .chatbot-container {
-            position: fixed;
-            bottom: 7rem;
-            right: 2rem;
-            width: 420px;
-            max-width: calc(100vw - 2rem);
-            height: 600px;
-            max-height: calc(100vh - 10rem);
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 15px;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(20px) scale(0.95);
-            transition: all 0.3s ease;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            position: fixed; bottom: 6rem; right: 1.5rem; width: 380px; max-width: calc(100vw - 1.5rem);
+            height: 500px; max-height: calc(100vh - 8rem); background: var(--bg-secondary);
+            border: 1px solid var(--border-color); border-radius: 12px; z-index: 1000;
+            display: flex; flex-direction: column; overflow: hidden; opacity: 0; visibility: hidden;
+            transform: translateY(20px) scale(0.95); transition: all 0.3s ease; box-shadow: 0 20px 60px var(--shadow-color);
         }
-
-        .chatbot-container.active {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0) scale(1);
-        }
-
+        .chatbot-container.active { opacity: 1; visibility: visible; transform: translateY(0) scale(1); }
         .chatbot-header {
-            padding: 1.25rem;
-            background: linear-gradient(135deg, rgba(201, 169, 98, 0.15), rgba(201, 169, 98, 0.05));
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            gap: 1rem;
+            padding: 0.9rem 1rem; background: linear-gradient(135deg, rgba(201, 169, 98, 0.15), rgba(201, 169, 98, 0.05));
+            border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 0.7rem;
         }
-
-        .chatbot-avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid var(--accent-gold);
-            background: var(--bg-primary);
+        .chatbot-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent-gold); background: var(--bg-primary); }
+        .chatbot-info h3 { font-family: 'Cormorant Garamond', serif; font-size: 1rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.3rem; }
+        .chatbot-info p { font-size: 0.6rem; color: var(--accent-gold); text-transform: uppercase; letter-spacing: 1px; }
+        .ai-badge { display: inline-flex; padding: 0.1rem 0.35rem; background: linear-gradient(135deg, #4285f4, #34a853); border-radius: 6px; font-size: 0.5rem; color: white; font-family: 'DM Sans', sans-serif; font-weight: 600; }
+        .chatbot-controls { display: flex; align-items: center; gap: 0.4rem; margin-left: auto; }
+        .voice-btn {
+            width: 32px; height: 32px; border-radius: 50%; background: transparent;
+            border: 1px solid var(--border-color); color: var(--text-secondary); cursor: pointer;
+            display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; font-size: 0.9rem;
         }
+        .voice-btn:hover { border-color: var(--accent-gold); color: var(--accent-gold); }
+        .voice-btn.recording { background: #ef4444; border-color: #ef4444; color: white; animation: pulse-recording 1s infinite; }
+        @keyframes pulse-recording { 0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); } }
+        .voice-btn.speaking { background: var(--accent-gold); border-color: var(--accent-gold); color: var(--bg-primary); animation: pulse-speaking 0.5s infinite; }
+        @keyframes pulse-speaking { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        .status-dot { width: 7px; height: 7px; background: #4ade80; border-radius: 50%; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
-        .chatbot-info h3 {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 1.2rem;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
+        .chatbot-messages { flex: 1; overflow-y: auto; padding: 0.9rem; display: flex; flex-direction: column; gap: 0.7rem; }
+        .chatbot-messages::-webkit-scrollbar { width: 4px; }
+        .chatbot-messages::-webkit-scrollbar-track { background: transparent; }
+        .chatbot-messages::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+        .message { max-width: 85%; padding: 0.8rem 1rem; border-radius: 10px; font-size: 0.85rem; line-height: 1.5; animation: messageIn 0.3s ease; white-space: pre-wrap; }
+        @keyframes messageIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .message.bot { background: rgba(201, 169, 98, 0.1); border: 1px solid var(--border-color); align-self: flex-start; border-bottom-left-radius: 3px; }
+        .message.user { background: var(--accent-gold); color: var(--bg-primary); align-self: flex-end; border-bottom-right-radius: 3px; }
+        .message.error { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #fca5a5; }
+        .typing-indicator { display: flex; gap: 4px; padding: 0.8rem 1rem; background: rgba(201, 169, 98, 0.1); border: 1px solid var(--border-color); border-radius: 10px; border-bottom-left-radius: 3px; align-self: flex-start; max-width: 60px; }
+        .typing-indicator span { width: 6px; height: 6px; background: var(--accent-gold); border-radius: 50%; animation: typing 1.4s infinite; }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing { 0%, 60%, 100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-4px); opacity: 1; } }
 
-        .chatbot-info p {
-            font-size: 0.7rem;
-            color: var(--accent-gold);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
+        .chatbot-suggestions { padding: 0 0.9rem 0.7rem; display: flex; flex-wrap: wrap; gap: 0.35rem; }
+        .suggestion-btn { padding: 0.35rem 0.7rem; background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); font-size: 0.65rem; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; font-family: inherit; }
+        .suggestion-btn:hover { border-color: var(--accent-gold); color: var(--accent-gold); }
 
-        .ai-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
-            padding: 0.15rem 0.5rem;
-            background: linear-gradient(135deg, #4285f4, #34a853);
-            border-radius: 10px;
-            font-size: 0.6rem;
-            color: white;
-            font-family: 'DM Sans', sans-serif;
-            font-weight: 600;
-        }
+        .chatbot-input { padding: 0.7rem 0.9rem; border-top: 1px solid var(--border-color); display: flex; gap: 0.5rem; background: rgba(10, 14, 20, 0.5); align-items: center; }
+        [data-theme="light"] .chatbot-input { background: rgba(248, 249, 250, 0.5); }
+        .chatbot-input input { flex: 1; padding: 0.6rem 0.9rem; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 18px; color: var(--text-primary); font-size: 0.85rem; font-family: inherit; outline: none; transition: border-color 0.3s ease; }
+        .chatbot-input input:focus { border-color: var(--accent-gold); }
+        .chatbot-input input::placeholder { color: var(--text-muted); }
+        .chatbot-input input:disabled { opacity: 0.6; cursor: not-allowed; }
+        .chatbot-input button { width: 36px; height: 36px; border-radius: 50%; background: var(--accent-gold); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; }
+        .chatbot-input button:hover:not(:disabled) { background: var(--accent-gold-light); transform: scale(1.05); }
+        .chatbot-input button:disabled { opacity: 0.6; cursor: not-allowed; }
+        .chatbot-input button svg { width: 16px; height: 16px; fill: var(--bg-primary); }
 
-        .chatbot-status {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-left: auto;
-        }
+        .scroll-top { position: fixed; bottom: 1.5rem; left: 1.5rem; width: 40px; height: 40px; border-radius: 50%; background: var(--card-bg); border: 1px solid var(--border-color); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: var(--text-secondary); opacity: 0; visibility: hidden; transition: all 0.3s ease; z-index: 999; }
+        .scroll-top.visible { opacity: 1; visibility: visible; }
+        .scroll-top:hover { border-color: var(--accent-gold); color: var(--accent-gold); transform: translateY(-3px); }
 
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            background: #4ade80;
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInRight { from { opacity: 0; transform: translate(30px, -50%); } to { opacity: 1; transform: translate(0, -50%); } }
+        .fade-in { opacity: 0; transform: translateY(30px); transition: all 0.8s ease; }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+        .mobile-menu-btn { display: none; background: none; border: none; color: var(--text-primary); font-size: 1.5rem; cursor: pointer; }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .chatbot-messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 1.25rem;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .chatbot-messages::-webkit-scrollbar {
-            width: 5px;
-        }
-
-        .chatbot-messages::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .chatbot-messages::-webkit-scrollbar-thumb {
-            background: var(--border-color);
-            border-radius: 5px;
-        }
-
-        .message {
-            max-width: 88%;
-            padding: 1rem 1.25rem;
-            border-radius: 15px;
-            font-size: 0.9rem;
-            line-height: 1.6;
-            animation: messageIn 0.3s ease;
-            white-space: pre-wrap;
-        }
-
-        @keyframes messageIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .message.bot {
-            background: rgba(201, 169, 98, 0.1);
-            border: 1px solid var(--border-color);
-            align-self: flex-start;
-            border-bottom-left-radius: 5px;
-        }
-
-        .message.user {
-            background: var(--accent-gold);
-            color: var(--bg-primary);
-            align-self: flex-end;
-            border-bottom-right-radius: 5px;
-        }
-
-        .message.error {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            color: #fca5a5;
-        }
-
-        .typing-indicator {
-            display: flex;
-            gap: 5px;
-            padding: 1rem 1.25rem;
-            background: rgba(201, 169, 98, 0.1);
-            border: 1px solid var(--border-color);
-            border-radius: 15px;
-            border-bottom-left-radius: 5px;
-            align-self: flex-start;
-            max-width: 80px;
-        }
-
-        .typing-indicator span {
-            width: 8px;
-            height: 8px;
-            background: var(--accent-gold);
-            border-radius: 50%;
-            animation: typing 1.4s infinite;
-        }
-
-        .typing-indicator span:nth-child(2) {
-            animation-delay: 0.2s;
-        }
-
-        .typing-indicator span:nth-child(3) {
-            animation-delay: 0.4s;
-        }
-
-        @keyframes typing {
-            0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
-            30% { transform: translateY(-5px); opacity: 1; }
-        }
-
-        .chatbot-suggestions {
-            padding: 0 1.25rem 1rem;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-        }
-
-        .suggestion-btn {
-            padding: 0.5rem 1rem;
-            background: transparent;
-            border: 1px solid var(--border-color);
-            color: var(--text-secondary);
-            font-size: 0.75rem;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-family: inherit;
-        }
-
-        .suggestion-btn:hover {
-            border-color: var(--accent-gold);
-            color: var(--accent-gold);
-        }
-
-        .chatbot-input {
-            padding: 1rem 1.25rem;
-            border-top: 1px solid var(--border-color);
-            display: flex;
-            gap: 0.75rem;
-            background: rgba(10, 14, 20, 0.5);
-        }
-
-        .chatbot-input input {
-            flex: 1;
-            padding: 0.8rem 1rem;
-            background: var(--bg-primary);
-            border: 1px solid var(--border-color);
-            border-radius: 25px;
-            color: var(--text-primary);
-            font-size: 0.9rem;
-            font-family: inherit;
-            outline: none;
-            transition: border-color 0.3s ease;
-        }
-
-        .chatbot-input input:focus {
-            border-color: var(--accent-gold);
-        }
-
-        .chatbot-input input::placeholder {
-            color: var(--text-muted);
-        }
-
-        .chatbot-input input:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .chatbot-input button {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            background: var(--accent-gold);
-            border: none;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-        }
-
-        .chatbot-input button:hover:not(:disabled) {
-            background: var(--accent-gold-light);
-            transform: scale(1.05);
-        }
-
-        .chatbot-input button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .chatbot-input button svg {
-            width: 20px;
-            height: 20px;
-            fill: var(--bg-primary);
-        }
-
-        /* API Key Modal */
-        .api-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 2000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .api-modal.active {
-            display: flex;
-        }
-
-        .api-modal-content {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 15px;
-            padding: 2rem;
-            max-width: 450px;
-            width: 90%;
-            text-align: center;
-        }
-
-        .api-modal h3 {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-            color: var(--accent-gold);
-        }
-
-        .api-modal p {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            margin-bottom: 1.5rem;
-            line-height: 1.6;
-        }
-
-        .api-modal input {
-            width: 100%;
-            padding: 0.8rem 1rem;
-            background: var(--bg-primary);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            color: var(--text-primary);
-            font-size: 0.9rem;
-            margin-bottom: 1rem;
-            outline: none;
-        }
-
-        .api-modal input:focus {
-            border-color: var(--accent-gold);
-        }
-
-        .api-modal-buttons {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-        }
-
-        .api-modal button {
-            padding: 0.7rem 1.5rem;
-            border-radius: 25px;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-family: inherit;
-        }
-
-        .api-modal .btn-save {
-            background: var(--accent-gold);
-            color: var(--bg-primary);
-            border: none;
-        }
-
-        .api-modal .btn-save:hover {
-            background: var(--accent-gold-light);
-        }
-
-        .api-modal .btn-skip {
-            background: transparent;
-            color: var(--text-secondary);
-            border: 1px solid var(--border-color);
-        }
-
-        .api-modal .btn-skip:hover {
-            border-color: var(--accent-gold);
-            color: var(--accent-gold);
-        }
-
-        .api-modal a {
-            color: var(--accent-gold);
-            text-decoration: none;
-        }
-
-        .api-modal a:hover {
-            text-decoration: underline;
-        }
-
-        .settings-btn {
-            position: absolute;
-            top: 1.25rem;
-            right: 1.25rem;
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            cursor: pointer;
-            font-size: 1.2rem;
-            transition: color 0.3s ease;
-        }
-
-        .settings-btn:hover {
-            color: var(--accent-gold);
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes fadeInRight {
-            from {
-                opacity: 0;
-                transform: translate(30px, -50%);
-            }
-            to {
-                opacity: 1;
-                transform: translate(0, -50%);
-            }
-        }
-
-        .fade-in {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: all 0.8s ease;
-        }
-
-        .fade-in.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .mobile-menu-btn {
-            display: none;
-            background: none;
-            border: none;
-            color: var(--text-primary);
-            font-size: 1.5rem;
-            cursor: pointer;
-        }
-
-        @media (max-width: 1200px) {
-            .hero-image { right: 4%; }
-            .profile-image { width: 300px; height: 300px; }
-        }
-
+        @media (max-width: 1200px) { .hero-image { right: 4%; } .profile-image { width: 260px; height: 260px; } .theme-toggle { right: 4.5rem; } }
         @media (max-width: 1024px) {
-            .hero {
-                flex-direction: column;
-                text-align: center;
-                padding-top: 10rem;
-            }
+            .hero { flex-direction: column; text-align: center; padding-top: 7rem; }
             .hero-content { max-width: 100%; }
-            .hero-image {
-                position: relative;
-                right: auto;
-                top: auto;
-                transform: none;
-                margin-top: 4rem;
-                animation: fadeInUp 1s ease forwards 0.8s;
-            }
+            .hero-image { position: relative; right: auto; top: auto; transform: none; margin-top: 2.5rem; animation: fadeInUp 1s ease forwards 0.8s; }
             .hero-cta { justify-content: center; }
-            .profile-stats {
-                position: relative;
-                bottom: auto;
-                left: auto;
-                transform: none;
-                margin-top: 2rem;
-                justify-content: center;
-            }
+            .profile-stats { position: relative; bottom: auto; left: auto; transform: none; margin-top: 1.2rem; justify-content: center; }
+            .theme-toggle { right: 4rem; }
         }
-
         @media (max-width: 768px) {
-            nav { padding: 1rem 2rem; }
+            nav { padding: 0.8rem 1.5rem; }
             .nav-links { display: none; }
             .mobile-menu-btn { display: block; }
-            .hero, section { padding: 6rem 2rem; }
-            .hero h1 { font-size: 2.5rem; }
+            .theme-toggle { right: 3rem; padding: 0.25rem; }
+            .theme-toggle-track { width: 36px; height: 20px; }
+            .theme-toggle-thumb { width: 16px; height: 16px; font-size: 9px; }
+            [data-theme="light"] .theme-toggle-thumb { transform: translateX(16px); }
+            .hero, section { padding: 3rem 1.5rem; }
+            .hero h1 { font-size: 2rem; }
             .hero-cta { flex-direction: column; align-items: center; }
-            .profile-image { width: 250px; height: 250px; }
-            .contact-grid { flex-direction: column; gap: 2rem; }
-            .languages { flex-wrap: wrap; gap: 2rem; }
-            .chatbot-container {
-                right: 1rem;
-                bottom: 6rem;
-                width: calc(100vw - 2rem);
-                height: calc(100vh - 8rem);
-            }
-            .chatbot-toggle { right: 1rem; bottom: 1rem; }
+            .profile-image { width: 200px; height: 200px; }
+            .contact-grid { flex-direction: column; gap: 0.8rem; }
+            .languages { gap: 0.8rem; }
+            .chatbot-container { right: 0.5rem; bottom: 5rem; width: calc(100vw - 1rem); height: calc(100vh - 6.5rem); }
+            .chatbot-toggle { right: 0.8rem; bottom: 0.8rem; width: 50px; height: 50px; }
+            .scroll-top { left: 0.8rem; bottom: 0.8rem; }
         }
     </style>
 </head>
 <body>
     <div class="bg-pattern"></div>
     <div class="grid-overlay"></div>
+    <div class="particles" id="particles"></div>
+
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+        <div class="theme-toggle-track"><div class="theme-toggle-thumb"><span id="themeIcon">🌙</span></div></div>
+    </button>
+    <button class="scroll-top" id="scrollTop" aria-label="Scroll to top">↑</button>
 
     <nav>
-        <div class="logo">MS</div>
+        <div class="logo" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">MS</div>
         <ul class="nav-links">
             <li><a href="#about">About</a></li>
             <li><a href="#competencies">Expertise</a></li>
@@ -1117,9 +428,7 @@
         <div class="hero-content">
             <span class="hero-label">Financial Professional</span>
             <h1>Matin <span>Saiyed</span></h1>
-            <p class="hero-description">
-                Certified Mutual Fund Representative and CFA Level I Candidate with proven ability to build strong customer relationships, exceed sales targets, and deliver exceptional service in fast-paced environments.
-            </p>
+            <p class="hero-description">Certified Mutual Fund Representative and CFA Level I Candidate with proven ability to build strong customer relationships, exceed sales targets, and deliver exceptional service.</p>
             <div class="hero-cta">
                 <a href="#contact" class="btn btn-primary">Get in Touch</a>
                 <a href="#experience" class="btn btn-outline">View Experience</a>
@@ -1127,620 +436,189 @@
         </div>
         <div class="hero-image">
             <div class="profile-container">
+                <div class="profile-ring"></div>
                 <img src="matin_photo.png" alt="Matin Saiyed" class="profile-image">
                 <div class="profile-frame"></div>
             </div>
             <div class="profile-stats">
-                <div class="profile-stat">
-                    <div class="profile-stat-number">25%</div>
-                    <div class="profile-stat-label">Above Target</div>
-                </div>
-                <div class="profile-stat">
-                    <div class="profile-stat-number">96%</div>
-                    <div class="profile-stat-label">Satisfaction</div>
-                </div>
-                <div class="profile-stat">
-                    <div class="profile-stat-number">4+</div>
-                    <div class="profile-stat-label">Years Exp</div>
-                </div>
+                <div class="profile-stat"><div class="profile-stat-number"><span class="counter" data-target="25">0</span>%</div><div class="profile-stat-label">Above Target</div></div>
+                <div class="profile-stat"><div class="profile-stat-number"><span class="counter" data-target="96">0</span>%</div><div class="profile-stat-label">Satisfaction</div></div>
+                <div class="profile-stat"><div class="profile-stat-number"><span class="counter" data-target="4">0</span>+</div><div class="profile-stat-label">Years Exp</div></div>
             </div>
         </div>
     </section>
 
     <section id="competencies">
-        <div class="section-header fade-in">
-            <div class="section-label">Core Expertise</div>
-            <h2 class="section-title">What I Bring to the Table</h2>
-        </div>
+        <div class="section-header fade-in"><div class="section-label">Core Expertise</div><h2 class="section-title">What I Bring to the Table</h2></div>
         <div class="competencies-grid">
-            <div class="competency-card fade-in">
-                <div class="competency-icon">🤝</div>
-                <h3 class="competency-title">Relationship Building</h3>
-                <p class="competency-desc">Customer-centric approach with proven ability to build strong relationships, deliver exceptional service, and nurture long-standing client partnerships.</p>
-            </div>
-            <div class="competency-card fade-in">
-                <div class="competency-icon">📈</div>
-                <h3 class="competency-title">Sales Performance</h3>
-                <p class="competency-desc">Demonstrated success meeting and exceeding sales targets while maintaining positive customer experience in fast-paced environments.</p>
-            </div>
-            <div class="competency-card fade-in">
-                <div class="competency-icon">🔍</div>
-                <h3 class="competency-title">Needs Discovery</h3>
-                <p class="competency-desc">Proactive approach to discovering customer needs through active listening; expertise in providing expert advice using holistic planning approaches.</p>
-            </div>
-            <div class="competency-card fade-in">
-                <div class="competency-icon">📊</div>
-                <h3 class="competency-title">Financial Products</h3>
-                <p class="competency-desc">Mutual Funds license (CIFC), working towards CIFP Diploma. Knowledge of RRSP, TFSA, GICs, and regulatory compliance experience.</p>
-            </div>
-            <div class="competency-card fade-in">
-                <div class="competency-icon">💻</div>
-                <h3 class="competency-title">Technical Skills</h3>
-                <p class="competency-desc">Proficient in Microsoft Office, Excel, Salesforce, PowerBI, and Tableau. Programming knowledge in Python, Java, and SQL for process optimization.</p>
-            </div>
+            <div class="competency-card fade-in" data-skill="95"><div class="competency-icon">🤝</div><h3 class="competency-title">Relationship Building</h3><p class="competency-desc">Customer-centric approach with proven ability to build strong relationships and deliver exceptional service.</p><div class="skill-bar"><div class="skill-progress"></div></div></div>
+            <div class="competency-card fade-in" data-skill="90"><div class="competency-icon">📈</div><h3 class="competency-title">Sales Performance</h3><p class="competency-desc">Demonstrated success meeting and exceeding sales targets while maintaining positive customer experience.</p><div class="skill-bar"><div class="skill-progress"></div></div></div>
+            <div class="competency-card fade-in" data-skill="88"><div class="competency-icon">🔍</div><h3 class="competency-title">Needs Discovery</h3><p class="competency-desc">Proactive approach to discovering customer needs through active listening and holistic planning.</p><div class="skill-bar"><div class="skill-progress"></div></div></div>
+            <div class="competency-card fade-in" data-skill="85"><div class="competency-icon">📊</div><h3 class="competency-title">Financial Products</h3><p class="competency-desc">CIFC licensed, working towards CIFP Diploma. Knowledge of RRSP, TFSA, GICs, and compliance.</p><div class="skill-bar"><div class="skill-progress"></div></div></div>
+            <div class="competency-card fade-in" data-skill="82"><div class="competency-icon">💻</div><h3 class="competency-title">Technical Skills</h3><p class="competency-desc">Proficient in Excel, Salesforce, PowerBI, Tableau, Python, Java, and SQL.</p><div class="skill-bar"><div class="skill-progress"></div></div></div>
         </div>
     </section>
 
     <section id="experience">
-        <div class="section-header fade-in">
-            <div class="section-label">Career Journey</div>
-            <h2 class="section-title">Professional Experience</h2>
-        </div>
+        <div class="section-header fade-in"><div class="section-label">Career Journey</div><h2 class="section-title">Professional Experience</h2></div>
         <div class="timeline">
-            <div class="timeline-item">
-                <div class="timeline-date">Jan 2024 — Present</div>
-                <h3 class="timeline-company">Golden Quasar Inc</h3>
-                <div class="timeline-role">Client Success Associate</div>
-                <div class="timeline-location">📍 Mississauga, ON</div>
-                <ul class="timeline-achievements">
-                    <li>Manage client onboarding processes ensuring seamless experience through proactive communication and issue resolution</li>
-                    <li>Meet and exceed sales targets by 25% while maintaining 96% client satisfaction</li>
-                    <li>Execute needs assessments using holistic approach to support comprehensive client success plans</li>
-                    <li>Build strong customer relationships through active listening, supporting long-term retention</li>
-                </ul>
-            </div>
-            <div class="timeline-item">
-                <div class="timeline-date">May 2023 — May 2024</div>
-                <h3 class="timeline-company">Prometric Center / Yukon Consultants</h3>
-                <div class="timeline-role">Operations Consultant / Training Coordinator</div>
-                <div class="timeline-location">📍 Toronto, ON • Montreal, QC • Halifax, NS • Sacramento, CA</div>
-                <ul class="timeline-achievements">
-                    <li>Raised customer satisfaction from 68% to 94% through customer-centric approach</li>
-                    <li>Exceeded capacity targets from 30% to 80% through strategic relationship management</li>
-                    <li>Coached diverse teams of 15+ individuals across North America</li>
-                    <li>Earned Regional Best Test Centre recognition</li>
-                </ul>
-            </div>
-            <div class="timeline-item">
-                <div class="timeline-date">Jan 2023 — Apr 2023</div>
-                <h3 class="timeline-company">Prometric Center / Yukon Consultants</h3>
-                <div class="timeline-role">Test Center Administrator</div>
-                <div class="timeline-location">📍 Toronto, ON</div>
-                <ul class="timeline-achievements">
-                    <li>Delivered excellent customer service to hundreds of clients weekly in fast-paced environment</li>
-                    <li>Conducted proactive outbound communications ensuring positive experience</li>
-                    <li>Maintained regulatory compliance and data privacy standards</li>
-                </ul>
-            </div>
-            <div class="timeline-item">
-                <div class="timeline-date">Jun 2022 — Jun 2023</div>
-                <h3 class="timeline-company">Web Summit / Collision Conference</h3>
-                <div class="timeline-role">Volunteer Team Lead</div>
-                <div class="timeline-location">📍 Toronto, ON</div>
-                <ul class="timeline-achievements">
-                    <li>Led 20-person teams at 35,000+ attendee event</li>
-                    <li>Built strong customer relationships delivering exceptional experience</li>
-                    <li>Supported business development and growth opportunities</li>
-                </ul>
-            </div>
-            <div class="timeline-item">
-                <div class="timeline-date">Jul 2021 — Dec 2021</div>
-                <h3 class="timeline-company">Investor Quotient IQ Canada</h3>
-                <div class="timeline-role">Intern, Financial Research & Client Support</div>
-                <div class="timeline-location">📍 Toronto, ON</div>
-                <ul class="timeline-achievements">
-                    <li>Built comprehensive client presentations using Excel and Power BI</li>
-                    <li>Maintained CRM systems, strengthening customer relationships</li>
-                    <li>Conducted market research identifying tailored solution opportunities</li>
-                </ul>
-            </div>
+            <div class="timeline-item"><div class="timeline-date">Jan 2024 — Present</div><h3 class="timeline-company">Golden Quasar Inc</h3><div class="timeline-role">Client Success Associate</div><div class="timeline-location">📍 Mississauga, ON</div><ul class="timeline-achievements"><li>Manage client onboarding ensuring seamless experience</li><li>Exceed sales targets by 25% with 96% client satisfaction</li><li>Execute needs assessments using holistic approach</li><li>Build strong customer relationships for long-term retention</li></ul></div>
+            <div class="timeline-item"><div class="timeline-date">May 2023 — May 2024</div><h3 class="timeline-company">Prometric / Yukon Consultants</h3><div class="timeline-role">Operations Consultant / Training Coordinator</div><div class="timeline-location">📍 Toronto • Montreal • Halifax • Sacramento</div><ul class="timeline-achievements"><li>Raised customer satisfaction from 68% to 94%</li><li>Exceeded capacity targets from 30% to 80%</li><li>Coached 15+ team members across North America</li><li>Earned Regional Best Test Centre recognition</li></ul></div>
+            <div class="timeline-item"><div class="timeline-date">Jan 2023 — Apr 2023</div><h3 class="timeline-company">Prometric / Yukon Consultants</h3><div class="timeline-role">Test Center Administrator</div><div class="timeline-location">📍 Toronto, ON</div><ul class="timeline-achievements"><li>Delivered excellent service to hundreds of clients weekly</li><li>Maintained regulatory compliance and data privacy</li></ul></div>
+            <div class="timeline-item"><div class="timeline-date">Jun 2022 — Jun 2023</div><h3 class="timeline-company">Web Summit / Collision Conference</h3><div class="timeline-role">Volunteer Team Lead</div><div class="timeline-location">📍 Toronto, ON</div><ul class="timeline-achievements"><li>Led 20-person teams at 35,000+ attendee events</li><li>Supported business development opportunities</li></ul></div>
+            <div class="timeline-item"><div class="timeline-date">Jul 2021 — Dec 2021</div><h3 class="timeline-company">Investor Quotient IQ Canada</h3><div class="timeline-role">Financial Research Intern</div><div class="timeline-location">📍 Toronto, ON</div><ul class="timeline-achievements"><li>Built client presentations with Excel and Power BI</li><li>Conducted market research for tailored solutions</li></ul></div>
         </div>
     </section>
 
     <section id="education">
-        <div class="section-header fade-in">
-            <div class="section-label">Credentials</div>
-            <h2 class="section-title">Education & Certifications</h2>
-        </div>
+        <div class="section-header fade-in"><div class="section-label">Credentials</div><h2 class="section-title">Education & Certifications</h2></div>
         <div class="education-grid">
-            <div class="education-card fade-in">
-                <div class="education-year">April 2025</div>
-                <h3 class="education-title">Bachelor of Commerce in Management Studies</h3>
-                <p class="education-institution">Humber College, Toronto, ON</p>
-            </div>
-            <div class="education-card fade-in">
-                <div class="education-year">2025</div>
-                <h3 class="education-title">Canadian Investment Funds Course (CIFC)</h3>
-                <p class="education-institution">Mutual Funds License, Ontario</p>
-            </div>
-            <div class="education-card fade-in">
-                <div class="education-year">In Progress</div>
-                <h3 class="education-title">CFA Level I Candidate</h3>
-                <p class="education-institution">Working towards CIFP Diploma</p>
-            </div>
+            <div class="education-card fade-in"><div class="education-year">April 2025</div><h3 class="education-title">Bachelor of Commerce in Management Studies</h3><p class="education-institution">Humber College, Toronto, ON</p></div>
+            <div class="education-card fade-in"><div class="education-year">2025</div><h3 class="education-title">Canadian Investment Funds Course (CIFC)</h3><p class="education-institution">Mutual Funds License, Ontario</p></div>
+            <div class="education-card fade-in"><div class="education-year">In Progress</div><h3 class="education-title">CFA Level I Candidate</h3><p class="education-institution">Working towards CIFP Diploma</p></div>
         </div>
     </section>
 
     <section id="contact" class="contact-section">
-        <div class="section-header fade-in">
-            <div class="section-label">Let's Connect</div>
-            <h2 class="section-title">Get in Touch</h2>
-        </div>
+        <div class="section-header fade-in"><div class="section-label">Let's Connect</div><h2 class="section-title">Get in Touch</h2></div>
         <div class="contact-grid fade-in">
-            <a href="tel:+14162707531" class="contact-item">
-                <div class="contact-label">Phone</div>
-                <div class="contact-value">+1 (416) 270-7531</div>
-            </a>
-            <a href="mailto:matinsaiyed3100@gmail.com" class="contact-item">
-                <div class="contact-label">Email</div>
-                <div class="contact-value">matinsaiyed3100@gmail.com</div>
-            </a>
-            <a href="https://linkedin.com/in/matinsaiyed/" target="_blank" class="contact-item">
-                <div class="contact-label">LinkedIn</div>
-                <div class="contact-value">linkedin.com/in/matinsaiyed</div>
-            </a>
-            <div class="contact-item">
-                <div class="contact-label">Location</div>
-                <div class="contact-value">Mississauga, ON</div>
-            </div>
+            <a href="tel:+14162707531" class="contact-item"><div class="contact-icon">📱</div><div class="contact-label">Phone</div><div class="contact-value">+1 (416) 270-7531</div></a>
+            <a href="mailto:matinsaiyed3100@gmail.com" class="contact-item"><div class="contact-icon">✉️</div><div class="contact-label">Email</div><div class="contact-value">matinsaiyed3100@gmail.com</div></a>
+            <a href="https://linkedin.com/in/matinsaiyed/" target="_blank" class="contact-item"><div class="contact-icon">💼</div><div class="contact-label">LinkedIn</div><div class="contact-value">linkedin.com/in/matinsaiyed</div></a>
+            <div class="contact-item"><div class="contact-icon">📍</div><div class="contact-label">Location</div><div class="contact-value">Mississauga, ON</div></div>
         </div>
         <div class="languages fade-in">
-            <div class="language">
-                <div class="language-name">English</div>
-                <div class="language-level">Fluent</div>
-            </div>
-            <div class="language">
-                <div class="language-name">Hindi</div>
-                <div class="language-level">Fluent</div>
-            </div>
-            <div class="language">
-                <div class="language-name">Gujarati</div>
-                <div class="language-level">Fluent</div>
-            </div>
-            <div class="language">
-                <div class="language-name">French</div>
-                <div class="language-level">Basic</div>
-            </div>
+            <div class="language"><div class="language-name">English</div><div class="language-level">Fluent</div></div>
+            <div class="language"><div class="language-name">Hindi</div><div class="language-level">Fluent</div></div>
+            <div class="language"><div class="language-name">Gujarati</div><div class="language-level">Fluent</div></div>
+            <div class="language"><div class="language-name">French</div><div class="language-level">Basic</div></div>
         </div>
     </section>
 
-    <footer>
-        <p>© 2025 Matin Saiyed. Built with passion for excellence.</p>
-    </footer>
+    <footer><p>© 2025 Matin Saiyed. Built with passion for excellence.</p></footer>
 
-    <!-- API Key Modal -->
-    <div class="api-modal" id="apiModal">
-        <div class="api-modal-content">
-            <h3>🔑 Setup AI Chatbot</h3>
-            <p>
-                Enter your free Google Gemini API key to enable AI-powered responses.<br><br>
-                <a href="https://aistudio.google.com/app/apikey" target="_blank">Get your free API key here →</a>
-            </p>
-            <input type="password" id="apiKeyInput" placeholder="Paste your Gemini API key...">
-            <div class="api-modal-buttons">
-                <button class="btn-save" onclick="saveApiKey()">Save Key</button>
-                <button class="btn-skip" onclick="closeApiModal()">Use Offline Mode</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- AI Chatbot -->
-    <button class="chatbot-toggle" id="chatbotToggle" aria-label="Open chat">
-        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
-        </svg>
-    </button>
-
+    <button class="chatbot-toggle" id="chatbotToggle" aria-label="Open chat"><svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg></button>
     <div class="chatbot-container" id="chatbotContainer">
         <div class="chatbot-header">
             <img src="matin_photo.png" alt="Matin" class="chatbot-avatar">
-            <div class="chatbot-info">
-                <h3>Ask Matin <span class="ai-badge">✨ Gemini</span></h3>
-                <p>AI-Powered Assistant</p>
-            </div>
-            <button class="settings-btn" onclick="openApiModal()" title="API Settings">⚙️</button>
+            <div class="chatbot-info"><h3>Ask Matin <span class="ai-badge">✨ Gemini</span></h3><p>AI Voice Assistant</p></div>
+            <div class="chatbot-controls"><button class="voice-btn" id="voiceBtn" title="Voice input">🎤</button><button class="voice-btn" id="speakerBtn" title="Text-to-speech">🔊</button><span class="status-dot"></span></div>
         </div>
-        <div class="chatbot-messages" id="chatMessages">
-            <div class="message bot">Hi there! 👋 I'm Matin's AI assistant powered by Google Gemini. I can answer any questions about my experience, skills, education, or career goals. What would you like to know?</div>
-        </div>
+        <div class="chatbot-messages" id="chatMessages"><div class="message bot">Hi there! 👋 I'm Matin's AI assistant. Ask me anything about my experience, skills, or career goals. You can also use voice! 🎤</div></div>
         <div class="chatbot-suggestions" id="suggestions">
-            <button class="suggestion-btn" data-question="What makes you a strong candidate for a financial role?">Why hire Matin?</button>
-            <button class="suggestion-btn" data-question="Tell me about your sales achievements and metrics">Sales results</button>
+            <button class="suggestion-btn" data-question="What makes you a strong candidate?">Why hire Matin?</button>
+            <button class="suggestion-btn" data-question="Tell me about your sales achievements">Sales results</button>
             <button class="suggestion-btn" data-question="What technical skills do you have?">Tech skills</button>
             <button class="suggestion-btn" data-question="Describe your leadership experience">Leadership</button>
         </div>
-        <div class="chatbot-input">
-            <input type="text" id="chatInput" placeholder="Ask anything about Matin..." autocomplete="off">
-            <button id="sendBtn" aria-label="Send message">
-                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-                </svg>
-            </button>
-        </div>
+        <div class="chatbot-input"><input type="text" id="chatInput" placeholder="Ask anything or tap 🎤..." autocomplete="off"><button id="sendBtn" aria-label="Send"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button></div>
     </div>
 
     <script>
-        // ============================================
-        // MATIN'S COMPLETE RESUME DATA (RAG Context)
-        // ============================================
-        const RESUME_CONTEXT = `
-# MATIN SAIYED - COMPLETE PROFESSIONAL PROFILE
-
-## CONTACT INFORMATION
-- Name: Matin Saiyed
-- Location: Mississauga, ON, Canada
-- Phone: +1 (416) 270-7531
-- Email: matinsaiyed3100@gmail.com
-- LinkedIn: linkedin.com/in/matinsaiyed/
-
-## PROFESSIONAL SUMMARY
-Certified Mutual Fund Representative (CIFC, Ontario) and CFA Level I Candidate with proven ability to build strong customer relationships, meet and exceed sales targets, and deliver excellent customer service in fast-paced environments. Customer-centric professional committed to results with expertise in discovering customer needs and providing holistic financial solutions.
-
-## CORE COMPETENCIES
-1. Customer Relationship Building: Customer-centric approach with proven ability to build strong relationships, deliver exceptional customer service, and nurture long-standing client partnerships.
-
-2. Sales Performance: Demonstrated success meeting and exceeding sales targets while maintaining positive customer experience in fast-paced environments. Currently exceeding targets by 25% with 96% client satisfaction.
-
-3. Needs Discovery & Solution Development: Proactive approach to discovering customer needs through active listening; expertise in providing expert advice and comprehensive planning using holistic approach.
-
-4. Financial Products & Compliance: Mutual Funds license (CIFC) working towards CIFP Diploma; knowledge of RRSP, TFSA, GICs; regulatory compliance experience.
-
-5. Technical & Analytical Skills: Proficient in Microsoft Office Suite, Excel, Salesforce, PowerBI, and Tableau for data analysis and client reporting; programming knowledge in Python, Java, and SQL for process optimization.
-
-## PROFESSIONAL EXPERIENCE
-
-### Golden Quasar Inc — Mississauga, ON
-**Client Success Associate | January 2024 — Present**
-- Manage client onboarding processes and customer relationship activities, ensuring seamless experience through proactive communication, issue investigation and resolution
-- Meet and exceed sales targets by 25% while maintaining 96% client satisfaction, delivering against individual and team sales goals
-- Execute needs assessment and provide recommendations using holistic approach to support comprehensive client success plans
-- Build strong customer relationships through active listening and solution development, supporting long-term client retention and business growth
-- Quickly adapted to new CRM platforms and digital tools, demonstrating strong technological aptitude
-
-### Prometric Center / Yukon Consultants — Toronto, ON; Montreal, QC; Halifax, NS; Sacramento, CA
-**Operations Consultant / Training Coordinator | May 2023 — May 2024**
-- Applied customer-centric approach, raising satisfaction from 68% to 94% through excellent customer service delivery
-- Exceeded capacity targets from 30% to 80% through strategic customer relationship management
-- Maintained regulatory compliance and conducted proactive follow-ups, ensuring positive customer experience
-- Coached diverse teams of 15+ individuals at newly established test centers across North America
-- Earned Regional Best Test Centre recognition
-
-### Prometric Center / Yukon Consultants — Toronto, ON
-**Test Center Administrator | January 2023 — April 2023**
-- Delivered excellent customer service to hundreds of clients weekly in fast-paced environment with efficient issue resolution
-- Conducted proactive outbound communications, ensuring positive customer experience throughout service delivery
-- Maintained regulatory compliance while upholding customer data privacy standards
-
-### Web Summit / Collision Conference — Toronto, ON
-**Volunteer Team Lead | June 2022 — June 2023**
-- Led 20-person teams at 35,000+ attendee event in a friendly, team-oriented environment
-- Built strong customer relationships and delivered exceptional customer experience
-- Supported business development activities contributing to growth opportunities
-
-### Investor Quotient IQ Canada — Toronto, ON
-**Intern, Financial Research & Client Support | July 2021 — December 2021**
-- Built comprehensive client presentations using Excel and Power BI
-- Maintained CRM systems, strengthening customer relationships
-- Conducted market research identifying opportunities for tailored financial solutions
-
-## EDUCATION & CERTIFICATIONS
-- Bachelor of Commerce in Management Studies — Humber College, Toronto, ON (Graduating April 2025)
-- Canadian Investment Funds Course (CIFC) — Mutual Funds License, Ontario (2025)
-- CFA Level I Candidate — Working towards CIFP Diploma (2025)
-
-## LANGUAGES
-- English: Fluent
-- Hindi: Fluent
-- Gujarati: Fluent
-- French: Basic
-
-## KEY METRICS & ACHIEVEMENTS
-- Exceeds sales targets by 25%
-- Maintains 96% client satisfaction rate
-- Raised customer satisfaction from 68% to 94% at Prometric
-- Increased capacity targets from 30% to 80%
-- Coached 15+ team members across North America
-- Led 20-person teams at 35,000+ attendee events
-- Earned Regional Best Test Centre recognition
-- 4+ years of professional experience
-`;
-
-        // ============================================
-        // GEMINI API CONFIGURATION
-        // ============================================
+        const GEMINI_API_KEY = 'AIzaSyAQbyxSe7wfBglnaP7IRvHqcOWniUb7QEg';
         const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
-        
-        let geminiApiKey = localStorage.getItem('gemini_api_key') || '';
-        let conversationHistory = [];
+        let conversationHistory = [], isSpeaking = false, recognition = null, ttsEnabled = true;
+        const speechSynthesis = window.speechSynthesis;
+        const RESUME = `MATIN SAIYED - Financial Professional, Mississauga ON. Phone: +1 (416) 270-7531, Email: matinsaiyed3100@gmail.com, LinkedIn: linkedin.com/in/matinsaiyed. SUMMARY: Certified Mutual Fund Rep (CIFC) and CFA Level I Candidate. Exceeds sales targets by 25%, 96% client satisfaction. EXPERIENCE: Golden Quasar Inc (Jan 2024-Present) Client Success Associate - 25% above targets, 96% satisfaction. Prometric/Yukon (May 2023-May 2024) Operations Consultant - raised satisfaction 68%→94%, capacity 30%→80%, coached 15+ members, Regional Best Test Centre. Prometric (Jan-Apr 2023) Test Center Admin. Web Summit/Collision (Jun 2022-Jun 2023) Team Lead - led 20 people at 35,000+ events. Investor Quotient IQ (Jul-Dec 2021) Financial Research Intern. EDUCATION: Bachelor of Commerce, Humber College (Apr 2025). CIFC Mutual Funds License (2025). CFA Level I Candidate. SKILLS: Excel, Salesforce, PowerBI, Tableau, Python, Java, SQL. LANGUAGES: English, Hindi, Gujarati (Fluent), French (Basic).`;
+        const SYSTEM = `You are Matin Saiyed's AI on his resume site. Speak as Matin in FIRST PERSON ("I", "my"). Be friendly, professional, concise (2-3 paragraphs). Use only this data: ${RESUME}`;
 
-        const SYSTEM_INSTRUCTION = `You are an AI assistant representing Matin Saiyed on his personal resume website. You speak in FIRST PERSON as if you ARE Matin (use "I", "my", "me").
-
-Your personality: Friendly, professional, enthusiastic, confident but humble.
-
-IMPORTANT RULES:
-1. ALWAYS speak as Matin in first person ("I have experience in...", "My role at Golden Quasar...")
-2. Use ONLY the resume information provided - never make up facts
-3. Be conversational and warm, like in a job interview
-4. Highlight specific achievements with real metrics when relevant
-5. Keep responses concise (2-4 paragraphs max)
-6. If asked something not in the resume, politely redirect to your email or LinkedIn
-7. Show genuine enthusiasm about your career and goals
-
-Here is Matin's complete resume for reference:
-${RESUME_CONTEXT}`;
-
-        // ============================================
-        // API KEY MANAGEMENT
-        // ============================================
-        function openApiModal() {
-            document.getElementById('apiModal').classList.add('active');
-            document.getElementById('apiKeyInput').value = geminiApiKey;
-        }
-
-        function closeApiModal() {
-            document.getElementById('apiModal').classList.remove('active');
-        }
-
-        function saveApiKey() {
-            const key = document.getElementById('apiKeyInput').value.trim();
-            if (key) {
-                geminiApiKey = key;
-                localStorage.setItem('gemini_api_key', key);
-                closeApiModal();
-                addMessage("✅ API key saved! I'm now powered by Google Gemini AI. Ask me anything!", 'bot');
-            }
-        }
-
-        // Check for API key on load
-        window.addEventListener('load', () => {
-            if (!geminiApiKey) {
-                // Show modal after a short delay when chatbot is first opened
-            }
+        // Theme
+        const themeToggle = document.getElementById('themeToggle'), themeIcon = document.getElementById('themeIcon'), html = document.documentElement;
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        html.setAttribute('data-theme', savedTheme); themeIcon.textContent = savedTheme === 'dark' ? '🌙' : '☀️';
+        themeToggle.addEventListener('click', () => {
+            const newTheme = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', newTheme); localStorage.setItem('theme', newTheme); themeIcon.textContent = newTheme === 'dark' ? '🌙' : '☀️';
         });
 
-        // ============================================
-        // CHATBOT FUNCTIONALITY
-        // ============================================
-        const chatbotToggle = document.getElementById('chatbotToggle');
-        const chatbotContainer = document.getElementById('chatbotContainer');
-        const chatMessages = document.getElementById('chatMessages');
-        const chatInput = document.getElementById('chatInput');
-        const sendBtn = document.getElementById('sendBtn');
-        const suggestions = document.getElementById('suggestions');
+        // Particles
+        const particles = document.getElementById('particles');
+        for (let i = 0; i < 15; i++) { const p = document.createElement('div'); p.className = 'particle'; p.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;animation-delay:${Math.random()*15}s;animation-duration:${15+Math.random()*10}s;`; particles.appendChild(p); }
 
-        function addMessage(text, type = 'bot') {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${type}`;
-            messageDiv.textContent = text;
-            chatMessages.appendChild(messageDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+        // Counters
+        const counters = document.querySelectorAll('.counter');
+        new IntersectionObserver((e) => e.forEach(entry => { if (entry.isIntersecting) { const c = entry.target, t = +c.dataset.target; let n = 0; const s = t / 125; const u = () => { n += s; c.textContent = n < t ? Math.floor(n) : t; if (n < t) requestAnimationFrame(u); }; u(); } }), {threshold: 0.5}).observe(counters[0]?.parentElement?.parentElement || document.body);
+        counters.forEach(c => new IntersectionObserver((e) => { if (e[0].isIntersecting) { const t = +c.dataset.target; let n = 0; const s = t / 125; const u = () => { n += s; c.textContent = n < t ? Math.floor(n) : t; if (n < t) requestAnimationFrame(u); }; u(); } }, {threshold: 0.5}).observe(c));
+
+        // Skill bars
+        document.querySelectorAll('.competency-card').forEach(card => {
+            new IntersectionObserver((e) => { if (e[0].isIntersecting) { const p = card.querySelector('.skill-progress'); if (p) setTimeout(() => p.style.width = card.dataset.skill + '%', 300); } }, {threshold: 0.3}).observe(card);
+            card.addEventListener('mousemove', (e) => { const r = card.getBoundingClientRect(); card.style.setProperty('--mouse-x', ((e.clientX-r.left)/r.width*100)+'%'); card.style.setProperty('--mouse-y', ((e.clientY-r.top)/r.height*100)+'%'); });
+        });
+
+        // Scroll top
+        const scrollTop = document.getElementById('scrollTop');
+        window.addEventListener('scroll', () => scrollTop.classList.toggle('visible', window.scrollY > 400));
+        scrollTop.addEventListener('click', () => window.scrollTo({top: 0, behavior: 'smooth'}));
+
+        // Voice recognition
+        const voiceBtn = document.getElementById('voiceBtn');
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition.continuous = false; recognition.interimResults = false; recognition.lang = 'en-US';
+            recognition.onstart = () => { voiceBtn.classList.add('recording'); voiceBtn.textContent = '⏹️'; };
+            recognition.onresult = (e) => { chatInput.value = e.results[0][0].transcript; handleSendMessage(chatInput.value); };
+            recognition.onend = () => { voiceBtn.classList.remove('recording'); voiceBtn.textContent = '🎤'; };
+            recognition.onerror = () => { voiceBtn.classList.remove('recording'); voiceBtn.textContent = '🎤'; };
+            voiceBtn.addEventListener('click', () => voiceBtn.classList.contains('recording') ? recognition.stop() : recognition.start());
+        } else voiceBtn.style.display = 'none';
+
+        // TTS
+        const speakerBtn = document.getElementById('speakerBtn');
+        speakerBtn.addEventListener('click', () => { ttsEnabled = !ttsEnabled; speakerBtn.textContent = ttsEnabled ? '🔊' : '🔇'; if (!ttsEnabled) speechSynthesis.cancel(); });
+        function speak(text) {
+            if (!ttsEnabled) return; speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(text.replace(/[*#→✅📈📊💼🎯💪🏢📍📧📱✨👋]/g, '').replace(/\n+/g, '. '));
+            u.rate = 1; u.pitch = 1;
+            u.onstart = () => { isSpeaking = true; speakerBtn.classList.add('speaking'); };
+            u.onend = () => { isSpeaking = false; speakerBtn.classList.remove('speaking'); };
+            speechSynthesis.speak(u);
         }
 
-        function showTyping() {
-            const typingDiv = document.createElement('div');
-            typingDiv.className = 'typing-indicator';
-            typingDiv.id = 'typingIndicator';
-            typingDiv.innerHTML = '<span></span><span></span><span></span>';
-            chatMessages.appendChild(typingDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
+        // Chatbot
+        const chatbotToggle = document.getElementById('chatbotToggle'), chatbotContainer = document.getElementById('chatbotContainer');
+        const chatMessages = document.getElementById('chatMessages'), chatInput = document.getElementById('chatInput'), sendBtn = document.getElementById('sendBtn');
+        function addMessage(text, type = 'bot') { const m = document.createElement('div'); m.className = `message ${type}`; m.textContent = text; chatMessages.appendChild(m); chatMessages.scrollTop = chatMessages.scrollHeight; if (type === 'bot') speak(text); }
+        function showTyping() { const t = document.createElement('div'); t.className = 'typing-indicator'; t.id = 'typing'; t.innerHTML = '<span></span><span></span><span></span>'; chatMessages.appendChild(t); chatMessages.scrollTop = chatMessages.scrollHeight; }
+        function hideTyping() { document.getElementById('typing')?.remove(); }
 
-        function hideTyping() {
-            const typing = document.getElementById('typingIndicator');
-            if (typing) typing.remove();
-        }
-
-        function setInputEnabled(enabled) {
-            chatInput.disabled = !enabled;
-            sendBtn.disabled = !enabled;
-        }
-
-        // ============================================
-        // GEMINI API CALL
-        // ============================================
-        async function callGeminiAPI(userMessage) {
-            if (!geminiApiKey) {
-                return "I need a Gemini API key to provide AI-powered responses. Click the ⚙️ button above to add your free API key from Google AI Studio!";
-            }
-
-            // Add to conversation history
-            conversationHistory.push({ role: 'user', parts: [{ text: userMessage }] });
-
-            // Keep only last 10 exchanges
-            if (conversationHistory.length > 20) {
-                conversationHistory = conversationHistory.slice(-20);
-            }
-
+        async function callGemini(msg) {
+            conversationHistory.push({role: 'user', parts: [{text: msg}]});
+            if (conversationHistory.length > 20) conversationHistory = conversationHistory.slice(-20);
             try {
-                const response = await fetch(`${GEMINI_API_URL}?key=${geminiApiKey}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        contents: conversationHistory,
-                        systemInstruction: {
-                            parts: [{ text: SYSTEM_INSTRUCTION }]
-                        },
-                        generationConfig: {
-                            temperature: 0.7,
-                            topK: 40,
-                            topP: 0.95,
-                            maxOutputTokens: 500,
-                        },
-                        safetySettings: [
-                            { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-                            { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-                            { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-                            { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
-                        ]
-                    })
+                const r = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({contents: conversationHistory, systemInstruction: {parts: [{text: SYSTEM}]}, generationConfig: {temperature: 0.7, maxOutputTokens: 350}})
                 });
-
-                if (!response.ok) {
-                    const error = await response.json();
-                    console.error('Gemini API Error:', error);
-                    
-                    if (response.status === 400) {
-                        return "Invalid API key. Please check your Gemini API key in settings (⚙️).";
-                    }
-                    throw new Error(error.error?.message || 'API request failed');
-                }
-
-                const data = await response.json();
-                const assistantMessage = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-                if (!assistantMessage) {
-                    throw new Error('No response generated');
-                }
-
-                // Add assistant response to history
-                conversationHistory.push({ role: 'model', parts: [{ text: assistantMessage }] });
-
-                return assistantMessage;
-
-            } catch (error) {
-                console.error('Error calling Gemini:', error);
-                return fallbackResponse(userMessage);
-            }
+                if (!r.ok) throw new Error();
+                const d = await r.json(), reply = d.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!reply) throw new Error();
+                conversationHistory.push({role: 'model', parts: [{text: reply}]});
+                return reply;
+            } catch { return "I apologize, but I'm having trouble connecting. Please reach out at matinsaiyed3100@gmail.com!"; }
         }
 
-        // ============================================
-        // FALLBACK RESPONSES (Offline Mode)
-        // ============================================
-        function fallbackResponse(input) {
-            const q = input.toLowerCase();
-            
-            if (/(current|now|present).*(role|job|work|position)/i.test(q)) {
-                return "I'm currently working as a Client Success Associate at Golden Quasar Inc in Mississauga since January 2024. I exceed sales targets by 25% while maintaining 96% client satisfaction!";
-            }
-            if (/(why|should).*(hire|choose)|stand\s*out|what\s*makes/i.test(q)) {
-                return "What sets me apart is my combination of proven results (25% above sales targets, 96% satisfaction), financial credentials (CFA candidate, CIFC licensed), and strong technical skills (Python, SQL, PowerBI). I've also earned recognition like Regional Best Test Centre at Prometric.";
-            }
-            if (/(sales|target|achievement|results|metrics)/i.test(q)) {
-                return "My sales achievements include: exceeding targets by 25% at Golden Quasar, improving customer satisfaction from 68% to 94% at Prometric, and increasing capacity from 30% to 80%. I earned Regional Best Test Centre recognition!";
-            }
-            if (/(technical|tech|software|programming)/i.test(q)) {
-                return "I'm proficient in Excel, Salesforce, PowerBI, and Tableau for data analysis. I also have programming knowledge in Python, Java, and SQL for process optimization.";
-            }
-            if (/(education|degree|school|college)/i.test(q)) {
-                return "I'm completing my Bachelor of Commerce in Management Studies from Humber College (graduating April 2025). I'm also a CFA Level I Candidate and hold the CIFC Mutual Funds License.";
-            }
-            if (/(contact|email|phone|reach)/i.test(q)) {
-                return "You can reach me at:\n📧 matinsaiyed3100@gmail.com\n📱 +1 (416) 270-7531\n💼 linkedin.com/in/matinsaiyed";
-            }
-            
-            return "I'd be happy to discuss that! For the best experience, add your free Gemini API key (⚙️ button) to enable AI-powered responses. Or feel free to email me at matinsaiyed3100@gmail.com!";
-        }
-
-        // ============================================
-        // MESSAGE HANDLING
-        // ============================================
         async function handleSendMessage(text) {
             if (!text.trim()) return;
-
-            addMessage(text, 'user');
-            chatInput.value = '';
-            suggestions.style.display = 'none';
-
-            setInputEnabled(false);
-            showTyping();
-
-            try {
-                const response = await callGeminiAPI(text);
-                hideTyping();
-                addMessage(response, 'bot');
-            } catch (error) {
-                hideTyping();
-                addMessage("Sorry, I encountered an error. Please try again or reach out to me directly at matinsaiyed3100@gmail.com", 'error');
-            } finally {
-                setInputEnabled(true);
-                chatInput.focus();
-            }
+            addMessage(text, 'user'); chatInput.value = ''; document.getElementById('suggestions').style.display = 'none';
+            chatInput.disabled = sendBtn.disabled = true; showTyping();
+            const response = await callGemini(text);
+            hideTyping(); addMessage(response, 'bot'); chatInput.disabled = sendBtn.disabled = false; chatInput.focus();
         }
 
-        // ============================================
-        // EVENT LISTENERS
-        // ============================================
-        chatbotToggle.addEventListener('click', () => {
-            chatbotToggle.classList.toggle('active');
-            chatbotContainer.classList.toggle('active');
-            if (chatbotContainer.classList.contains('active')) {
-                chatInput.focus();
-                // Prompt for API key if not set
-                if (!geminiApiKey && !sessionStorage.getItem('api_prompt_shown')) {
-                    sessionStorage.setItem('api_prompt_shown', 'true');
-                    setTimeout(() => {
-                        addMessage("💡 Tip: For the best AI experience, click ⚙️ to add your free Google Gemini API key!", 'bot');
-                    }, 1000);
-                }
-            }
-        });
-
+        chatbotToggle.addEventListener('click', () => { chatbotToggle.classList.toggle('active'); chatbotContainer.classList.toggle('active'); if (chatbotContainer.classList.contains('active')) chatInput.focus(); });
         sendBtn.addEventListener('click', () => handleSendMessage(chatInput.value));
+        chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSendMessage(chatInput.value); });
+        document.querySelectorAll('.suggestion-btn').forEach(btn => btn.addEventListener('click', () => handleSendMessage(btn.dataset.question)));
 
-        chatInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSendMessage(chatInput.value);
-            }
-        });
-
-        document.querySelectorAll('.suggestion-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                handleSendMessage(btn.dataset.question);
-            });
-        });
-
-        // Close modal when clicking outside
-        document.getElementById('apiModal').addEventListener('click', (e) => {
-            if (e.target.id === 'apiModal') {
-                closeApiModal();
-            }
-        });
-
-        // ============================================
-        // PAGE ANIMATIONS
-        // ============================================
-        const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
-
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                }
-            });
-        }, observerOptions);
-
-        document.querySelectorAll('.fade-in, .timeline-item').forEach(el => observer.observe(el));
-
-        // Smooth scroll
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function(e) {
-                e.preventDefault();
-                document.querySelector(this.getAttribute('href'))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            });
-        });
-
-        // Nav background on scroll
-        window.addEventListener('scroll', () => {
-            document.querySelector('nav').style.background = window.scrollY > 100 ? 'rgba(10, 14, 20, 0.98)' : 'rgba(10, 14, 20, 0.9)';
-        });
-
-        // Staggered animations
-        document.querySelectorAll('.competency-card').forEach((card, i) => card.style.transitionDelay = `${i * 0.1}s`);
-        document.querySelectorAll('.education-card').forEach((card, i) => card.style.transitionDelay = `${i * 0.1}s`);
-        document.querySelectorAll('.timeline-item').forEach((item, i) => item.style.transitionDelay = `${i * 0.15}s`);
+        // Animations
+        const obs = new IntersectionObserver((e) => e.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); }), {threshold: 0.1, rootMargin: '0px 0px -50px 0px'});
+        document.querySelectorAll('.fade-in, .timeline-item').forEach(el => obs.observe(el));
+        document.querySelectorAll('a[href^="#"]').forEach(a => a.addEventListener('click', function(e) { e.preventDefault(); document.querySelector(this.getAttribute('href'))?.scrollIntoView({behavior: 'smooth'}); }));
+        window.addEventListener('scroll', () => { document.querySelector('nav').style.background = window.scrollY > 100 ? (html.dataset.theme === 'dark' ? 'rgba(10,14,20,0.98)' : 'rgba(255,255,255,0.98)') : (html.dataset.theme === 'dark' ? 'rgba(10,14,20,0.9)' : 'rgba(255,255,255,0.95)'); });
+        document.querySelectorAll('.competency-card').forEach((c, i) => c.style.transitionDelay = `${i * 0.1}s`);
+        document.querySelectorAll('.education-card').forEach((c, i) => c.style.transitionDelay = `${i * 0.1}s`);
+        document.querySelectorAll('.timeline-item').forEach((c, i) => c.style.transitionDelay = `${i * 0.12}s`);
     </script>
 </body>
 </html>
