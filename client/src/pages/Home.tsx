@@ -1,4 +1,5 @@
-import { useState, useCallback, Suspense, lazy } from 'react';
+import { useState, useCallback, Suspense, lazy, Component, type ReactNode, type ErrorInfo } from 'react';
+import type { Application } from '@splinetool/runtime';
 import Navigation from "@/components/Navigation";
 
 /* Only Spline is lazy — it's ~2 MB and loads its own scene over the network.
@@ -20,6 +21,14 @@ import SectionTransition from "@/components/SectionTransition";
 import Footer from "@/components/Footer";
 import ClickSpark from "@/components/reactbits/ClickSpark";
 
+/** Catches Spline load failures silently — the 3D scene is non-essential. */
+class SplineBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  state = { hasError: false };
+  static getDerivedStateFromError() { return { hasError: true }; }
+  componentDidCatch(_error: Error, _info: ErrorInfo) { /* Spline failed — degrade gracefully */ }
+  render() { return this.state.hasError ? null : this.props.children; }
+}
+
 export default function Home() {
   const [preloaderDone, setPreloaderDone] = useState(false);
 
@@ -28,7 +37,7 @@ export default function Home() {
   }, []);
 
   // Zoom the Spline camera in so the 3D scene fills the viewport.
-  const handleSplineLoad = useCallback((splineApp: any) => {
+  const handleSplineLoad = useCallback((splineApp: Application) => {
     if (splineApp && typeof splineApp.setZoom === 'function') {
       splineApp.setZoom(0.55);
     }
@@ -38,12 +47,14 @@ export default function Home() {
     <>
       {/* Spline 3D background — fixed behind all content, camera-zoomed for quality */}
       <div className="spline-bg fixed inset-0 z-0 pointer-events-none overflow-hidden">
-        <Suspense fallback={null}>
-          <Spline
-            scene="https://prod.spline.design/qEHqkzH9t-4mYczb/scene.splinecode"
-            onLoad={handleSplineLoad}
-          />
-        </Suspense>
+        <SplineBoundary>
+          <Suspense fallback={null}>
+            <Spline
+              scene="https://prod.spline.design/qEHqkzH9t-4mYczb/scene.splinecode"
+              onLoad={handleSplineLoad}
+            />
+          </Suspense>
+        </SplineBoundary>
       </div>
 
       {/* Branded preloader */}

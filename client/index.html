@@ -3,9 +3,12 @@
 
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Matin Saiyed — Finance Professional | Client Success & Financial Services</title>
     <meta name="description" content="Matin Saiyed is a finance professional and CIFC-licensed Mutual Funds Representative based in Mississauga, ON. Specializing in client success, financial planning, and investment advisory services." />
+
+    <!-- Canonical -->
+    <link rel="canonical" href="https://matinsaiyed.com/" />
 
     <!-- Favicon -->
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -15,13 +18,16 @@
     <meta property="og:title" content="Matin Saiyed — Finance Professional" />
     <meta property="og:description" content="CIFC-licensed Mutual Funds Representative and CFA Level I Candidate specializing in client success, financial planning, and investment advisory." />
     <meta property="og:image" content="/images/portrait.jpg" />
-    <meta property="og:url" content="/" />
+    <meta property="og:url" content="https://matinsaiyed.com/" />
+    <meta property="og:locale" content="en_CA" />
+    <meta property="og:site_name" content="Matin Saiyed" />
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Matin Saiyed — Finance Professional" />
     <meta name="twitter:description" content="CIFC-licensed Mutual Funds Representative and CFA Level I Candidate specializing in client success and financial planning." />
     <meta name="twitter:image" content="/images/portrait.jpg" />
+    <meta name="twitter:creator" content="@matinsaiyed" />
 
     <!-- Structured Data -->
     <script type="application/ld+json">
@@ -32,12 +38,25 @@
       "jobTitle": "Client Success Associate",
       "email": "matinsaiyed3100@gmail.com",
       "telephone": "+14162707531",
+      "url": "https://matinsaiyed.com",
       "address": {
         "@type": "PostalAddress",
         "addressLocality": "Mississauga",
         "addressRegion": "ON",
         "addressCountry": "CA"
       },
+      "hasCredential": [
+        {
+          "@type": "EducationalOccupationalCredential",
+          "credentialCategory": "license",
+          "name": "CIFC Mutual Funds License"
+        },
+        {
+          "@type": "EducationalOccupationalCredential",
+          "credentialCategory": "certification",
+          "name": "CFA Level I Candidate"
+        }
+      ],
       "sameAs": [
         "https://linkedin.com/in/matinsaiyed/"
       ]
@@ -48,15 +67,34 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+    <!-- Mobile: shrink performance dashboard rings to prevent overlap -->
+    <style>
+      @media (max-width: 767px) {
+        svg[width="120"][height="120"] {
+          width: 72px !important;
+          height: 72px !important;
+        }
+      }
+    </style>
   </head>
 
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <script
-      defer
-      src="%VITE_ANALYTICS_ENDPOINT%/umami"
-      data-website-id="%VITE_ANALYTICS_WEBSITE_ID%"></script>
+    <script>
+      (function () {
+        var endpoint = "%VITE_ANALYTICS_ENDPOINT%";
+        var websiteId = "%VITE_ANALYTICS_WEBSITE_ID%";
+        if (endpoint && websiteId && !endpoint.startsWith("%")) {
+          var s = document.createElement("script");
+          s.defer = true;
+          s.src = endpoint + "/umami";
+          s.setAttribute("data-website-id", websiteId);
+          document.body.appendChild(s);
+        }
+      })();
+    </script>
   </body>
 
 </html>

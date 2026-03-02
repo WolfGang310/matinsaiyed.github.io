@@ -225,7 +225,7 @@ function ProgressRing({ value, color, size = 120, strokeWidth = 5, delay = 0 }: 
   const center = size / 2;
 
   return (
-    <svg ref={ref} width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="block">
+    <svg ref={ref} viewBox={`0 0 ${size} ${size}`} className="block w-full h-auto">
       {/* Background ring */}
       <circle cx={center} cy={center} r={radius} fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth={strokeWidth} />
       {/* Progress arc */}
@@ -258,6 +258,7 @@ function MetricCard({ metric, index, isSelected, onClick }: {
   const [hasStarted, setHasStarted] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const motionVal = useMotionValue(0);
+  const ringSize = 120; // viewBox size (SVG scales via CSS)
 
   useEffect(() => {
     const el = ref.current;
@@ -301,7 +302,7 @@ function MetricCard({ metric, index, isSelected, onClick }: {
       <AnimatePresence>
         {isSelected && (
           <motion.div
-            className="absolute -inset-3 border z-0"
+            className="absolute -inset-2 sm:-inset-3 border z-0"
             style={{ borderColor: `${metric.color}30`, backgroundColor: `${metric.color}06` }}
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -312,23 +313,23 @@ function MetricCard({ metric, index, isSelected, onClick }: {
       </AnimatePresence>
 
       {/* Ring + center value */}
-      <div className="relative z-10">
+      <div className="relative z-10 w-[72px] sm:w-[100px] lg:w-[120px]">
         <ProgressRing
           value={metric.value}
           color={metric.color}
-          size={120}
+          size={ringSize}
           strokeWidth={isSelected ? 6 : 5}
           delay={index * 200}
         />
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span
-            className="text-2xl font-bold text-white tabular-nums"
+            className="text-lg sm:text-2xl font-bold text-white tabular-nums"
             style={{ fontFamily: 'var(--font-display)' }}
           >
             {animValue}{metric.suffix}
           </span>
           <span
-            className="text-[8px] text-neutral-500 uppercase tracking-[2px] mt-0.5"
+            className="text-[6px] sm:text-[8px] text-neutral-500 uppercase tracking-[1px] sm:tracking-[2px] mt-0.5 max-w-[52px] sm:max-w-none text-center leading-tight"
             style={{ fontFamily: 'var(--font-display)' }}
           >
             {metric.sublabel}
@@ -337,15 +338,15 @@ function MetricCard({ metric, index, isSelected, onClick }: {
       </div>
 
       {/* Icon + label */}
-      <div className="flex items-center gap-2 mt-3 relative z-10">
+      <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 mt-2 sm:mt-3 relative z-10">
         <div
-          className="p-1.5 transition-colors duration-300"
+          className="p-1 sm:p-1.5 transition-colors duration-300"
           style={{ backgroundColor: isSelected ? `${metric.color}15` : 'transparent' }}
         >
-          <Icon className="w-3.5 h-3.5" style={{ color: metric.color }} />
+          <Icon className="w-3 h-3 sm:w-3.5 sm:h-3.5" style={{ color: metric.color }} />
         </div>
         <span
-          className="text-xs uppercase tracking-wider font-medium transition-colors duration-300"
+          className="text-[9px] sm:text-xs uppercase tracking-wider font-medium transition-colors duration-300 text-center leading-tight"
           style={{ fontFamily: 'var(--font-display)', color: isSelected ? 'white' : '#737373' }}
         >
           {metric.label}
@@ -356,7 +357,7 @@ function MetricCard({ metric, index, isSelected, onClick }: {
       <AnimatePresence>
         {isSelected && (
           <motion.div
-            className="w-1 h-1 mt-2 relative z-10"
+            className="w-1 h-1 mt-1 sm:mt-2 relative z-10"
             style={{ backgroundColor: metric.color }}
             initial={{ opacity: 0, scale: 0 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -379,16 +380,16 @@ function MetricDetailPanel({ metric }: { metric: PerformanceMetric }) {
       transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
       className="overflow-hidden"
     >
-      <div className="px-6 lg:px-8 pb-6 pt-2 space-y-5">
+      <div className="px-4 sm:px-6 lg:px-8 pb-5 sm:pb-6 pt-2 space-y-4 sm:space-y-5">
         {/* Colored divider */}
         <div
           className="h-px"
           style={{ background: `linear-gradient(to right, transparent, ${metric.color}30, transparent)` }}
         />
 
-        <div className="grid grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-5 gap-4 sm:gap-6">
           {/* Left: Description + Highlight */}
-          <div className="col-span-3 space-y-3">
+          <div className="sm:col-span-3 space-y-3">
             <motion.p
               className="text-sm text-neutral-400 leading-relaxed"
               initial={{ opacity: 0, y: 8 }}
@@ -411,7 +412,7 @@ function MetricDetailPanel({ metric }: { metric: PerformanceMetric }) {
 
           {/* Right: Sparkline */}
           <motion.div
-            className="col-span-2"
+            className="sm:col-span-2"
             initial={{ opacity: 0, x: 10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.4, delay: 0.2 }}
@@ -579,9 +580,9 @@ export default function AboutSection() {
                 <div className="absolute bottom-0 right-0 w-8 h-8 border-b border-r border-red-600/30" />
 
                 {/* Dashboard header */}
-                <div className="relative z-10 px-6 lg:px-8 pt-5 pb-4 flex items-center justify-between border-b border-neutral-800/30">
+                <div className="relative z-10 px-4 sm:px-6 lg:px-8 pt-4 sm:pt-5 pb-3 sm:pb-4 flex items-center justify-between border-b border-neutral-800/30">
                   <h3
-                    className="text-sm font-medium text-white uppercase tracking-wider"
+                    className="text-xs sm:text-sm font-medium text-white uppercase tracking-wider"
                     style={{ fontFamily: 'var(--font-display)' }}
                   >
                     Performance Dashboard
@@ -601,8 +602,8 @@ export default function AboutSection() {
                 </div>
 
                 {/* ── Metrics row ── */}
-                <div className="relative z-10 px-4 lg:px-6 pt-6 pb-4">
-                  <div className="grid grid-cols-3 gap-2">
+                <div className="relative z-10 px-2 sm:px-4 lg:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4">
+                  <div className="grid grid-cols-3 gap-1 sm:gap-2">
                     {performanceMetrics.map((metric, index) => (
                       <MetricCard
                         key={metric.label}

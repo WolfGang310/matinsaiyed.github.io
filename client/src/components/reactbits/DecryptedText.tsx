@@ -103,7 +103,13 @@ export default function DecryptedText({
       { threshold: 0.1 }
     );
 
-    observer.observe(el);
+    // If element is already in the viewport when mounted, trigger immediately
+    const rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight && rect.bottom > 0) {
+      animate();
+    } else {
+      observer.observe(el);
+    }
     return () => observer.disconnect();
   }, [animateOn, hasAnimated, animate, text, getRandomChar]);
 

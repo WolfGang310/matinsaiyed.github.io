@@ -55,6 +55,23 @@ export default function Navigation() {
         setIsMobileMenuOpen(false);
         toggleRef.current?.focus();
       }
+
+      // Focus trap: cycle Tab within the mobile menu
+      if (e.key === 'Tab' && menuRef.current) {
+        const focusable = menuRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), a[href]'
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     };
 
     const handleClickOutside = (e: MouseEvent) => {
@@ -125,7 +142,7 @@ export default function Navigation() {
         ref={menuRef}
         className={`fixed top-0 left-0 right-0 z-50 md:hidden transition-all duration-300 ${isScrolled ? 'bg-black/90 backdrop-blur-md' : 'bg-transparent'}`}
       >
-        <div className="flex items-center justify-between px-6 py-4">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}>
           <span className="text-lg font-bold text-white uppercase" style={{ fontFamily: 'var(--font-display)' }}>
             Matin <span className="text-red-600">Saiyed</span>
           </span>

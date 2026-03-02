@@ -7,6 +7,7 @@ import DecryptedText from './reactbits/DecryptedText';
 const RESUME_PDF_URL = '/Matin_Saiyed_Resume.pdf';
 
 const PORTRAIT_URL = '/images/portrait.jpg';
+const PARALLAX_DIVISOR = 25;
 
 export default function HeroSection() {
   const [isVisible, setIsVisible] = useState(false);
@@ -16,11 +17,15 @@ export default function HeroSection() {
   useEffect(() => {
     setIsVisible(true);
 
+    // Skip parallax on touch devices — saves CPU and avoids awkward tilt
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    if (isTouchDevice) return;
+
     const handleMouseMove = (e: MouseEvent) => {
       if (imageRef.current) {
         const rect = imageRef.current.getBoundingClientRect();
-        const x = (e.clientX - rect.left - rect.width / 2) / 25;
-        const y = (e.clientY - rect.top - rect.height / 2) / 25;
+        const x = (e.clientX - rect.left - rect.width / 2) / PARALLAX_DIVISOR;
+        const y = (e.clientY - rect.top - rect.height / 2) / PARALLAX_DIVISOR;
         imageRef.current.style.transform = `perspective(1000px) rotateY(${x}deg) rotateX(${-y}deg) scale(1.02)`;
       }
     };
@@ -85,7 +90,7 @@ export default function HeroSection() {
                 <SplitText
                   text="Matin"
                   tag="h1"
-                  className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tight text-white uppercase"
+                  className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tight text-white uppercase"
                   delay={80}
                   duration={1.2}
                   ease="power4.out"
@@ -100,7 +105,7 @@ export default function HeroSection() {
                 <SplitText
                   text="Saiyed"
                   tag="h1"
-                  className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tight text-red-600 uppercase"
+                  className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tight text-red-600 uppercase"
                   delay={80}
                   duration={1.2}
                   ease="power4.out"
@@ -112,7 +117,7 @@ export default function HeroSection() {
             </div>
 
             <div className={`overflow-hidden mb-8 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
-              <h2 className="text-xl sm:text-2xl lg:text-3xl font-light text-neutral-400 tracking-wide uppercase" style={{ fontFamily: 'var(--font-display)' }}>
+              <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-light text-neutral-400 tracking-wide uppercase" style={{ fontFamily: 'var(--font-display)' }}>
                 {isVisible && (
                   <DecryptedText
                     text="Client Success Associate"
@@ -156,7 +161,7 @@ export default function HeroSection() {
             <div className={`flex flex-col sm:flex-row sm:flex-wrap justify-center lg:justify-start gap-4 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`} style={{ animationDelay: '0.7s' }}>
               <a
                 href="#experience"
-                className="group relative px-8 py-4 bg-red-600 text-white font-medium uppercase tracking-wider text-sm overflow-hidden transition-all duration-300 hover:shadow-glow"
+                className="group relative px-6 py-3 sm:px-8 sm:py-4 bg-red-600 text-white font-medium uppercase tracking-wider text-xs sm:text-sm overflow-hidden transition-all duration-300 hover:shadow-glow"
                 style={{ fontFamily: 'var(--font-display)' }}
               >
                 <span className="relative z-10">View Experience</span>
@@ -167,7 +172,7 @@ export default function HeroSection() {
                 download="Matin_Saiyed_Resume.pdf"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group relative flex items-center gap-2 px-8 py-4 bg-white text-black font-medium uppercase tracking-wider text-sm overflow-hidden transition-all duration-300 hover:bg-neutral-200"
+                className="group relative flex items-center justify-center gap-2 px-6 py-3 sm:px-8 sm:py-4 bg-white text-black font-medium uppercase tracking-wider text-xs sm:text-sm overflow-hidden transition-all duration-300 hover:bg-neutral-200"
                 style={{ fontFamily: 'var(--font-display)' }}
               >
                 <Download className="w-4 h-4 transition-transform duration-300 group-hover:translate-y-0.5" />
@@ -177,7 +182,7 @@ export default function HeroSection() {
                 href="https://linkedin.com/in/matinsaiyed/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 px-8 py-4 border border-neutral-700 text-white font-medium uppercase tracking-wider text-sm hover:border-red-600 hover:text-red-500 transition-all duration-300"
+                className="flex items-center justify-center gap-2 px-6 py-3 sm:px-8 sm:py-4 border border-neutral-700 text-white font-medium uppercase tracking-wider text-xs sm:text-sm hover:border-red-600 hover:text-red-500 transition-all duration-300"
                 style={{ fontFamily: 'var(--font-display)' }}
               >
                 <Linkedin className="w-4 h-4" />
@@ -195,7 +200,7 @@ export default function HeroSection() {
             >
               <div className="absolute -inset-4 bg-gradient-to-br from-red-600/20 to-transparent blur-3xl rounded-full" />
 
-              <div className="relative w-72 h-96 sm:w-80 sm:h-[28rem] lg:w-96 lg:h-[32rem] overflow-hidden">
+              <div className="relative w-56 h-72 sm:w-72 sm:h-96 md:w-80 md:h-[28rem] lg:w-96 lg:h-[32rem] overflow-hidden">
                 <picture>
                   <source
                     type="image/webp"
@@ -207,6 +212,8 @@ export default function HeroSection() {
                     srcSet="/images/portrait-480w.jpg 480w, /images/portrait-768w.jpg 768w, /images/portrait.jpg 1074w"
                     sizes="(max-width: 640px) 288px, (max-width: 1024px) 320px, 384px"
                     alt="Matin Saiyed — Client Success Associate"
+                    width={384}
+                    height={512}
                     className="w-full h-full object-cover lg:grayscale-[30%] lg:hover:grayscale-0 transition-all duration-700"
                     loading="eager"
                     fetchPriority="high"

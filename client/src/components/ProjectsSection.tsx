@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowUpRight, TrendingUp, Users, Target, ChevronRight } from 'lucide-react';
+import { ArrowUpRight, TrendingUp, Users, Target, ChevronRight, LayoutDashboard } from 'lucide-react';
 import ShinyText from './reactbits/ShinyText';
 import ScrollFloat from './reactbits/ScrollFloat';
 
@@ -16,9 +16,35 @@ interface CaseStudy {
   approach: string[];
   result: string;
   impactStats: { value: string; label: string }[];
+  link?: string;
 }
 
 const caseStudies: CaseStudy[] = [
+  {
+    id: 'scheduler',
+    category: 'Product Development',
+    title: 'Building a Full-Stack Test Center Scheduling Platform',
+    metric: '0→1',
+    metricLabel: 'Built from Scratch',
+    color: '#8b5cf6',
+    icon: LayoutDashboard,
+    challenge:
+      'Managing scheduling across multiple test centers relied on manual coordination, spreadsheets, and fragmented communication — leading to coverage gaps, scheduling conflicts, and limited operational visibility.',
+    approach: [
+      'Designed a role-based platform with Manager, Supervisor, and TCA tiers — each with tailored dashboards and permissions',
+      'Built a real-time Command Center with live status boards, action queues, and an automated scheduling algorithm',
+      'Implemented multi-center management with per-center sessions, operating hours, and staff assignment workflows',
+      'Engineered full-stack architecture with React 18, TypeScript, and Supabase — featuring real-time sync, leave management, clock tracking, and daily reporting',
+    ],
+    result:
+      'Delivered a production-ready platform that replaced manual spreadsheet processes with a unified, real-time system — managing scheduling, leave requests, time tracking, and reporting across three test centers and 15+ staff.',
+    impactStats: [
+      { value: '3', label: 'Centers Managed' },
+      { value: '15+', label: 'Staff Scheduled' },
+      { value: 'Real-Time', label: 'Live Sync' },
+    ],
+    link: '/scheduler/index.html',
+  },
   {
     id: 'capacity',
     category: 'Operations',
@@ -265,6 +291,40 @@ function CaseStudyCard({ study, isExpanded, onToggle, index, isVisible }: {
                     </motion.div>
                   ))}
                 </div>
+
+                {/* Launch link */}
+                {study.link && (
+                  <motion.div
+                    className="pt-4"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 }}
+                  >
+                    <a
+                      href={study.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 text-xs uppercase tracking-widest font-medium text-white transition-all duration-300 hover:gap-3"
+                      style={{
+                        fontFamily: 'var(--font-display)',
+                        backgroundColor: `${study.color}20`,
+                        border: `1px solid ${study.color}40`,
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = `${study.color}35`;
+                        e.currentTarget.style.borderColor = study.color;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = `${study.color}20`;
+                        e.currentTarget.style.borderColor = `${study.color}40`;
+                      }}
+                    >
+                      Launch Platform
+                      <ArrowUpRight className="w-3.5 h-3.5" style={{ color: study.color }} />
+                    </a>
+                  </motion.div>
+                )}
               </div>
             </motion.div>
           )}

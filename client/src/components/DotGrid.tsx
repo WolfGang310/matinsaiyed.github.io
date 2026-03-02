@@ -5,6 +5,10 @@ import { InertiaPlugin } from 'gsap/InertiaPlugin';
 
 gsap.registerPlugin(InertiaPlugin);
 
+const prefersReducedMotion =
+  typeof window !== 'undefined' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 const throttle = (func: (...args: any[]) => void, limit: number) => {
   let lastCall = 0;
   return function (this: any, ...args: any[]) {
@@ -65,6 +69,15 @@ const DotGrid: React.FC<DotGridProps> = ({
   className = '',
   style
 }) => {
+  // Skip entirely on mobile — canvas + GSAP inertia is too heavy
+  const [isMobile, setIsMobile] = React.useState(false);
+  React.useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)');
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const dotsRef = useRef<Dot[]>([]);
@@ -292,6 +305,8 @@ const DotGrid: React.FC<DotGridProps> = ({
       window.removeEventListener('touchstart', onTouchStart);
     };
   }, [maxSpeed, speedTrigger, proximity, resistance, returnDuration, shockRadius, shockStrength]);
+
+  if (isMobile || prefersReducedMotion) return null;
 
   return (
     <section className={`p-4 flex items-center justify-center h-full w-full relative ${className}`} style={style}>

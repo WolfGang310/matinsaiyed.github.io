@@ -20,6 +20,7 @@ export default function ContactSection() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const sectionRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const lastSubmitTime = useRef(0);
 
   const validate = (name: string, value: string): string => {
     if (name === 'name' && !value.trim()) return 'Name is required';
@@ -55,10 +56,25 @@ export default function ContactSection() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    const RATE_LIMIT_MS = 5_000;
+    const now = Date.now();
+    if (now - lastSubmitTime.current < RATE_LIMIT_MS) {
+      toast.error('Please wait before submitting again.');
+      return;
+    }
+
+    const accessKey = import.meta.env.VITE_WEB3FORMS_KEY;
+    if (!accessKey) {
+      toast.error('Contact form is not configured. Please reach out via email.');
+      return;
+    }
+
     setIsSubmitting(true);
+    lastSubmitTime.current = now;
 
     const formData = new FormData(e.currentTarget);
-    formData.append('access_key', 'YOUR_WEB3FORMS_KEY');
+    formData.append('access_key', accessKey);
 
     try {
       const response = await fetch('https://api.web3forms.com/submit', {
@@ -248,7 +264,7 @@ export default function ContactSection() {
                   className="group relative w-full flex items-center justify-center gap-3 px-8 py-4 bg-red-600 text-white font-medium uppercase tracking-wider text-sm overflow-hidden transition-all duration-300 hover:shadow-glow disabled:opacity-70 disabled:cursor-not-allowed"
                   style={{ fontFamily: 'var(--font-display)' }}
                 >
-                  <span className="relative z-10 flex items-center gap-3">
+                  <span className="relative z-10 flex items-center gap-3" role="status" aria-live="polite">
                     {isSubmitting ? (
                       <>Sending...<Loader2 className="w-4 h-4 animate-spin" /></>
                     ) : isSubmitted ? (
