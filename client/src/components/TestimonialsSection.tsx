@@ -89,17 +89,17 @@ export default function TestimonialsSection() {
     setActiveIndex(index);
   };
 
-  const goNext = () => {
+  const goNext = useCallback(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     setDirection(1);
     setActiveIndex((prev) => (prev + 1) % testimonials.length);
-  };
+  }, []);
 
-  const goPrev = () => {
+  const goPrev = useCallback(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     setDirection(-1);
     setActiveIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
-  };
+  }, []);
 
   const current = testimonials[activeIndex];
 
@@ -109,8 +109,7 @@ export default function TestimonialsSection() {
       if (e.key === 'ArrowLeft') { e.preventDefault(); goPrev(); }
       else if (e.key === 'ArrowRight') { e.preventDefault(); goNext(); }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [goPrev, goNext]
   );
 
   const variants = {

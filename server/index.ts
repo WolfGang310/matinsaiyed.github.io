@@ -32,7 +32,7 @@ async function startServer() {
       "Content-Security-Policy",
       [
         "default-src 'self'",
-        "script-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+        "script-src 'self' https://fonts.googleapis.com",
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
         "font-src 'self' https://fonts.gstatic.com",
         "img-src 'self' data: blob: https:",
@@ -74,9 +74,8 @@ async function startServer() {
       formData.append("access_key", accessKey);
       formData.append("name", String(name));
       formData.append("email", String(email));
-      if (subject_line) formData.append("subject", String(subject_line));
+      formData.append("subject", subject_line ? String(subject_line) : "Portfolio Contact Form Submission");
       formData.append("message", String(message));
-      formData.append("subject", "Portfolio Contact Form Submission");
 
       const upstream = await fetch("https://api.web3forms.com/submit", {
         method: "POST",
@@ -113,4 +112,7 @@ async function startServer() {
   });
 }
 
-startServer().catch(console.error);
+startServer().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

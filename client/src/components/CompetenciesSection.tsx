@@ -641,6 +641,7 @@ export default function CompetenciesSection() {
   }, []);
 
   /* Memoize the custom tick to pass interaction state */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const renderCustomTick = useCallback((tickProps: any) => {
     return (
       <CustomAngleTick
@@ -655,6 +656,7 @@ export default function CompetenciesSection() {
   }, [selectedNode, hoveredCard, handleNodeClick, handleNodeHover, handleNodeLeave]);
 
   /* Memoize the custom dot to pass interaction state */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const renderCustomDot = useCallback((dotProps: any) => {
     return (
       <CustomRadarDot

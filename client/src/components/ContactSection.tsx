@@ -64,22 +64,21 @@ export default function ContactSection() {
       return;
     }
 
-    const accessKey = import.meta.env.VITE_WEB3FORMS_KEY;
-    if (!accessKey) {
-      toast.error('Contact form is not configured. Please reach out via email.');
-      return;
-    }
-
     setIsSubmitting(true);
     lastSubmitTime.current = now;
 
     const formData = new FormData(e.currentTarget);
-    formData.append('access_key', accessKey);
 
     try {
-      const response = await fetch('https://api.web3forms.com/submit', {
+      const response = await fetch('/api/contact', {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.get('name'),
+          email: formData.get('email'),
+          subject_line: formData.get('subject_line'),
+          message: formData.get('message'),
+        }),
       });
 
       if (response.ok) {
