@@ -15,6 +15,7 @@ import ProjectsSection from "@/components/ProjectsSection";
 import ExperienceSection from "@/components/ExperienceSection";
 import TestimonialsSection from "@/components/TestimonialsSection";
 import EducationSection from "@/components/EducationSection";
+import StudyGuideSection from "@/components/StudyGuideSection";
 import PersonalSection from "@/components/PersonalSection";
 import ContactSection from "@/components/ContactSection";
 import SectionTransition from "@/components/SectionTransition";
@@ -102,6 +103,8 @@ export default function Home() {
             <TestimonialsSection />
             <SectionTransition variant="line" />
             <EducationSection />
+            <SectionTransition variant="text" text="Study Hub" />
+            <StudyGuideSection />
             <SectionTransition variant="text" text="Off the Clock" />
             <PersonalSection />
             <SectionTransition variant="line" />

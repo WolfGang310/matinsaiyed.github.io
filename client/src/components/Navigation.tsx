@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { Home, User, Briefcase, GraduationCap, Mail, Menu, X, Award, FolderOpen, MessageSquareQuote, Heart } from 'lucide-react';
+import { Home, User, Briefcase, GraduationCap, Mail, Menu, X, Award, FolderOpen, MessageSquareQuote, Heart, BookOpen } from 'lucide-react';
 
 const navItems = [
   { id: 'home', label: 'Home', icon: Home },
@@ -9,6 +9,7 @@ const navItems = [
   { id: 'experience', label: 'Experience', icon: Briefcase },
   { id: 'testimonials', label: 'Testimonials', icon: MessageSquareQuote },
   { id: 'education', label: 'Education', icon: GraduationCap },
+  { id: 'studyhub', label: 'Study Hub', icon: BookOpen },
   { id: 'personal', label: 'Personal', icon: Heart },
   { id: 'contact', label: 'Contact', icon: Mail },
 ];
