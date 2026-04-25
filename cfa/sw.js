@@ -1,10 +1,11 @@
 
 // cfa-sw.js — very small cache-first service worker
-const CACHE = 'cfa-l1-guide-v2-srcdoc';
+const CACHE = 'cfa-l1-guide-v3-annotate';
 const ASSETS = [
   './',
   './index.html',
   './manifest.webmanifest',
+  './annotate.js',
 ];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS).catch(()=>{})));
