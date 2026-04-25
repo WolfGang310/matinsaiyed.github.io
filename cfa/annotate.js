@@ -41,13 +41,21 @@
   ];
 
   // ============================================================
-  //  Mode dispatch
+  //  Mode dispatch — wait for DOM ready so document.body exists
   // ============================================================
   var script = document.currentScript;
   var mode = (script && script.getAttribute('data-cfa-mode')) || (window.CFA_ANNOTATE ? 'lm' : 'host');
 
-  if (mode === 'host') return bootHost();
-  if (mode === 'lm')   return bootLm();
+  function whenReady(fn) {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', fn, { once: true });
+    } else {
+      fn();
+    }
+  }
+
+  if (mode === 'host') return whenReady(bootHost);
+  if (mode === 'lm')   return whenReady(bootLm);
 
   // ============================================================
   //  HOST (master guide) — owner_id + postMessage relay
