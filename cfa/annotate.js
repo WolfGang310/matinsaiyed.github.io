@@ -307,13 +307,20 @@
       }
 
       .cfa-canvas {
-        position: absolute; top: 0; left: 0;
+        position: fixed; top: 0; left: 0;
+        width: 100vw; height: 100vh;
         pointer-events: none; z-index: 2147483640;
         -webkit-user-select: none; user-select: none;
         -webkit-touch-callout: none;
         -webkit-tap-highlight-color: transparent;
+        background: transparent;
       }
-      .cfa-canvas.drawing { pointer-events: auto; touch-action: none; cursor: crosshair; }
+      .cfa-canvas.drawing {
+        pointer-events: auto;
+        touch-action: none;
+        cursor: crosshair;
+      }
+      .cfa-canvas.flash { background: rgba(29,78,216,0.06); transition: background .25s; }
 
       .cfa-notes-drawer {
         position: fixed; top: 0; right: -640px; width: min(620px, 96vw); height: 100vh;
@@ -751,8 +758,10 @@
     // ============================================================
     function sizeCanvas() {
       if (!dom || !dom.canvas) return;
-      var w = Math.max(document.documentElement.scrollWidth, window.innerWidth);
-      var h = Math.max(document.documentElement.scrollHeight, window.innerHeight);
+      // Viewport-sized canvas. Strokes are stored in viewport coords;
+      // they shift with scroll, but drawing is reliable on iPad.
+      var w = window.innerWidth;
+      var h = window.innerHeight;
       var dpr = Math.min(window.devicePixelRatio || 1, 2);
       dom.canvas.style.width  = w + 'px';
       dom.canvas.style.height = h + 'px';
@@ -763,8 +772,14 @@
     }
 
     function pageXY(e) {
-      var rect = dom.canvas.getBoundingClientRect();
-      return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      // Canvas is position:fixed at 0,0 — viewport coords ARE canvas coords.
+      return { x: e.clientX, y: e.clientY };
+    }
+
+    function flashCanvas() {
+      if (!dom || !dom.canvas) return;
+      dom.canvas.classList.add('flash');
+      setTimeout(function () { dom.canvas.classList.remove('flash'); }, 220);
     }
 
     function shouldAccept(e) {
@@ -779,7 +794,7 @@
     }
 
     function onPointerDown(e) {
-      if (window.__cfaDebug) toast('down ' + (e.pointerType||'?') + ' tool=' + (state.tool||'-'));
+      flashCanvas();
       if (!state.tool) return;
       if (!shouldAccept(e)) return;
       if (e.preventDefault) e.preventDefault();
@@ -791,7 +806,7 @@
       state.live = {
         tool: state.tool,
         color: state.color,
-        width: width,
+        width: Math.max(width, 2),  // floor so even pen is visible
         alpha: t.alpha,
         composite: t.composite,
         points: [[p.x, p.y, e.pressure || 0.5]]
