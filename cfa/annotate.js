@@ -181,7 +181,11 @@
         transition: opacity .2s;
         isolation: isolate;
       }
-      .cfa-toolbar * { pointer-events: auto !important; }
+      .cfa-toolbar > * { pointer-events: auto !important; }
+      /* SVG icons inside buttons must be transparent to taps —
+         otherwise iOS hit-tests on the path's painted area only and
+         empty pixels around the icon never reach the button. */
+      .cfa-toolbar svg, .cfa-toolbar svg * { pointer-events: none !important; }
       @media (prefers-color-scheme: dark) {
         .cfa-toolbar {
           background: linear-gradient(180deg,#2c2e33 0%,#1f2125 100%);
@@ -211,7 +215,11 @@
         .cfa-tb-btn { color: #d8dadf; }
       }
       .cfa-tb-btn:hover { background: rgba(0,0,0,0.06); }
-      .cfa-tb-btn:active { transform: scale(0.94); }
+      .cfa-tb-btn:active {
+        transform: scale(0.92);
+        background: rgba(29,78,216,0.18) !important;
+        box-shadow: 0 0 0 2px rgba(29,78,216,0.35) inset;
+      }
       @media (prefers-color-scheme: dark) {
         .cfa-tb-btn:hover { background: rgba(255,255,255,0.08); }
       }
@@ -581,29 +589,45 @@
       d.btnSync.appendChild(d.syncBadge);
       updateOwnerBadge();
 
-      // Universal tap handler: fires on click OR (synthesised from)
-      // touchend / pointerup, with debounce so it never double-fires.
+      // Universal tap handler — fires on whichever event iOS happens
+      // to dispatch (touchend, pointerup, click). Debounced so it
+      // never double-fires from multiple matched events.
       function onTap(el, fn) {
         var lastFire = 0;
         var downX = 0, downY = 0, moved = false;
         function tryFire(e) {
           if (Date.now() - lastFire < 350) return;
           lastFire = Date.now();
-          fn(e);
+          try { fn(e); } catch (err) { console.error('[CFA tap]', err); }
         }
-        el.addEventListener('pointerdown', function (e) {
-          downX = e.clientX; downY = e.clientY; moved = false;
+        function recordDown(x, y) { downX = x; downY = y; moved = false; }
+        function recordMove(x, y) {
+          if (Math.abs(x - downX) > 10 || Math.abs(y - downY) > 10) moved = true;
+        }
+        // Pointer events (modern browsers)
+        el.addEventListener('pointerdown', function (e) { recordDown(e.clientX, e.clientY); });
+        el.addEventListener('pointermove', function (e) { recordMove(e.clientX, e.clientY); });
+        el.addEventListener('pointerup',   function (e) {
+          if (moved) return;
+          e.stopPropagation();
+          tryFire(e);
         });
-        el.addEventListener('pointermove', function (e) {
-          if (Math.abs(e.clientX - downX) > 8 || Math.abs(e.clientY - downY) > 8) moved = true;
-        });
-        el.addEventListener('pointerup', function (e) {
+        // Touch events (iOS srcdoc fallback — sometimes pointer events
+        // simply do not fire here. We listen for touchend regardless.)
+        el.addEventListener('touchstart', function (e) {
+          var t = e.touches[0]; if (t) recordDown(t.clientX, t.clientY);
+        }, { passive: true });
+        el.addEventListener('touchmove', function (e) {
+          var t = e.touches[0]; if (t) recordMove(t.clientX, t.clientY);
+        }, { passive: true });
+        el.addEventListener('touchend', function (e) {
           if (moved) return;
           e.preventDefault(); e.stopPropagation();
           tryFire(e);
         });
+        // Click (desktop / final fallback)
         el.addEventListener('click', function (e) {
-          e.preventDefault(); e.stopPropagation();
+          e.stopPropagation();
           tryFire(e);
         });
       }
@@ -755,9 +779,10 @@
     }
 
     function onPointerDown(e) {
+      if (window.__cfaDebug) toast('down ' + (e.pointerType||'?') + ' tool=' + (state.tool||'-'));
       if (!state.tool) return;
       if (!shouldAccept(e)) return;
-      e.preventDefault();
+      if (e.preventDefault) e.preventDefault();
       try { dom.canvas.setPointerCapture(e.pointerId); } catch (_) {}
       var p = pageXY(e);
       var preset = THICKNESS_PRESETS[state.thicknessIdx];
@@ -771,6 +796,8 @@
         composite: t.composite,
         points: [[p.x, p.y, e.pressure || 0.5]]
       };
+      // Render initial dot immediately for visual feedback
+      drawStroke(state.live);
     }
 
     function onPointerMove(e) {
