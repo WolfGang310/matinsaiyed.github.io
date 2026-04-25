@@ -18,8 +18,8 @@
   // ============================================================
   //  Config
   // ============================================================
-  var SUPA_URL  = 'https://igfchvbzmvfveecivswb.supabase.co';
-  var SUPA_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlnZmNodmJ6bXZmdmVlY2l2c3diIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0Mjk2MjYsImV4cCI6MjA4ODAwNTYyNn0.-oU8CN309uuINCsgnrwPqNcfYNZ0s2-rOZcu3j-QRlw';
+  var SUPA_URL  = 'https://yzkstgbfqckubdzpjind.supabase.co';
+  var SUPA_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6a3N0Z2JmcWNrdWJkenBqaW5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMDQ4MDYsImV4cCI6MjA5MjY4MDgwNn0.kJiJAra573XvkQeXNnVngd0CICIzBaOAk4iUAYXGfH0';
   var TABLE     = 'cfa_annotations';
   var DEBOUNCE  = 1200;
   var OWNER_KEY = 'cfa_owner_id_v1';

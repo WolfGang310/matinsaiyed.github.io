@@ -1,6 +1,6 @@
 
 // cfa-sw.js — very small cache-first service worker
-const CACHE = 'cfa-l1-guide-v12-fixedcanvas';
+const CACHE = 'cfa-l1-guide-v13-newproject';
 const ASSETS = [
   './',
   './index.html',
