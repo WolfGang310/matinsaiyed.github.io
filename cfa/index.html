@@ -1849,17 +1849,7 @@ function printTopic(key){
   w.document.write('<!DOCTYPE html><html><head><title>'+h.title+'</title></head><body style="margin:0">');
   w.document.write('<iframe src="'+h.data+'" style="width:100vw;height:100vh;border:0"></iframe>');
   w.document.write('<script>setTimeout(()=>window.print(),1500)<\/script>');
-  w.document.write('
-<script>
-/* CFA annotate: handle owner-change requests bubbled from LM iframes */
-window.addEventListener('message', function(e){
-  if (e.data && e.data.type === 'cfa_owner_change_request' && /^[a-f0-9]{32}$/.test(e.data.ownerId)) {
-    if (typeof window.__cfaSetOwner === 'function') window.__cfaSetOwner(e.data.ownerId);
-  }
-});
-</script>
-
-</body></html>');
+  w.document.write('</body></html>');
   w.document.close();
 }
 function resetAll(){
@@ -3550,6 +3540,14 @@ window.addEventListener('resize', () => {
   }
 });
 
+</script>
+<script>
+/* CFA annotate: handle owner-change requests bubbled from LM iframes */
+window.addEventListener('message', function(e){
+  if (e.data && e.data.type === 'cfa_owner_change_request' && /^[a-f0-9]{32}$/.test(e.data.ownerId)) {
+    if (typeof window.__cfaSetOwner === 'function') window.__cfaSetOwner(e.data.ownerId);
+  }
+});
 </script>
 </body>
 </html>
