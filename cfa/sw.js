@@ -1,6 +1,6 @@
 
 // cfa-sw.js — very small cache-first service worker
-const CACHE = 'cfa-l1-guide-v6-domready';
+const CACHE = 'cfa-l1-guide-v7-absurl';
 const ASSETS = [
   './',
   './index.html',
