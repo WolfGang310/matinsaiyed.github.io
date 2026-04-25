@@ -1,90 +1,93 @@
-/* CFA Atelier — annotation overlay (Apple Pencil ink + per-LM notes)
+/* CFA Atelier — annotation overlay (Notability-inspired)
  *
- * Loaded inside every Learning Module iframe and inside the master guide.
+ * Loads in two modes:
+ *   data-cfa-mode="host"   → master guide; manages owner_id + relays it to the hub.
+ *   (no attribute)         → LM iframe; renders the toolbar and canvas.
  *
- * In the master guide it provides:
- *   - owner_id management (random 32-char hex, in localStorage)
- *   - postMessage relay to the hub iframe so the LM injection knows the owner
- *
- * Inside a LM iframe (window.CFA_ANNOTATE is present) it provides:
- *   - Floating toolbar (top-right): pen / highlighter / eraser / color / undo / clear / notes / sync
- *   - Full-document canvas overlay anchored to absolute scroll position
- *   - Pointer-event filter: pointerType === 'pen' draws; touch always scrolls
- *   - Slide-out notes drawer (right side, half-width on iPad, full-width on phone)
- *   - Supabase upsert keyed by (owner_id, lm_key, kind) with 1.5s debounce
- *
- * Usage in master guide:
- *   <script src="/cfa/annotate.js" data-cfa-mode="host"></script>
- *
- * Usage in LM iframe (injected by hub openModule before srcdoc):
- *   <script>window.CFA_ANNOTATE = { url, anonKey, ownerId, lmKey, lmTitle };</script>
- *   <script src="/cfa/annotate.js"></script>
+ * Designed for desktop (mouse), iPad (Apple Pencil + finger), and phone.
+ * Drawing inputs:
+ *   - On a touch device with a pen detected: only `pointerType === 'pen'`
+ *     draws; touch passes through so the page scrolls normally.
+ *   - On other devices: any active pointer (mouse, touch, pen) draws while
+ *     a tool is selected.
+ * Storage: Supabase upsert on (owner_id, lm_key, kind). Debounced 1.2s.
  */
 (function () {
   'use strict';
 
   // ============================================================
-  //  Constants
+  //  Config
   // ============================================================
   var SUPA_URL  = 'https://igfchvbzmvfveecivswb.supabase.co';
   var SUPA_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlnZmNodmJ6bXZmdmVlY2l2c3diIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0Mjk2MjYsImV4cCI6MjA4ODAwNTYyNn0.-oU8CN309uuINCsgnrwPqNcfYNZ0s2-rOZcu3j-QRlw';
   var TABLE     = 'cfa_annotations';
-  var DEBOUNCE  = 1500; // ms
+  var DEBOUNCE  = 1200;
   var OWNER_KEY = 'cfa_owner_id_v1';
 
-  var INK_COLORS = [
-    { name: 'Ink',       value: '#1a1a1a' },
-    { name: 'Blue',      value: '#1d4ed8' },
-    { name: 'Red',       value: '#dc2626' },
-    { name: 'Green',     value: '#15803d' },
-    { name: 'Yellow',    value: '#facc15' }
+  // Notability-style palette
+  var COLORS = [
+    { name: 'Black',     value: '#1f2227' },
+    { name: 'Red',       value: '#e23b3b' },
+    { name: 'Orange',    value: '#f29423' },
+    { name: 'Yellow',    value: '#f5c518' },
+    { name: 'Green',     value: '#2da44e' },
+    { name: 'Blue',      value: '#1f6feb' },
+    { name: 'Indigo',    value: '#6e40c9' },
+    { name: 'Pink',      value: '#db61a2' }
+  ];
+
+  var TOOLS = {
+    pen:         { stroke: 1.6,  alpha: 1,    composite: 'source-over' },
+    marker:      { stroke: 3.2,  alpha: 1,    composite: 'source-over' },
+    highlighter: { stroke: 14,   alpha: 0.32, composite: 'source-over' },
+    eraser:      { stroke: 22,   alpha: 1,    composite: 'destination-out' }
+  };
+
+  var THICKNESS_PRESETS = [
+    { id: 'fine',   pen: 1.0,  marker: 2.0,  highlighter: 10 },
+    { id: 'medium', pen: 1.6,  marker: 3.2,  highlighter: 14 },
+    { id: 'thick',  pen: 2.6,  marker: 5.0,  highlighter: 22 }
   ];
 
   // ============================================================
-  //  Mode dispatch — wait for DOM ready so document.body exists
+  //  Mode dispatch (DOM-ready safe)
   // ============================================================
   var script = document.currentScript;
-  var mode = (script && script.getAttribute('data-cfa-mode')) || (window.CFA_ANNOTATE ? 'lm' : 'host');
+  var mode = (script && script.getAttribute('data-cfa-mode')) ||
+             (window.CFA_ANNOTATE ? 'lm' : 'host');
 
   function whenReady(fn) {
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', fn, { once: true });
-    } else {
-      fn();
-    }
+    } else fn();
   }
-
   if (mode === 'host') return whenReady(bootHost);
   if (mode === 'lm')   return whenReady(bootLm);
 
   // ============================================================
-  //  HOST (master guide) — owner_id + postMessage relay
+  //  HOST (master guide)
   // ============================================================
   function bootHost() {
     var ownerId = ensureOwnerId();
     window.__cfaOwnerId = ownerId;
 
-    // Wait until a hub iframe exists, then push owner on every load.
     var attach = function () {
       var hub = document.getElementById('hub-iframe');
       if (!hub) return setTimeout(attach, 200);
       hub.addEventListener('load', function () {
         try { hub.contentWindow.postMessage({ type: 'cfa_owner', ownerId: ownerId }, '*'); }
-        catch (e) {}
+        catch (_) {}
       });
     };
     attach();
 
-    // Forward owner updates from settings panel back into hub.
     window.__cfaSetOwner = function (newId) {
       if (!/^[a-f0-9]{32}$/.test(newId)) return false;
       try { localStorage.setItem(OWNER_KEY, newId); } catch (_) {}
       window.__cfaOwnerId = newId;
       var hub = document.getElementById('hub-iframe');
-      if (hub) {
-        try { hub.contentWindow.postMessage({ type: 'cfa_owner', ownerId: newId }, '*'); }
-        catch (_) {}
-      }
+      if (hub) try { hub.contentWindow.postMessage({ type: 'cfa_owner', ownerId: newId }, '*'); }
+      catch (_) {}
       return true;
     };
 
@@ -96,7 +99,8 @@
       var bytes = new Uint8Array(16);
       crypto.getRandomValues(bytes);
       var hex = '';
-      for (var i = 0; i < bytes.length; i++) hex += (bytes[i] < 16 ? '0' : '') + bytes[i].toString(16);
+      for (var i = 0; i < bytes.length; i++)
+        hex += (bytes[i] < 16 ? '0' : '') + bytes[i].toString(16);
       try { localStorage.setItem(OWNER_KEY, hex); } catch (_) {}
       return hex;
     }
@@ -107,60 +111,55 @@
   // ============================================================
   function bootLm() {
     var cfg = window.CFA_ANNOTATE || {};
-    if (!cfg.lmKey) { console.warn('[CFA] missing lmKey'); return; }
+    if (!cfg.lmKey) return;
     cfg.url     = cfg.url     || SUPA_URL;
     cfg.anonKey = cfg.anonKey || SUPA_KEY;
-    cfg.ownerId = cfg.ownerId || '';
 
-    // ----- State -----
+    // Detect Apple Pencil-class devices (true iPad with stylus)
+    // Heuristic: touch device AND pointer events fire with pen type.
+    var hasTouch = 'ontouchstart' in window || (navigator.maxTouchPoints || 0) > 0;
+    var penOnlyMode = false; // becomes true once we see a pen pointer event
+
     var state = {
-      tool: 'pen',           // 'pen' | 'highlighter' | 'eraser'
-      color: INK_COLORS[0].value,
-      strokes: [],           // saved strokes (replayed on load)
-      live: null,            // current in-progress stroke
+      tool: null,             // 'pen' | 'marker' | 'highlighter' | 'eraser' | null (off)
+      color: COLORS[0].value,
+      thicknessIdx: 1,        // 0=fine, 1=medium, 2=thick
+      strokes: [],            // saved committed strokes
+      redo: [],               // undo stack
+      live: null,             // current in-progress stroke
+      ownerId: cfg.ownerId || '',
       noteMd: '',
-      ownerId: cfg.ownerId,
-      drawingOn: false,      // whether canvas is capturing pointer events
       saveTimer: null,
-      noteTimer: null,
-      ready: false,
-      pendingPushAfterReady: false
+      noteTimer: null
     };
 
-    // Inject styles
     injectStyles();
-
-    // Build UI
     var dom = buildUi();
+    setupOwner();
+    if (state.ownerId) loadFromCloud();
 
-    // Fetch existing data and replay
-    if (state.ownerId) {
-      loadFromCloud().catch(function (e) { console.warn('[CFA] load failed', e); });
-    } else {
-      // Wait for owner_id from parent
-      window.addEventListener('message', function onMsg(e) {
-        if (e.data && e.data.type === 'cfa_owner' && /^[a-f0-9]{32}$/.test(e.data.ownerId)) {
-          state.ownerId = e.data.ownerId;
-          dom.syncBadge.textContent = shortOwner(state.ownerId);
-          loadFromCloud().catch(function (er) { console.warn('[CFA] load failed', er); });
-          window.removeEventListener('message', onMsg);
+    // ----------------------------------------------------------
+    //  Owner sync
+    // ----------------------------------------------------------
+    function setupOwner() {
+      window.addEventListener('message', function (e) {
+        if (!e.data) return;
+        if (e.data.type === 'cfa_owner' && /^[a-f0-9]{32}$/.test(e.data.ownerId)) {
+          if (state.ownerId !== e.data.ownerId) {
+            state.ownerId = e.data.ownerId;
+            updateOwnerBadge();
+            loadFromCloud();
+          }
         }
       });
     }
 
-    // Listen for owner changes from parent (settings sync)
-    window.addEventListener('message', function (e) {
-      if (e.data && e.data.type === 'cfa_owner_change' && /^[a-f0-9]{32}$/.test(e.data.ownerId)) {
-        state.ownerId = e.data.ownerId;
-        dom.syncBadge.textContent = shortOwner(e.data.ownerId);
-        // Wipe local & reload
-        state.strokes = [];
-        state.noteMd = '';
-        dom.notesArea.value = '';
-        redrawAll();
-        loadFromCloud().catch(function (er) { console.warn('[CFA] reload failed', er); });
-      }
-    });
+    function updateOwnerBadge() {
+      if (dom.syncBadge)
+        dom.syncBadge.textContent = state.ownerId
+          ? state.ownerId.slice(0, 4) + '…' + state.ownerId.slice(-4)
+          : '—';
+    }
 
     // ============================================================
     //  Styles
@@ -169,274 +168,477 @@
       var css = `
       .cfa-toolbar {
         position: fixed; top: 14px; right: 14px; z-index: 2147483646;
-        display: flex; gap: 6px; padding: 6px;
-        background: rgba(15,15,17,0.92); backdrop-filter: blur(12px);
-        border-radius: 14px; box-shadow: 0 6px 24px rgba(0,0,0,0.35);
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        display: flex; flex-direction: column; gap: 6px; padding: 8px;
+        background: linear-gradient(180deg,#fafbfc 0%,#eef0f3 100%);
+        border-radius: 14px;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.10), 0 1px 2px rgba(0,0,0,0.06),
+                    inset 0 1px 0 rgba(255,255,255,0.7);
+        border: 1px solid rgba(0,0,0,0.06);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         user-select: none; -webkit-user-select: none;
-        touch-action: none;
+        touch-action: manipulation;
+        transition: opacity .2s;
+      }
+      @media (prefers-color-scheme: dark) {
+        .cfa-toolbar {
+          background: linear-gradient(180deg,#2c2e33 0%,#1f2125 100%);
+          border-color: rgba(255,255,255,0.08);
+          box-shadow: 0 8px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06);
+        }
+      }
+      .cfa-toolbar.collapsed > *:not(.cfa-tb-toggle) { display: none; }
+      .cfa-tb-row { display: flex; gap: 4px; }
+      .cfa-tb-divider {
+        height: 1px; background: rgba(0,0,0,0.08); margin: 4px 2px;
+      }
+      @media (prefers-color-scheme: dark) {
+        .cfa-tb-divider { background: rgba(255,255,255,0.08); }
       }
       .cfa-tb-btn {
-        width: 40px; height: 40px; border: none; border-radius: 9px;
-        background: transparent; color: #e5e7eb; cursor: pointer;
+        width: 38px; height: 38px; padding: 0;
+        border: none; border-radius: 9px;
+        background: transparent;
+        color: #2a2d33;
+        cursor: pointer;
         display: flex; align-items: center; justify-content: center;
-        font-size: 18px; transition: background .15s, transform .1s;
+        transition: background .12s, transform .08s, box-shadow .12s;
         position: relative;
       }
-      .cfa-tb-btn:hover { background: rgba(255,255,255,0.08); }
-      .cfa-tb-btn:active { transform: scale(0.92); }
+      @media (prefers-color-scheme: dark) {
+        .cfa-tb-btn { color: #d8dadf; }
+      }
+      .cfa-tb-btn:hover { background: rgba(0,0,0,0.06); }
+      .cfa-tb-btn:active { transform: scale(0.94); }
+      @media (prefers-color-scheme: dark) {
+        .cfa-tb-btn:hover { background: rgba(255,255,255,0.08); }
+      }
       .cfa-tb-btn.on {
-        background: linear-gradient(135deg,#6366f1,#8b5cf6);
-        color: #fff; box-shadow: 0 2px 8px rgba(99,102,241,0.5);
+        background: linear-gradient(180deg,#e9eefb,#d6dffb);
+        color: #1d4ed8;
+        box-shadow: inset 0 0 0 1px #b8c5f5, 0 1px 2px rgba(29,78,216,0.18);
       }
+      @media (prefers-color-scheme: dark) {
+        .cfa-tb-btn.on {
+          background: linear-gradient(180deg,#2a3550,#1f2942);
+          color: #93b8ff;
+          box-shadow: inset 0 0 0 1px #3d558f;
+        }
+      }
+      .cfa-tb-btn svg { width: 22px; height: 22px; }
       .cfa-tb-btn .cfa-color-dot {
-        width: 18px; height: 18px; border-radius: 50%;
-        border: 2px solid rgba(255,255,255,0.7);
+        position: absolute; bottom: 4px; right: 4px;
+        width: 9px; height: 9px; border-radius: 50%;
+        border: 1.5px solid #fff;
+        box-shadow: 0 0 0 1px rgba(0,0,0,0.15);
       }
-      .cfa-tb-sep { width: 1px; background: rgba(255,255,255,0.12); margin: 4px 2px; }
+      .cfa-tb-toggle {
+        cursor: pointer;
+        opacity: 0.6;
+      }
 
-      .cfa-color-pop {
-        position: fixed; top: 64px; right: 14px; z-index: 2147483647;
-        background: rgba(15,15,17,0.95); backdrop-filter: blur(12px);
-        padding: 8px; border-radius: 12px; display: none; gap: 6px;
-        box-shadow: 0 6px 24px rgba(0,0,0,0.4);
+      .cfa-popover {
+        position: fixed; z-index: 2147483647;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.18), 0 2px 6px rgba(0,0,0,0.08);
+        padding: 12px;
+        font-family: inherit;
+        display: none;
       }
-      .cfa-color-pop.open { display: flex; }
+      @media (prefers-color-scheme: dark) {
+        .cfa-popover { background: #2a2d33; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+      }
+      .cfa-popover.open { display: block; }
+      .cfa-popover h4 {
+        margin: 0 0 8px; font-size: 11px; text-transform: uppercase;
+        letter-spacing: 0.06em; color: #6c727a; font-weight: 600;
+      }
+      @media (prefers-color-scheme: dark) {
+        .cfa-popover h4 { color: #9099a3; }
+      }
+      .cfa-color-grid {
+        display: grid; grid-template-columns: repeat(4, 32px); gap: 8px;
+      }
       .cfa-color-swatch {
-        width: 32px; height: 32px; border-radius: 50%; cursor: pointer;
-        border: 3px solid transparent; transition: border-color .15s;
+        width: 32px; height: 32px; border-radius: 50%;
+        cursor: pointer; border: 2px solid transparent;
+        transition: transform .12s, border-color .12s;
+        position: relative;
       }
-      .cfa-color-swatch.on { border-color: #fff; }
+      .cfa-color-swatch:hover { transform: scale(1.08); }
+      .cfa-color-swatch.on {
+        border-color: #1d4ed8;
+        box-shadow: 0 0 0 2px rgba(29,78,216,0.18);
+      }
+      .cfa-thickness-row {
+        display: flex; align-items: center; gap: 12px;
+        margin-top: 14px;
+      }
+      .cfa-thickness-btn {
+        flex: 1; cursor: pointer;
+        background: transparent; border: 1px solid rgba(0,0,0,0.08);
+        border-radius: 8px; padding: 8px 0;
+        display: flex; align-items: center; justify-content: center;
+        transition: all .12s;
+      }
+      @media (prefers-color-scheme: dark) {
+        .cfa-thickness-btn { border-color: rgba(255,255,255,0.12); }
+      }
+      .cfa-thickness-btn:hover { background: rgba(0,0,0,0.04); }
+      @media (prefers-color-scheme: dark) {
+        .cfa-thickness-btn:hover { background: rgba(255,255,255,0.06); }
+      }
+      .cfa-thickness-btn.on {
+        background: rgba(29,78,216,0.10); border-color: #1d4ed8;
+      }
+      .cfa-thickness-bar {
+        background: currentColor; border-radius: 999px;
+      }
 
       .cfa-canvas {
         position: absolute; top: 0; left: 0;
         pointer-events: none; z-index: 2147483640;
       }
-      .cfa-canvas.drawing { pointer-events: auto; touch-action: none; }
+      .cfa-canvas.drawing { pointer-events: auto; touch-action: none; cursor: crosshair; }
 
       .cfa-notes-drawer {
-        position: fixed; top: 0; right: -640px; width: min(640px, 95vw); height: 100vh;
-        background: #fff; color: #111; z-index: 2147483645;
-        box-shadow: -8px 0 32px rgba(0,0,0,0.25);
+        position: fixed; top: 0; right: -640px; width: min(620px, 96vw); height: 100vh;
+        background: #ffffff; color: #14171c; z-index: 2147483645;
+        box-shadow: -8px 0 36px rgba(0,0,0,0.18);
         display: flex; flex-direction: column;
-        transition: right .35s cubic-bezier(.4,.1,.2,1);
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        transition: right .32s cubic-bezier(.3,.05,.2,1);
+        font-family: -apple-system, BlinkMacSystemFont, sans-serif;
       }
       @media (prefers-color-scheme: dark) {
-        .cfa-notes-drawer { background: #1c1d20; color: #f3f4f6; }
+        .cfa-notes-drawer { background: #1d1f24; color: #e8eaed; }
       }
       .cfa-notes-drawer.open { right: 0; }
       .cfa-notes-header {
         display: flex; align-items: center; justify-content: space-between;
-        padding: 14px 18px; border-bottom: 1px solid rgba(0,0,0,0.08);
-        font-weight: 600;
+        padding: 14px 18px;
+        border-bottom: 1px solid rgba(0,0,0,0.06);
+        font-weight: 600; font-size: 14px;
       }
       @media (prefers-color-scheme: dark) {
-        .cfa-notes-header { border-bottom-color: rgba(255,255,255,0.1); }
+        .cfa-notes-header { border-bottom-color: rgba(255,255,255,0.08); }
       }
       .cfa-notes-area {
-        flex: 1; padding: 16px 18px; border: none; outline: none; resize: none;
-        font: 16px/1.55 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        flex: 1; padding: 16px 20px; border: none; outline: none; resize: none;
+        font: 15px/1.6 -apple-system, BlinkMacSystemFont, sans-serif;
         background: transparent; color: inherit;
       }
-      .cfa-notes-status {
-        padding: 8px 18px; font-size: 12px; opacity: 0.6;
+      .cfa-notes-foot {
+        padding: 8px 18px; font-size: 12px; opacity: 0.55;
         border-top: 1px solid rgba(0,0,0,0.06);
+        display: flex; justify-content: space-between;
       }
       @media (prefers-color-scheme: dark) {
-        .cfa-notes-status { border-top-color: rgba(255,255,255,0.08); }
+        .cfa-notes-foot { border-top-color: rgba(255,255,255,0.08); }
       }
-      .cfa-notes-close {
-        background: none; border: none; font-size: 22px; cursor: pointer;
-        padding: 4px 10px; border-radius: 6px; color: inherit;
+      .cfa-icon-btn {
+        background: none; border: none; cursor: pointer;
+        font-size: 20px; padding: 4px 10px; border-radius: 6px;
+        color: inherit;
       }
-      .cfa-notes-close:hover { background: rgba(0,0,0,0.06); }
+      .cfa-icon-btn:hover { background: rgba(0,0,0,0.06); }
+      @media (prefers-color-scheme: dark) {
+        .cfa-icon-btn:hover { background: rgba(255,255,255,0.06); }
+      }
 
-      .cfa-sync-modal {
-        position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+      .cfa-modal {
+        position: fixed; inset: 0; background: rgba(0,0,0,0.5);
         z-index: 2147483647; display: none; align-items: center; justify-content: center;
         padding: 20px;
       }
-      .cfa-sync-modal.open { display: flex; }
-      .cfa-sync-card {
-        background: #fff; color: #111; padding: 24px; border-radius: 18px;
+      .cfa-modal.open { display: flex; }
+      .cfa-modal-card {
+        background: #ffffff; color: #14171c;
         max-width: 460px; width: 100%;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+        padding: 24px; border-radius: 16px;
+        box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+        font-family: -apple-system, BlinkMacSystemFont, sans-serif;
       }
       @media (prefers-color-scheme: dark) {
-        .cfa-sync-card { background: #1c1d20; color: #f3f4f6; }
+        .cfa-modal-card { background: #1d1f24; color: #e8eaed; }
       }
-      .cfa-sync-card h3 { margin: 0 0 6px; font-size: 18px; }
-      .cfa-sync-card p { margin: 4px 0 14px; font-size: 13px; opacity: 0.75; }
-      .cfa-sync-card label { display: block; font-size: 12px; font-weight: 600; margin-top: 14px; opacity: 0.7; }
-      .cfa-sync-id {
+      .cfa-modal-card h3 { margin: 0 0 4px; font-size: 17px; }
+      .cfa-modal-card p { margin: 4px 0 14px; font-size: 13px; opacity: 0.7; line-height: 1.5; }
+      .cfa-modal-card label { display: block; font-size: 11px; font-weight: 600; margin-top: 14px; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.05em; }
+      .cfa-id-display {
         font: 13px/1.4 ui-monospace, 'SF Mono', Menlo, monospace;
         word-break: break-all; padding: 10px 12px; border-radius: 8px;
-        background: rgba(0,0,0,0.05); margin-top: 6px;
+        background: rgba(0,0,0,0.04); margin-top: 6px;
       }
       @media (prefers-color-scheme: dark) {
-        .cfa-sync-id { background: rgba(255,255,255,0.08); }
+        .cfa-id-display { background: rgba(255,255,255,0.06); }
       }
-      .cfa-sync-input {
+      .cfa-id-input {
         width: 100%; padding: 10px 12px; border-radius: 8px;
         border: 1px solid rgba(0,0,0,0.15); margin-top: 6px;
         font: 13px ui-monospace, 'SF Mono', Menlo, monospace;
-        background: transparent; color: inherit;
-        box-sizing: border-box;
+        background: transparent; color: inherit; box-sizing: border-box;
       }
       @media (prefers-color-scheme: dark) {
-        .cfa-sync-input { border-color: rgba(255,255,255,0.18); }
+        .cfa-id-input { border-color: rgba(255,255,255,0.16); }
       }
-      .cfa-sync-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
-      .cfa-sync-btn {
-        padding: 10px 16px; border-radius: 9px; border: none; cursor: pointer;
-        font-size: 14px; font-weight: 600;
+      .cfa-modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
+      .cfa-btn {
+        padding: 9px 16px; border-radius: 8px; border: none; cursor: pointer;
+        font-size: 13px; font-weight: 600;
       }
-      .cfa-sync-btn.primary { background: #6366f1; color: #fff; }
-      .cfa-sync-btn.ghost { background: transparent; color: inherit; }
+      .cfa-btn-primary { background: #1d4ed8; color: #fff; }
+      .cfa-btn-primary:hover { background: #1f56e8; }
+      .cfa-btn-ghost { background: transparent; color: inherit; }
 
-      .cfa-status {
-        position: fixed; bottom: 16px; right: 16px; z-index: 2147483640;
-        background: rgba(15,15,17,0.92); color: #e5e7eb;
-        padding: 6px 12px; border-radius: 999px; font-size: 11px;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        opacity: 0; transition: opacity .25s; pointer-events: none;
+      .cfa-toast {
+        position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+        background: rgba(15,15,20,0.9); color: #fff;
+        padding: 8px 14px; border-radius: 999px; font-size: 12px;
+        font-family: -apple-system, sans-serif;
+        opacity: 0; transition: opacity .2s; pointer-events: none;
+        z-index: 2147483647;
       }
-      .cfa-status.show { opacity: 1; }
+      .cfa-toast.show { opacity: 1; }
 
-      @media (max-width: 540px) {
-        .cfa-toolbar { top: 8px; right: 8px; padding: 4px; gap: 4px; }
-        .cfa-tb-btn { width: 36px; height: 36px; font-size: 16px; }
+      @media (max-width: 600px) {
+        .cfa-toolbar { top: 8px; right: 8px; padding: 5px; gap: 4px; }
+        .cfa-tb-btn { width: 34px; height: 34px; }
+        .cfa-tb-btn svg { width: 18px; height: 18px; }
       }
       `;
       var s = document.createElement('style');
       s.id = 'cfa-annotate-styles';
       s.textContent = css;
-      document.head.appendChild(s);
+      (document.head || document.documentElement).appendChild(s);
     }
 
     // ============================================================
-    //  UI
+    //  Icons (inline SVG, currentColor)
+    // ============================================================
+    function icon(name) {
+      var paths = {
+        // A real pen with a tilted nib
+        pen: '<path d="M14.06 4.94 19.06 9.94 9 20H4v-5L14.06 4.94Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M13 6 18 11" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>',
+        // Marker — chunky body with a tip
+        marker: '<path d="M5.6 16.4 14 8 16 10l-8.4 8.4-3.4.6.4-3.6Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><rect x="13.2" y="6.2" width="5.6" height="3.6" rx="1" transform="rotate(45 16 8)" fill="currentColor"/>',
+        // Highlighter — angled chisel
+        highlighter: '<path d="M6 18 14 10l3 3-8 8H6v-3Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><rect x="13" y="6" width="6" height="5" rx="1.2" transform="rotate(45 16 8.5)" fill="currentColor" opacity="0.45"/>',
+        // Eraser
+        eraser: '<path d="M16 5 5 16l3.5 3.5 5-5L20 8.5 16 5Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M11 11l4.5 4.5" stroke="currentColor" stroke-width="1.5"/>',
+        // Color circle (filled)
+        color: '<circle cx="12" cy="12" r="7" fill="currentColor"/>',
+        undo: '<path d="M9 7 4 12l5 5M4 12h10a5 5 0 0 1 0 10h-2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>',
+        redo: '<path d="M15 7 20 12l-5 5M20 12H10a5 5 0 0 0 0 10h2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>',
+        clear: '<path d="M5 7h14M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M7 7l1 13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l1-13" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>',
+        notes: '<rect x="5" y="4" width="14" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 9h8M8 12h8M8 15h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>',
+        sync: '<path d="M4 12a8 8 0 0 1 13.5-5.7L20 4v6h-6l2.4-2.4A6 6 0 0 0 6 12H4Zm16 0a8 8 0 0 1-13.5 5.7L4 20v-6h6l-2.4 2.4A6 6 0 0 0 18 12h2Z" fill="currentColor"/>',
+        chevron: '<path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'
+      };
+      return '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+        (paths[name] || '') + '</svg>';
+    }
+
+    // ============================================================
+    //  Build UI
     // ============================================================
     function buildUi() {
       var d = {};
 
-      // --- Toolbar ---
+      // Toolbar
       d.toolbar = el('div', 'cfa-toolbar');
-      d.btnPen   = tbBtn('✏️',  'Pen (Apple Pencil only)');
-      d.btnHi    = tbBtn('🖍️',  'Highlighter');
-      d.btnEr    = tbBtn('🧽',  'Eraser');
-      d.btnColor = tbBtn('',    'Color');
-      var dot = el('span', 'cfa-color-dot'); dot.style.background = state.color;
-      d.btnColor.appendChild(dot); d.colorDot = dot;
-      d.btnUndo  = tbBtn('↶',  'Undo');
-      d.btnClear = tbBtn('🗑',  'Clear all ink');
-      d.sep1     = el('div', 'cfa-tb-sep');
-      d.btnNotes = tbBtn('📝',  'Notes');
-      d.btnSync  = tbBtn('☁︎',  'Sync settings');
 
-      [d.btnPen, d.btnHi, d.btnEr, d.btnColor, d.btnUndo, d.btnClear,
-       d.sep1, d.btnNotes, d.btnSync].forEach(function (n) { d.toolbar.appendChild(n); });
+      d.btnPen   = tbBtn(icon('pen'),         'Pen');
+      d.btnMrk   = tbBtn(icon('marker'),      'Marker');
+      d.btnHi    = tbBtn(icon('highlighter'), 'Highlighter');
+      d.btnEr    = tbBtn(icon('eraser'),      'Eraser');
+
+      // Color/thickness combo
+      d.btnColor = tbBtn(icon('color'),       'Color & thickness');
+      d.btnColor.style.color = state.color;
+      var colorDot = el('span', 'cfa-color-dot');
+      colorDot.style.background = state.color;
+      d.btnColor.appendChild(colorDot);
+      d.colorDot = colorDot;
+
+      d.divider1 = el('div', 'cfa-tb-divider');
+
+      d.btnUndo  = tbBtn(icon('undo'),  'Undo');
+      d.btnRedo  = tbBtn(icon('redo'),  'Redo');
+      d.btnClear = tbBtn(icon('clear'), 'Clear all ink');
+
+      d.divider2 = el('div', 'cfa-tb-divider');
+
+      d.btnNotes = tbBtn(icon('notes'), 'Notes');
+      d.btnSync  = tbBtn(icon('sync'),  'Sync ID');
+
+      [d.btnPen, d.btnMrk, d.btnHi, d.btnEr, d.btnColor, d.divider1,
+       d.btnUndo, d.btnRedo, d.btnClear, d.divider2,
+       d.btnNotes, d.btnSync].forEach(function (n) { d.toolbar.appendChild(n); });
       document.body.appendChild(d.toolbar);
 
-      // --- Color popover ---
-      d.colorPop = el('div', 'cfa-color-pop');
-      d.swatches = INK_COLORS.map(function (c, i) {
+      // Color popover (positioned to the left of color button)
+      d.colorPop = el('div', 'cfa-popover');
+      var colorH = el('h4'); colorH.textContent = 'Color';
+      d.colorPop.appendChild(colorH);
+      var grid = el('div', 'cfa-color-grid');
+      d.colorSwatches = COLORS.map(function (c) {
         var sw = el('div', 'cfa-color-swatch' + (c.value === state.color ? ' on' : ''));
         sw.style.background = c.value;
         sw.title = c.name;
         sw.addEventListener('click', function () {
           state.color = c.value;
           d.colorDot.style.background = c.value;
-          d.swatches.forEach(function (s) { s.classList.remove('on'); });
+          d.btnColor.style.color = c.value;
+          d.colorSwatches.forEach(function (s) { s.classList.remove('on'); });
           sw.classList.add('on');
-          d.colorPop.classList.remove('open');
         });
-        d.colorPop.appendChild(sw);
+        grid.appendChild(sw);
         return sw;
       });
+      d.colorPop.appendChild(grid);
+
+      var thickH = el('h4'); thickH.textContent = 'Thickness';
+      thickH.style.marginTop = '14px';
+      d.colorPop.appendChild(thickH);
+      var thickRow = el('div', 'cfa-thickness-row');
+      d.thicknessBtns = THICKNESS_PRESETS.map(function (preset, idx) {
+        var b = el('button', 'cfa-thickness-btn' + (idx === state.thicknessIdx ? ' on' : ''));
+        var bar = el('div', 'cfa-thickness-bar');
+        bar.style.height = (2 + idx * 2) + 'px';
+        bar.style.width = (60 - idx * 10) + '%';
+        b.appendChild(bar);
+        b.addEventListener('click', function () {
+          state.thicknessIdx = idx;
+          d.thicknessBtns.forEach(function (x) { x.classList.remove('on'); });
+          b.classList.add('on');
+        });
+        thickRow.appendChild(b);
+        return b;
+      });
+      d.colorPop.appendChild(thickRow);
       document.body.appendChild(d.colorPop);
 
-      // --- Canvas ---
+      // Canvas
       d.canvas = el('canvas', 'cfa-canvas');
       d.ctx = d.canvas.getContext('2d');
       document.body.appendChild(d.canvas);
       sizeCanvas();
       window.addEventListener('resize', sizeCanvas);
-      // Recompute on document size change (content reflow, image load, etc.)
-      var ro = new ResizeObserver(sizeCanvas);
-      try { ro.observe(document.documentElement); } catch (_) {}
+      try {
+        new ResizeObserver(sizeCanvas).observe(document.documentElement);
+      } catch (_) {}
+      // Recalc periodically — content may load images / KaTeX after script runs
+      setTimeout(sizeCanvas, 800);
+      setTimeout(sizeCanvas, 2400);
 
-      // --- Notes drawer ---
-      d.notesDrawer = el('div', 'cfa-notes-drawer');
-      var hdr = el('div', 'cfa-notes-header');
-      hdr.innerHTML = '<span>Notes — ' + escapeHtml(cfg.lmTitle || cfg.lmKey) + '</span>';
-      d.notesClose = el('button', 'cfa-notes-close'); d.notesClose.textContent = '×';
-      hdr.appendChild(d.notesClose);
+      // Notes drawer
+      d.notes = el('div', 'cfa-notes-drawer');
+      var nh = el('div', 'cfa-notes-header');
+      nh.innerHTML = '<span>Notes — ' + escapeHtml(cfg.lmTitle || cfg.lmKey) + '</span>';
+      var nClose = el('button', 'cfa-icon-btn'); nClose.textContent = '×'; nClose.title = 'Close';
+      nh.appendChild(nClose);
       d.notesArea = el('textarea', 'cfa-notes-area');
       d.notesArea.placeholder = 'Type notes for this learning module…';
-      d.notesStatus = el('div', 'cfa-notes-status'); d.notesStatus.textContent = 'Saved';
-      d.notesDrawer.appendChild(hdr);
-      d.notesDrawer.appendChild(d.notesArea);
-      d.notesDrawer.appendChild(d.notesStatus);
-      document.body.appendChild(d.notesDrawer);
+      var nf = el('div', 'cfa-notes-foot');
+      d.notesStatus = el('span'); d.notesStatus.textContent = 'Saved';
+      var nfHelp = el('span'); nfHelp.textContent = 'Autosaves & syncs across devices';
+      nf.appendChild(d.notesStatus); nf.appendChild(nfHelp);
+      d.notes.appendChild(nh); d.notes.appendChild(d.notesArea); d.notes.appendChild(nf);
+      document.body.appendChild(d.notes);
 
-      // --- Sync modal ---
-      d.syncModal = el('div', 'cfa-sync-modal');
-      var syncCard = el('div', 'cfa-sync-card');
-      syncCard.innerHTML =
+      // Sync modal
+      d.modal = el('div', 'cfa-modal');
+      var card = el('div', 'cfa-modal-card');
+      card.innerHTML =
         '<h3>Sync across devices</h3>' +
-        '<p>Your notes and ink are tied to a 32-character ID stored on this device. ' +
-        'Copy it to another device to sync your annotations there.</p>' +
+        '<p>Your annotations are tied to a 32-character ID stored on this device. ' +
+        'Copy it into your iPad / phone to keep ink and notes in sync.</p>' +
         '<label>This device</label>' +
-        '<div class="cfa-sync-id" id="cfa-sync-id-show"></div>' +
+        '<div class="cfa-id-display" id="cfa-id-show"></div>' +
         '<label>Use a different ID</label>' +
-        '<input class="cfa-sync-input" id="cfa-sync-id-input" placeholder="paste 32-character ID" maxlength="32" />' +
-        '<div class="cfa-sync-actions">' +
-        '  <button class="cfa-sync-btn ghost" id="cfa-sync-cancel">Close</button>' +
-        '  <button class="cfa-sync-btn primary" id="cfa-sync-copy">Copy ID</button>' +
-        '  <button class="cfa-sync-btn primary" id="cfa-sync-save">Use this ID</button>' +
+        '<input class="cfa-id-input" id="cfa-id-input" placeholder="paste 32-character ID" maxlength="32" />' +
+        '<div class="cfa-modal-actions">' +
+        '  <button class="cfa-btn cfa-btn-ghost" id="cfa-modal-cancel">Cancel</button>' +
+        '  <button class="cfa-btn cfa-btn-primary" id="cfa-modal-copy">Copy</button>' +
+        '  <button class="cfa-btn cfa-btn-primary" id="cfa-modal-save">Use this ID</button>' +
         '</div>';
-      d.syncModal.appendChild(syncCard);
-      document.body.appendChild(d.syncModal);
+      d.modal.appendChild(card);
+      document.body.appendChild(d.modal);
 
-      // --- Status toast ---
-      d.status = el('div', 'cfa-status');
-      document.body.appendChild(d.status);
+      // Toast
+      d.toast = el('div', 'cfa-toast');
+      document.body.appendChild(d.toast);
 
-      // --- Sync badge in toolbar (short owner id) ---
-      d.syncBadge = el('span'); d.syncBadge.style.fontSize = '9px'; d.syncBadge.style.position = 'absolute';
-      d.syncBadge.style.bottom = '2px'; d.syncBadge.style.right = '4px'; d.syncBadge.style.opacity = '0.55';
-      d.syncBadge.textContent = state.ownerId ? shortOwner(state.ownerId) : '…';
+      // Sync badge appended to sync button
+      d.syncBadge = el('span');
+      d.syncBadge.style.cssText = 'position:absolute;bottom:1px;right:3px;font-size:8px;font-family:ui-monospace,Menlo,monospace;opacity:0.55;letter-spacing:-0.5px;';
       d.btnSync.appendChild(d.syncBadge);
+      updateOwnerBadge();
 
-      // --- Behavior wiring ---
-      d.btnPen.addEventListener('click', function () { setTool('pen'); });
-      d.btnHi.addEventListener('click',  function () { setTool('highlighter'); });
-      d.btnEr.addEventListener('click',  function () { setTool('eraser'); });
+      // Wire behaviour
+      d.btnPen.addEventListener('click', function () { selectTool('pen', d.btnPen); });
+      d.btnMrk.addEventListener('click', function () { selectTool('marker', d.btnMrk); });
+      d.btnHi.addEventListener('click',  function () { selectTool('highlighter', d.btnHi); });
+      d.btnEr.addEventListener('click',  function () { selectTool('eraser', d.btnEr); });
+
       d.btnColor.addEventListener('click', function (e) {
-        e.stopPropagation(); d.colorPop.classList.toggle('open');
+        e.stopPropagation();
+        var rect = d.btnColor.getBoundingClientRect();
+        d.colorPop.style.top  = (rect.bottom + 8) + 'px';
+        d.colorPop.style.right = (window.innerWidth - rect.right) + 'px';
+        d.colorPop.classList.toggle('open');
       });
-      document.addEventListener('click', function () { d.colorPop.classList.remove('open'); });
+      document.addEventListener('click', function (e) {
+        if (!d.colorPop.contains(e.target) && e.target !== d.btnColor) {
+          d.colorPop.classList.remove('open');
+        }
+      });
+
       d.btnUndo.addEventListener('click', undoStroke);
+      d.btnRedo.addEventListener('click', redoStroke);
       d.btnClear.addEventListener('click', function () {
-        if (!state.strokes.length && !state.live) return;
+        if (!state.strokes.length) return toast('Nothing to clear');
         if (!confirm('Erase all ink on this learning module?')) return;
-        state.strokes = []; state.live = null;
-        redrawAll(); scheduleSaveInk();
+        state.redo = state.strokes.slice();
+        state.strokes = [];
+        redrawAll();
+        scheduleSaveInk();
       });
+
       d.btnNotes.addEventListener('click', function () {
-        d.notesDrawer.classList.toggle('open');
-        if (d.notesDrawer.classList.contains('open')) d.notesArea.focus();
+        d.notes.classList.toggle('open');
+        if (d.notes.classList.contains('open')) setTimeout(function () { d.notesArea.focus(); }, 320);
       });
-      d.notesClose.addEventListener('click', function () { d.notesDrawer.classList.remove('open'); });
+      nClose.addEventListener('click', function () { d.notes.classList.remove('open'); });
       d.notesArea.addEventListener('input', function () {
         state.noteMd = d.notesArea.value;
         d.notesStatus.textContent = 'Saving…';
         scheduleSaveNote();
       });
-      d.btnSync.addEventListener('click', openSync);
+
+      d.btnSync.addEventListener('click', function () {
+        document.getElementById('cfa-id-show').textContent = state.ownerId || '—';
+        document.getElementById('cfa-id-input').value = '';
+        d.modal.classList.add('open');
+      });
+      d.modal.addEventListener('click', function (e) {
+        if (e.target === d.modal || e.target.id === 'cfa-modal-cancel') {
+          d.modal.classList.remove('open');
+        } else if (e.target.id === 'cfa-modal-copy') {
+          copyToClipboard(state.ownerId, function (ok) { toast(ok ? 'ID copied' : 'Copy failed'); });
+        } else if (e.target.id === 'cfa-modal-save') {
+          var v = (document.getElementById('cfa-id-input').value || '').trim().toLowerCase();
+          if (!/^[a-f0-9]{32}$/.test(v)) return toast('Need 32-char hex');
+          try { window.parent.parent.postMessage({ type: 'cfa_owner_change_request', ownerId: v }, '*'); } catch (_) {}
+          state.ownerId = v;
+          updateOwnerBadge();
+          state.strokes = []; state.redo = []; d.notesArea.value = '';
+          redrawAll();
+          loadFromCloud();
+          d.modal.classList.remove('open');
+          toast('Switched');
+        }
+      });
 
       // Pointer handling on canvas
       d.canvas.addEventListener('pointerdown', onPointerDown);
@@ -445,78 +647,42 @@
       d.canvas.addEventListener('pointercancel', onPointerUp);
       d.canvas.addEventListener('pointerleave',  onPointerUp);
 
-      function tbBtn(label, title) {
-        var b = el('button', 'cfa-tb-btn'); b.textContent = label; b.title = title;
+      return d;
+
+      function tbBtn(svgHtml, title) {
+        var b = document.createElement('button');
+        b.className = 'cfa-tb-btn'; b.title = title;
+        b.innerHTML = svgHtml; b.type = 'button';
         return b;
       }
       function el(tag, cls) {
-        var n = document.createElement(tag); if (cls) n.className = cls; return n;
+        var n = document.createElement(tag);
+        if (cls) n.className = cls; return n;
       }
-      function setTool(t) {
-        state.tool = t; state.drawingOn = true;
-        [d.btnPen, d.btnHi, d.btnEr].forEach(function (b) { b.classList.remove('on'); });
-        if (t === 'pen') d.btnPen.classList.add('on');
-        if (t === 'highlighter') d.btnHi.classList.add('on');
-        if (t === 'eraser') d.btnEr.classList.add('on');
-        // Toggle off if clicking the same tool
-        if (state.lastTool === t) {
-          state.drawingOn = false; state.lastTool = null;
-          [d.btnPen, d.btnHi, d.btnEr].forEach(function (b) { b.classList.remove('on'); });
-        } else {
-          state.lastTool = t;
-        }
-        d.canvas.classList.toggle('drawing', state.drawingOn);
-        toast(state.drawingOn ? (t === 'eraser' ? 'Eraser ON' : 'Pencil drawing — ' + t.toUpperCase()) : 'Drawing OFF');
-      }
-      function openSync() {
-        document.getElementById('cfa-sync-id-show').textContent = state.ownerId || '(none)';
-        document.getElementById('cfa-sync-id-input').value = '';
-        d.syncModal.classList.add('open');
-      }
-      d.syncModal.addEventListener('click', function (e) {
-        if (e.target.id === 'cfa-sync-cancel' || e.target === d.syncModal) {
-          d.syncModal.classList.remove('open');
-        } else if (e.target.id === 'cfa-sync-copy') {
-          var id = state.ownerId || '';
-          if (!id) return toast('No ID yet');
-          navigator.clipboard.writeText(id).then(function () { toast('Copied'); }).catch(function () {
-            try {
-              var ta = document.createElement('textarea'); ta.value = id;
-              document.body.appendChild(ta); ta.select(); document.execCommand('copy');
-              document.body.removeChild(ta); toast('Copied');
-            } catch (_) { toast('Copy failed'); }
-          });
-        } else if (e.target.id === 'cfa-sync-save') {
-          var v = document.getElementById('cfa-sync-id-input').value.trim().toLowerCase();
-          if (!/^[a-f0-9]{32}$/.test(v)) return toast('Need 32-char hex');
-          // Tell parent to update its ownerId; parent will broadcast back
-          try { window.parent.parent.postMessage({ type: 'cfa_owner_change_request', ownerId: v }, '*'); } catch (_) {}
-          // Also update locally
-          state.ownerId = v;
-          d.syncBadge.textContent = shortOwner(v);
-          state.strokes = []; d.notesArea.value = ''; redrawAll();
-          loadFromCloud().catch(function (e) { console.warn('reload', e); });
-          d.syncModal.classList.remove('open');
-          toast('Switched to ' + shortOwner(v));
-        }
-      });
-
-      return d;
     }
 
-    function toast(msg) {
-      var s = dom && dom.status; if (!s) return;
-      s.textContent = msg; s.classList.add('show');
-      clearTimeout(s._t); s._t = setTimeout(function () { s.classList.remove('show'); }, 1400);
+    function selectTool(name, btn) {
+      var same = state.tool === name;
+      state.tool = same ? null : name;
+      [dom.btnPen, dom.btnMrk, dom.btnHi, dom.btnEr]
+        .forEach(function (b) { b.classList.remove('on'); });
+      if (state.tool) btn.classList.add('on');
+      dom.canvas.classList.toggle('drawing', !!state.tool);
+      if (state.tool) {
+        toast(prettyTool(state.tool) + (penOnlyMode ? ' • Pencil only' : ''));
+      } else {
+        toast('Drawing off');
+      }
     }
-
-    function shortOwner(id) { return id ? (id.slice(0, 4) + '…' + id.slice(-4)) : ''; }
-    function escapeHtml(s) { return String(s||'').replace(/[&<>"']/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+    function prettyTool(t) {
+      return ({ pen: 'Pen', marker: 'Marker', highlighter: 'Highlighter', eraser: 'Eraser' })[t] || t;
+    }
 
     // ============================================================
     //  Canvas + drawing
     // ============================================================
     function sizeCanvas() {
+      if (!dom || !dom.canvas) return;
       var w = Math.max(document.documentElement.scrollWidth, window.innerWidth);
       var h = Math.max(document.documentElement.scrollHeight, window.innerHeight);
       var dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -528,24 +694,44 @@
       redrawAll();
     }
 
+    function pageXY(e) {
+      var rect = dom.canvas.getBoundingClientRect();
+      return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    }
+
+    function shouldAccept(e) {
+      // If we've ever seen a pen pointer event, lock to pen-only so finger can scroll.
+      if (e.pointerType === 'pen') {
+        penOnlyMode = true;
+        return true;
+      }
+      if (penOnlyMode) return false;
+      // Otherwise (desktop or pure-touch device with no pencil) accept any input.
+      return true;
+    }
+
     function onPointerDown(e) {
-      if (!state.drawingOn) return;
-      // Only Apple Pencil (or stylus) draws; finger / mouse pass through.
-      if (e.pointerType !== 'pen') return;
+      if (!state.tool) return;
+      if (!shouldAccept(e)) return;
       e.preventDefault();
       try { dom.canvas.setPointerCapture(e.pointerId); } catch (_) {}
-      var pt = pageXY(e);
+      var p = pageXY(e);
+      var preset = THICKNESS_PRESETS[state.thicknessIdx];
+      var t = TOOLS[state.tool];
+      var width = preset[state.tool] !== undefined ? preset[state.tool] : t.stroke;
       state.live = {
         tool: state.tool,
         color: state.color,
-        width: state.tool === 'highlighter' ? 14 : 2.4,
-        opacity: state.tool === 'highlighter' ? 0.35 : 1,
-        points: [[pt.x, pt.y, e.pressure || 0.5]]
+        width: width,
+        alpha: t.alpha,
+        composite: t.composite,
+        points: [[p.x, p.y, e.pressure || 0.5]]
       };
     }
+
     function onPointerMove(e) {
-      if (!state.drawingOn || !state.live) return;
-      if (e.pointerType !== 'pen') return;
+      if (!state.live) return;
+      if (!shouldAccept(e)) return;
       e.preventDefault();
       var pts = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
       for (var i = 0; i < pts.length; i++) {
@@ -554,103 +740,118 @@
       }
       drawIncremental(state.live);
     }
+
     function onPointerUp(e) {
       if (!state.live) return;
-      if (e.pointerType !== 'pen') { state.live = null; return; }
-      // Eraser: any saved stroke that has a point within radius is removed
       if (state.live.tool === 'eraser') {
-        var toRemove = [];
-        var R = 22;
+        // Hit-test saved strokes against the eraser path
+        var R = state.live.width / 2 + 6;
+        var keep = [];
         for (var i = 0; i < state.strokes.length; i++) {
-          var s = state.strokes[i];
-          if (strokeIntersectsPath(s, state.live.points, R)) toRemove.push(i);
+          if (strokeHitsPath(state.strokes[i], state.live.points, R))
+            state.redo.push(state.strokes[i]);
+          else
+            keep.push(state.strokes[i]);
         }
-        if (toRemove.length) {
-          state.strokes = state.strokes.filter(function (_, i) { return toRemove.indexOf(i) === -1; });
+        if (keep.length !== state.strokes.length) {
+          state.strokes = keep;
           redrawAll();
           scheduleSaveInk();
         } else {
-          // Nothing removed; still need redraw to clear the eraser preview
           redrawAll();
         }
       } else {
         state.strokes.push(state.live);
+        state.redo = []; // any new stroke clears redo
         scheduleSaveInk();
       }
       state.live = null;
     }
-    function pageXY(e) {
-      // Translate from viewport to page coordinates (canvas is absolute at 0,0 in document)
-      var rect = dom.canvas.getBoundingClientRect();
-      return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+
+    function applyStyle(ctx, s) {
+      ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      ctx.globalAlpha = s.alpha;
+      ctx.globalCompositeOperation = s.composite;
+      ctx.strokeStyle = s.color;
+      ctx.lineWidth = s.width;
     }
 
-    function drawIncremental(stroke) {
-      // Just redraw the last 3 points for cheap incremental rendering
-      var p = stroke.points;
-      if (p.length < 2) return;
-      var ctx = dom.ctx;
-      applyStyle(ctx, stroke);
-      ctx.beginPath();
-      var i = Math.max(0, p.length - 3);
-      ctx.moveTo(p[i][0], p[i][1]);
-      for (var j = i + 1; j < p.length; j++) ctx.lineTo(p[j][0], p[j][1]);
-      ctx.stroke();
-    }
-    function applyStyle(ctx, stroke) {
-      ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-      if (stroke.tool === 'eraser') {
-        // Eraser doesn't draw — handled on pointerup
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.strokeStyle = 'rgba(255,80,80,0.25)';
-        ctx.lineWidth = 22;
-        return;
-      }
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.globalAlpha = stroke.opacity || 1;
-      ctx.strokeStyle = stroke.color;
-      ctx.lineWidth = stroke.width || 2.4;
-    }
-    function redrawAll() {
-      var ctx = dom.ctx;
-      ctx.save();
-      ctx.setTransform(1,0,0,1,0,0);
-      ctx.clearRect(0, 0, dom.canvas.width, dom.canvas.height);
-      ctx.restore();
-      var dpr = Math.min(window.devicePixelRatio || 1, 2);
-      ctx.setTransform(dpr,0,0,dpr,0,0);
-      for (var i = 0; i < state.strokes.length; i++) drawStroke(state.strokes[i]);
-      if (state.live && state.live.tool !== 'eraser') drawStroke(state.live);
-    }
     function drawStroke(s) {
-      if (!s.points || s.points.length < 2) return;
+      if (!s || !s.points || s.points.length < 1) return;
       var ctx = dom.ctx;
       ctx.save();
       applyStyle(ctx, s);
-      if (s.tool === 'eraser') { ctx.restore(); return; }
       ctx.beginPath();
-      ctx.moveTo(s.points[0][0], s.points[0][1]);
-      for (var i = 1; i < s.points.length; i++) {
-        ctx.lineTo(s.points[i][0], s.points[i][1]);
+      var pts = s.points;
+      if (pts.length === 1) {
+        // Dot
+        ctx.arc(pts[0][0], pts[0][1], s.width / 2, 0, Math.PI * 2);
+        ctx.fillStyle = s.color;
+        ctx.fill();
+      } else {
+        ctx.moveTo(pts[0][0], pts[0][1]);
+        for (var i = 1; i < pts.length - 1; i++) {
+          var mx = (pts[i][0] + pts[i + 1][0]) / 2;
+          var my = (pts[i][1] + pts[i + 1][1]) / 2;
+          ctx.quadraticCurveTo(pts[i][0], pts[i][1], mx, my);
+        }
+        ctx.lineTo(pts[pts.length - 1][0], pts[pts.length - 1][1]);
+        ctx.stroke();
       }
+      ctx.restore();
+    }
+
+    function drawIncremental(s) {
+      // Cheap render for the in-progress stroke: draw last 3 segments
+      var pts = s.points; if (pts.length < 2) return;
+      var ctx = dom.ctx;
+      ctx.save();
+      applyStyle(ctx, s);
+      ctx.beginPath();
+      var i = Math.max(0, pts.length - 3);
+      ctx.moveTo(pts[i][0], pts[i][1]);
+      for (var j = i + 1; j < pts.length; j++) ctx.lineTo(pts[j][0], pts[j][1]);
       ctx.stroke();
       ctx.restore();
     }
-    function strokeIntersectsPath(stroke, eraserPts, R) {
-      // Simple distance check between any saved-stroke point and any eraser point
+
+    function redrawAll() {
+      if (!dom || !dom.ctx) return;
+      var ctx = dom.ctx;
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, dom.canvas.width, dom.canvas.height);
+      ctx.restore();
+      var dpr = Math.min(window.devicePixelRatio || 1, 2);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      for (var i = 0; i < state.strokes.length; i++) drawStroke(state.strokes[i]);
+      if (state.live && state.live.tool !== 'eraser') drawStroke(state.live);
+    }
+
+    function strokeHitsPath(stroke, eraserPts, R) {
+      var R2 = R * R;
       for (var i = 0; i < stroke.points.length; i++) {
         var sp = stroke.points[i];
         for (var j = 0; j < eraserPts.length; j++) {
           var ep = eraserPts[j];
           var dx = sp[0] - ep[0], dy = sp[1] - ep[1];
-          if (dx*dx + dy*dy < R*R) return true;
+          if (dx * dx + dy * dy < R2) return true;
         }
       }
       return false;
     }
+
     function undoStroke() {
-      if (!state.strokes.length) return;
-      state.strokes.pop();
+      if (!state.strokes.length) return toast('Nothing to undo');
+      var s = state.strokes.pop();
+      state.redo.push(s);
+      redrawAll();
+      scheduleSaveInk();
+    }
+    function redoStroke() {
+      if (!state.redo.length) return toast('Nothing to redo');
+      var s = state.redo.pop();
+      state.strokes.push(s);
       redrawAll();
       scheduleSaveInk();
     }
@@ -658,7 +859,7 @@
     // ============================================================
     //  Cloud sync
     // ============================================================
-    function supaUrl(path) { return cfg.url + '/rest/v1/' + path; }
+    function supaUrl(p) { return cfg.url + '/rest/v1/' + p; }
     function supaHeaders(extra) {
       var h = {
         'apikey': cfg.anonKey,
@@ -680,6 +881,7 @@
           rows.forEach(function (row) {
             if (row.kind === 'ink' && row.payload && Array.isArray(row.payload.strokes)) {
               state.strokes = row.payload.strokes;
+              state.redo = [];
             } else if (row.kind === 'note' && row.payload && typeof row.payload.md === 'string') {
               state.noteMd = row.payload.md;
               dom.notesArea.value = row.payload.md;
@@ -687,21 +889,15 @@
             }
           });
           redrawAll();
-          state.ready = true;
-        });
+        })
+        .catch(function (e) { console.warn('[CFA] load', e); });
     }
-    function scheduleSaveInk() {
-      clearTimeout(state.saveTimer);
-      state.saveTimer = setTimeout(saveInk, DEBOUNCE);
-    }
-    function scheduleSaveNote() {
-      clearTimeout(state.noteTimer);
-      state.noteTimer = setTimeout(saveNote, DEBOUNCE);
-    }
+    function scheduleSaveInk()  { clearTimeout(state.saveTimer); state.saveTimer = setTimeout(saveInk,  DEBOUNCE); }
+    function scheduleSaveNote() { clearTimeout(state.noteTimer); state.noteTimer = setTimeout(saveNote, DEBOUNCE); }
     function saveInk()  { return upsert('ink',  { strokes: state.strokes }); }
     function saveNote() {
       return upsert('note', { md: state.noteMd }).then(function () {
-        if (dom && dom.notesStatus) dom.notesStatus.textContent = 'Saved · ' + new Date().toLocaleTimeString();
+        if (dom.notesStatus) dom.notesStatus.textContent = 'Saved · ' + new Date().toLocaleTimeString();
       });
     }
     function upsert(kind, payload) {
@@ -715,37 +911,67 @@
       }]);
       return fetch(supaUrl(TABLE), {
         method: 'POST',
-        headers: supaHeaders({
-          'Prefer': 'resolution=merge-duplicates,return=minimal',
-          'Content-Profile': 'public'
-        }),
+        headers: supaHeaders({ 'Prefer': 'resolution=merge-duplicates,return=minimal' }),
         body: body
       }).then(function (r) {
-        if (!r.ok) {
-          return r.text().then(function (t) {
-            console.warn('[CFA] upsert failed', r.status, t);
-            toast('Save failed (' + r.status + ')');
-          });
-        }
-      }).catch(function (e) {
-        console.warn('[CFA] upsert error', e);
-        toast('Offline — will retry');
-      });
+        if (!r.ok) return r.text().then(function (t) {
+          console.warn('[CFA] save', r.status, t); toast('Save failed');
+        });
+      }).catch(function (e) { console.warn('[CFA] save err', e); toast('Offline'); });
     }
 
-    // Save on unload (navigating away)
+    // Save on unload
     window.addEventListener('beforeunload', function () {
       try {
-        if (state.ownerId && (state.strokes.length || state.noteMd)) {
-          var payloadInk  = JSON.stringify([{ owner_id: state.ownerId, lm_key: cfg.lmKey, kind: 'ink',  payload: { strokes: state.strokes }, updated_at: new Date().toISOString() }]);
-          var payloadNote = JSON.stringify([{ owner_id: state.ownerId, lm_key: cfg.lmKey, kind: 'note', payload: { md: state.noteMd }, updated_at: new Date().toISOString() }]);
-          if (navigator.sendBeacon) {
-            // sendBeacon doesn't allow custom headers — use fetch with keepalive
-            fetch(supaUrl(TABLE), { method: 'POST', headers: supaHeaders({ 'Prefer': 'resolution=merge-duplicates,return=minimal' }), body: payloadInk,  keepalive: true });
-            fetch(supaUrl(TABLE), { method: 'POST', headers: supaHeaders({ 'Prefer': 'resolution=merge-duplicates,return=minimal' }), body: payloadNote, keepalive: true });
-          }
+        if (state.ownerId && state.strokes.length) {
+          fetch(supaUrl(TABLE), {
+            method: 'POST',
+            headers: supaHeaders({ 'Prefer': 'resolution=merge-duplicates,return=minimal' }),
+            body: JSON.stringify([{ owner_id: state.ownerId, lm_key: cfg.lmKey, kind: 'ink', payload: { strokes: state.strokes }, updated_at: new Date().toISOString() }]),
+            keepalive: true
+          });
+        }
+        if (state.ownerId && state.noteMd) {
+          fetch(supaUrl(TABLE), {
+            method: 'POST',
+            headers: supaHeaders({ 'Prefer': 'resolution=merge-duplicates,return=minimal' }),
+            body: JSON.stringify([{ owner_id: state.ownerId, lm_key: cfg.lmKey, kind: 'note', payload: { md: state.noteMd }, updated_at: new Date().toISOString() }]),
+            keepalive: true
+          });
         }
       } catch (_) {}
     });
+
+    // ============================================================
+    //  Helpers
+    // ============================================================
+    function toast(msg) {
+      if (!dom || !dom.toast) return;
+      dom.toast.textContent = msg;
+      dom.toast.classList.add('show');
+      clearTimeout(dom.toast._t);
+      dom.toast._t = setTimeout(function () { dom.toast.classList.remove('show'); }, 1400);
+    }
+    function copyToClipboard(text, cb) {
+      if (!text) return cb && cb(false);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { cb && cb(true); }, function () { fallback(); });
+      } else fallback();
+      function fallback() {
+        try {
+          var ta = document.createElement('textarea');
+          ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+          document.body.appendChild(ta); ta.select();
+          var ok = document.execCommand('copy');
+          document.body.removeChild(ta);
+          cb && cb(ok);
+        } catch (_) { cb && cb(false); }
+      }
+    }
+    function escapeHtml(s) {
+      return String(s || '').replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
   } // bootLm
 })();
