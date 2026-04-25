@@ -121,7 +121,7 @@
     var penOnlyMode = false; // becomes true once we see a pen pointer event
 
     var state = {
-      tool: 'pen',            // start with pen so user can draw immediately
+      tool: null,             // start with no tool — taps go to toolbar / page normally
       color: COLORS[0].value,
       thicknessIdx: 1,        // 0=fine, 1=medium, 2=thick
       strokes: [],            // saved committed strokes
@@ -137,9 +137,6 @@
     var dom = buildUi();
     setupOwner();
     if (state.ownerId) loadFromCloud();
-    // Reflect default-pen state in the UI
-    dom.btnPen.classList.add('on');
-    dom.canvas.classList.add('drawing');
 
     // ----------------------------------------------------------
     //  Owner sync
@@ -180,8 +177,11 @@
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         user-select: none; -webkit-user-select: none;
         touch-action: manipulation;
+        pointer-events: auto !important;
         transition: opacity .2s;
+        isolation: isolate;
       }
+      .cfa-toolbar * { pointer-events: auto !important; }
       @media (prefers-color-scheme: dark) {
         .cfa-toolbar {
           background: linear-gradient(180deg,#2c2e33 0%,#1f2125 100%);
@@ -581,28 +581,54 @@
       d.btnSync.appendChild(d.syncBadge);
       updateOwnerBadge();
 
-      // Wire behaviour
-      d.btnPen.addEventListener('click', function () { selectTool('pen', d.btnPen); });
-      d.btnMrk.addEventListener('click', function () { selectTool('marker', d.btnMrk); });
-      d.btnHi.addEventListener('click',  function () { selectTool('highlighter', d.btnHi); });
-      d.btnEr.addEventListener('click',  function () { selectTool('eraser', d.btnEr); });
+      // Universal tap handler: fires on click OR (synthesised from)
+      // touchend / pointerup, with debounce so it never double-fires.
+      function onTap(el, fn) {
+        var lastFire = 0;
+        var downX = 0, downY = 0, moved = false;
+        function tryFire(e) {
+          if (Date.now() - lastFire < 350) return;
+          lastFire = Date.now();
+          fn(e);
+        }
+        el.addEventListener('pointerdown', function (e) {
+          downX = e.clientX; downY = e.clientY; moved = false;
+        });
+        el.addEventListener('pointermove', function (e) {
+          if (Math.abs(e.clientX - downX) > 8 || Math.abs(e.clientY - downY) > 8) moved = true;
+        });
+        el.addEventListener('pointerup', function (e) {
+          if (moved) return;
+          e.preventDefault(); e.stopPropagation();
+          tryFire(e);
+        });
+        el.addEventListener('click', function (e) {
+          e.preventDefault(); e.stopPropagation();
+          tryFire(e);
+        });
+      }
 
-      d.btnColor.addEventListener('click', function (e) {
-        e.stopPropagation();
+      // Wire behaviour
+      onTap(d.btnPen, function () { selectTool('pen', d.btnPen); });
+      onTap(d.btnMrk, function () { selectTool('marker', d.btnMrk); });
+      onTap(d.btnHi,  function () { selectTool('highlighter', d.btnHi); });
+      onTap(d.btnEr,  function () { selectTool('eraser', d.btnEr); });
+
+      onTap(d.btnColor, function () {
         var rect = d.btnColor.getBoundingClientRect();
         d.colorPop.style.top  = (rect.bottom + 8) + 'px';
         d.colorPop.style.right = (window.innerWidth - rect.right) + 'px';
         d.colorPop.classList.toggle('open');
       });
-      document.addEventListener('click', function (e) {
-        if (!d.colorPop.contains(e.target) && e.target !== d.btnColor) {
+      document.addEventListener('pointerdown', function (e) {
+        if (!d.colorPop.contains(e.target) && !d.btnColor.contains(e.target)) {
           d.colorPop.classList.remove('open');
         }
       });
 
-      d.btnUndo.addEventListener('click', undoStroke);
-      d.btnRedo.addEventListener('click', redoStroke);
-      d.btnClear.addEventListener('click', function () {
+      onTap(d.btnUndo, undoStroke);
+      onTap(d.btnRedo, redoStroke);
+      onTap(d.btnClear, function () {
         if (!state.strokes.length) return toast('Nothing to clear');
         if (!confirm('Erase all ink on this learning module?')) return;
         state.redo = state.strokes.slice();
@@ -611,18 +637,18 @@
         scheduleSaveInk();
       });
 
-      d.btnNotes.addEventListener('click', function () {
+      onTap(d.btnNotes, function () {
         d.notes.classList.toggle('open');
         if (d.notes.classList.contains('open')) setTimeout(function () { d.notesArea.focus(); }, 320);
       });
-      nClose.addEventListener('click', function () { d.notes.classList.remove('open'); });
+      onTap(nClose, function () { d.notes.classList.remove('open'); });
       d.notesArea.addEventListener('input', function () {
         state.noteMd = d.notesArea.value;
         d.notesStatus.textContent = 'Saving…';
         scheduleSaveNote();
       });
 
-      d.btnSync.addEventListener('click', function () {
+      onTap(d.btnSync, function () {
         document.getElementById('cfa-id-show').textContent = state.ownerId || '—';
         document.getElementById('cfa-id-input').value = '';
         d.modal.classList.add('open');
@@ -666,6 +692,11 @@
         var b = document.createElement('button');
         b.className = 'cfa-tb-btn'; b.title = title;
         b.innerHTML = svgHtml; b.type = 'button';
+        b.style.touchAction = 'manipulation';
+        // Stop touchstart from bubbling so the canvas overlay can never
+        // grab a pen/finger tap that lands on a toolbar button.
+        b.addEventListener('touchstart', function (e) { e.stopPropagation(); }, { passive: true });
+        b.addEventListener('pointerdown', function (e) { e.stopPropagation(); }, { passive: true });
         return b;
       }
       function el(tag, cls) {
