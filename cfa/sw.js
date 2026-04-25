@@ -1,6 +1,6 @@
 
 // cfa-sw.js — very small cache-first service worker
-const CACHE = 'cfa-l1-guide-v4-annotate-fix';
+const CACHE = 'cfa-l1-guide-v5-annotate-fix2';
 const ASSETS = [
   './',
   './index.html',
