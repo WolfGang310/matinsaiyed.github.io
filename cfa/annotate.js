@@ -121,7 +121,7 @@
     var penOnlyMode = false; // becomes true once we see a pen pointer event
 
     var state = {
-      tool: null,             // 'pen' | 'marker' | 'highlighter' | 'eraser' | null (off)
+      tool: 'pen',            // start with pen so user can draw immediately
       color: COLORS[0].value,
       thicknessIdx: 1,        // 0=fine, 1=medium, 2=thick
       strokes: [],            // saved committed strokes
@@ -137,6 +137,9 @@
     var dom = buildUi();
     setupOwner();
     if (state.ownerId) loadFromCloud();
+    // Reflect default-pen state in the UI
+    dom.btnPen.classList.add('on');
+    dom.canvas.classList.add('drawing');
 
     // ----------------------------------------------------------
     //  Owner sync
@@ -298,6 +301,9 @@
       .cfa-canvas {
         position: absolute; top: 0; left: 0;
         pointer-events: none; z-index: 2147483640;
+        -webkit-user-select: none; user-select: none;
+        -webkit-touch-callout: none;
+        -webkit-tap-highlight-color: transparent;
       }
       .cfa-canvas.drawing { pointer-events: auto; touch-action: none; cursor: crosshair; }
 
@@ -640,12 +646,19 @@
         }
       });
 
-      // Pointer handling on canvas
+      // Pointer handling on canvas — Pointer Events first, Touch as fallback for old iOS
       d.canvas.addEventListener('pointerdown', onPointerDown);
       d.canvas.addEventListener('pointermove', onPointerMove);
       d.canvas.addEventListener('pointerup',   onPointerUp);
       d.canvas.addEventListener('pointercancel', onPointerUp);
       d.canvas.addEventListener('pointerleave',  onPointerUp);
+
+      // Touch fallback (iOS Safari sometimes won't fire pointer events
+      // for Apple Pencil if the page hasn't received user-agent stylesheets)
+      d.canvas.addEventListener('touchstart', onTouchStart, { passive: false });
+      d.canvas.addEventListener('touchmove',  onTouchMove,  { passive: false });
+      d.canvas.addEventListener('touchend',   onTouchEnd,   { passive: false });
+      d.canvas.addEventListener('touchcancel',onTouchEnd,   { passive: false });
 
       return d;
 
@@ -766,6 +779,43 @@
         scheduleSaveInk();
       }
       state.live = null;
+    }
+
+    // Touch fallback: build a synthetic pointer-like event from a Touch
+    function syntheticFromTouch(touch) {
+      // Apple Pencil reports touchType === 'stylus' on iOS Safari. Treat as pen.
+      var pt = touch.touchType === 'stylus' ? 'pen' : 'touch';
+      return {
+        clientX: touch.clientX,
+        clientY: touch.clientY,
+        pointerType: pt,
+        pointerId: touch.identifier,
+        pressure: touch.force || 0.5,
+        preventDefault: function () {}
+      };
+    }
+    function onTouchStart(e) {
+      // Touch events fire alongside pointer events on modern iOS — but
+      // ONLY pointer events have pointerType. If pointer fired first,
+      // state.live is already set; ignore the touch dupe. If pointer
+      // didn't fire (legacy iOS, certain WKWebView modes), use touch.
+      if (state.live) return;
+      if (!state.tool) return;
+      e.preventDefault();
+      var t = e.changedTouches[0]; if (!t) return;
+      onPointerDown(syntheticFromTouch(t));
+    }
+    function onTouchMove(e) {
+      if (!state.live) return;
+      e.preventDefault();
+      var t = e.changedTouches[0]; if (!t) return;
+      onPointerMove(syntheticFromTouch(t));
+    }
+    function onTouchEnd(e) {
+      if (!state.live) return;
+      e.preventDefault();
+      var t = e.changedTouches[0]; if (!t) return;
+      onPointerUp(syntheticFromTouch(t));
     }
 
     function applyStyle(ctx, s) {
