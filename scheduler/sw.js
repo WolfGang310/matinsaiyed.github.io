@@ -1,4 +1,4 @@
-const CACHE_NAME = 'test-center-scheduler-v3-rollback';
+const CACHE_NAME = 'test-center-scheduler-v4-precfa';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
