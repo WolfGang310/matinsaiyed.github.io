@@ -993,7 +993,10 @@ function retryQuiz(){
 
 <!-- ===== Apple Notes-inspired drawing surface (Pencil Pro features) ===== -->
 <style id="cfa-draw-styles">
-  /* Canvas — full viewport, fixed, captures pointer when armed */
+  /* Canvas — full viewport, fixed, ALWAYS pointer-events:none for the
+     element itself; pen drawing is captured via document-level pointer
+     events that filter on pointerType=='pen'. This keeps finger
+     scrolling 100% native on iPad. */
   #cfa-canvas {
     position: fixed; top: 0; left: 0;
     width: 100vw; height: 100vh;
@@ -1003,11 +1006,14 @@ function retryQuiz(){
     -webkit-tap-highlight-color: transparent;
     background: transparent;
   }
-  #cfa-canvas.on {
+  /* When user explicitly chose "finger draw" we'll capture touches.
+     Default = pen only. */
+  #cfa-canvas.touch-draw {
     pointer-events: auto;
     touch-action: none;
-    cursor: crosshair;
   }
+  /* Add bottom padding to body so the toolbar doesn't cover LM nav */
+  body { padding-bottom: 90px !important; }
   /* Hover preview dot for Pencil Pro */
   #cfa-hover {
     position: fixed; pointer-events: none; z-index: 10001;
@@ -1494,9 +1500,8 @@ function retryQuiz(){
       TOOL_BUTTONS[t].classList.toggle('on', t === state.tool);
     });
     state.drawingOn = !!state.tool;
-    canvas.classList.toggle('on', state.drawingOn);
     showStatus(state.drawingOn
-      ? prettyTool(state.tool) + (state.penOnlyMode ? ' · Pencil only' : '')
+      ? prettyTool(state.tool) + ' · Pencil/mouse only'
       : 'Drawing off');
     submenu.classList.remove('show');
   }
@@ -1636,57 +1641,32 @@ function retryQuiz(){
     ctx.fillStyle = s.color;
   }
 
-  // Smooth bezier-ish path with variable width based on stroke point pressures
+  // Render a saved stroke. Variable width based on per-point pressure.
+  // No multi-pass offsets — that caused jitter. Pencil = thinner, slightly
+  // less alpha for a softer look.
   function drawStroke(s) {
     if (!s || !s.points || s.points.length === 0) return;
     var pts = s.points;
+    ctx.save();
+    applyStyle(s);
     if (pts.length === 1) {
-      // dot
-      ctx.save();
-      applyStyle(s);
+      var p = pts[0];
       ctx.beginPath();
-      ctx.arc(pts[0][0], pts[0][1], (s.baseWidth * (pts[0][2] || 0.5)) / 2, 0, Math.PI * 2);
+      ctx.arc(p[0], p[1], s.baseWidth / 2, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
       return;
     }
-    ctx.save();
-    applyStyle(s);
-    // Variable-width path drawn as a sequence of short segments,
-    // each with the width from the segment's starting pressure.
+    var pr = s.pressureRange || [1, 1];
     for (var i = 0; i < pts.length - 1; i++) {
       var a = pts[i], b = pts[i + 1];
-      // Apply pressure curve based on tool's pressureRange
-      var pr = s.pressureRange || [1, 1];
       var pa = pr[0] + (pr[1] - pr[0]) * (a[2] || 0.5);
       var pb = pr[0] + (pr[1] - pr[0]) * (b[2] || 0.5);
-      var w  = s.baseWidth * (pa + pb) / 2;
-      // For pencil (tilt), draw multiple slightly-offset strokes for grainy texture
-      if (s.tool === 'pencil') {
-        ctx.lineWidth = Math.max(0.3, w * 0.7);
-        ctx.globalAlpha = (s.alpha || 1) * 0.55;
-        for (var j = 0; j < 3; j++) {
-          var ox = (Math.sin(i * 7 + j * 11) * 0.4);
-          var oy = (Math.cos(i * 9 + j * 13) * 0.4);
-          ctx.beginPath();
-          ctx.moveTo(a[0] + ox, a[1] + oy);
-          ctx.lineTo(b[0] + ox, b[1] + oy);
-          ctx.stroke();
-        }
-      } else {
-        ctx.lineWidth = w;
-        ctx.beginPath();
-        ctx.moveTo(a[0], a[1]);
-        // quad through b for smoothing
-        if (i + 2 < pts.length) {
-          var c = pts[i + 2];
-          var mx = (b[0] + c[0]) / 2, my = (b[1] + c[1]) / 2;
-          ctx.quadraticCurveTo(b[0], b[1], mx, my);
-        } else {
-          ctx.lineTo(b[0], b[1]);
-        }
-        ctx.stroke();
-      }
+      ctx.lineWidth = s.baseWidth * (pa + pb) / 2;
+      ctx.beginPath();
+      ctx.moveTo(a[0], a[1]);
+      ctx.lineTo(b[0], b[1]);
+      ctx.stroke();
     }
     ctx.restore();
   }
@@ -1719,15 +1699,29 @@ function retryQuiz(){
 
   // ===========================================================
   //  Pointer / touch handling
+  //
+  //  Strategy: listen at the DOCUMENT level (not on the canvas),
+  //  filter for pointerType==='pen' (or mouse on desktop).
+  //  This way the canvas can stay pointer-events:none and finger
+  //  scrolling works 100% natively on iPad.
   // ===========================================================
-  function shouldAccept(e) {
-    if (state.pinching) return false;
-    if (e.pointerType === 'pen') {
-      state.penOnlyMode = true;
-      return true;
-    }
-    if (state.penOnlyMode) return false;  // finger goes to scrolling on iPad once pen used
-    return true;
+  var rafPending = false;
+  function scheduleRedraw() {
+    if (rafPending) return;
+    rafPending = true;
+    requestAnimationFrame(function () {
+      rafPending = false;
+      redraw();
+    });
+  }
+
+  function isDrawingInput(e) {
+    if (!state.tool) return false;
+    if (e.pointerType === 'pen') return true;
+    if (e.pointerType === 'mouse') return true;  // desktop testing
+    // Finger drawing: only when user explicitly opted in (touch-draw class)
+    if (e.pointerType === 'touch' && canvas.classList.contains('touch-draw')) return true;
+    return false;
   }
 
   function makeStroke(e, x, y) {
@@ -1757,22 +1751,54 @@ function retryQuiz(){
     return false;
   }
 
-  function onDown(e, x, y) {
-    if (!state.tool) return;
-    if (!shouldAccept(e)) return;
-    if (e.preventDefault) e.preventDefault();
-    try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
-    state.live = makeStroke(e, x, y);
-    redraw();
+  // Draw one fresh segment incrementally (no full clear) — fast and smooth.
+  function drawIncrement(s) {
+    var pts = s.points;
+    if (pts.length < 2) return;
+    var i = pts.length - 2;
+    var a = pts[i], b = pts[i + 1];
+    ctx.save();
+    applyStyle(s);
+    var pr = s.pressureRange || [1, 1];
+    var pa = pr[0] + (pr[1] - pr[0]) * (a[2] || 0.5);
+    var pb = pr[0] + (pr[1] - pr[0]) * (b[2] || 0.5);
+    ctx.lineWidth = s.baseWidth * (pa + pb) / 2;
+    ctx.beginPath();
+    ctx.moveTo(a[0], a[1]);
+    ctx.lineTo(b[0], b[1]);
+    ctx.stroke();
+    ctx.restore();
   }
-  function onMove(e, x, y) {
-    if (!state.live) return;
-    if (!shouldAccept(e)) return;
-    if (e.preventDefault) e.preventDefault();
-    state.live.points.push([x, y, e.pressure || 0.5]);
-    redraw();
+
+  function onDown(e) {
+    if (!isDrawingInput(e)) return;
+    if (state.pinching) return;
+    e.preventDefault();
+    state.live = makeStroke(e, e.clientX, e.clientY);
+    drawIncrement(state.live);
   }
-  function onUp() {
+  function onMove(e) {
+    if (state.live) {
+      e.preventDefault();
+      // Skip points that are too close (1px-jitter filter)
+      var last = state.live.points[state.live.points.length - 1];
+      var dx = e.clientX - last[0], dy = e.clientY - last[1];
+      if (dx * dx + dy * dy < 1.2) return;
+      state.live.points.push([e.clientX, e.clientY, e.pressure || 0.5]);
+      drawIncrement(state.live);  // no full redraw
+      return;
+    }
+    // Hover preview for Pencil Pro
+    if (e.pointerType === 'pen' && state.drawingOn) {
+      hover.style.left = e.clientX + 'px';
+      hover.style.top = e.clientY + 'px';
+      hover.style.color = state.color;
+      hover.classList.add('show');
+    } else {
+      hover.classList.remove('show');
+    }
+  }
+  function onUp(e) {
     if (!state.live) return;
     if (state.live.tool === 'eraser') {
       var R = state.live.baseWidth / 2 + 8;
@@ -1783,74 +1809,62 @@ function retryQuiz(){
         } else keep.push(state.strokes[i]);
       }
       if (keep.length !== state.strokes.length) {
-        state.strokes = keep; save();
+        state.strokes = keep;
       }
-    } else {
-      state.strokes.push(state.live);
-      state.redo = [];
+      // After eraser path ends, full redraw to clear preview
+      state.live = null;
+      redraw();
       save();
-    }
-    state.live = null;
-    redraw();
-  }
-
-  // Pointer events (mouse, pen, also touch on modern browsers)
-  canvas.addEventListener('pointerdown', function (e) {
-    if (e.pointerType === 'touch' && e.isPrimary === false) return;
-    onDown(e, e.clientX, e.clientY);
-  });
-  canvas.addEventListener('pointermove', function (e) {
-    onMove(e, e.clientX, e.clientY);
-    // Hover preview for Pencil Pro
-    if (e.pointerType === 'pen' && !state.live && state.drawingOn) {
-      hover.style.left = e.clientX + 'px';
-      hover.style.top = e.clientY + 'px';
-      hover.style.color = state.color;
-      hover.classList.add('show');
-    } else {
-      hover.classList.remove('show');
-    }
-  });
-  canvas.addEventListener('pointerup', onUp);
-  canvas.addEventListener('pointercancel', onUp);
-  canvas.addEventListener('pointerleave', function () {
-    hover.classList.remove('show');
-    onUp();
-  });
-
-  // Touch fallback: detect pinch (2 fingers) and disable drawing during it
-  canvas.addEventListener('touchstart', function (e) {
-    if (e.touches.length >= 2) {
-      state.pinching = true;
-      onUp(); // cancel any in-progress stroke
       return;
     }
-    if (state.live) return; // pointer event already in progress
+    // Pen-family stroke: commit
+    state.strokes.push(state.live);
+    state.redo = [];
+    state.live = null;
+    save();
+    // No full redraw needed — incremental segments are already on canvas
+  }
+
+  // Document-level pointer events. This is the trick that lets finger
+  // touches scroll natively (canvas is pointer-events:none) while still
+  // letting Pencil/mouse draw.
+  document.addEventListener('pointerdown', onDown);
+  document.addEventListener('pointermove', onMove);
+  document.addEventListener('pointerup', onUp);
+  document.addEventListener('pointercancel', onUp);
+
+  // iOS Safari legacy: touch events with touchType==='stylus' may be
+  // dispatched without corresponding pointer events. Catch those too.
+  document.addEventListener('touchstart', function (e) {
+    if (e.touches.length >= 2) { state.pinching = true; if (state.live) onUp(e); return; }
     var t = e.changedTouches[0]; if (!t) return;
-    e.preventDefault();
-    onDown({ pointerType: t.touchType === 'stylus' ? 'pen' : 'touch',
-             pointerId: t.identifier,
-             pressure: t.force || 0.5,
-             preventDefault: function () {} },
-           t.clientX, t.clientY);
+    if (t.touchType === 'stylus' && !state.live) {
+      e.preventDefault();
+      onDown({
+        pointerType: 'pen',
+        clientX: t.clientX, clientY: t.clientY,
+        pressure: t.force || 0.5,
+        preventDefault: function () {}
+      });
+    }
   }, { passive: false });
-  canvas.addEventListener('touchmove', function (e) {
-    if (e.touches.length >= 2) { onUp(); return; }
+  document.addEventListener('touchmove', function (e) {
+    if (e.touches.length >= 2) { if (state.live) onUp(e); return; }
     if (!state.live) return;
-    e.preventDefault();
     var t = e.changedTouches[0]; if (!t) return;
-    onMove({ pointerType: t.touchType === 'stylus' ? 'pen' : 'touch',
-             pressure: t.force || 0.5,
-             preventDefault: function () {} },
-           t.clientX, t.clientY);
+    if (t.touchType === 'stylus') {
+      e.preventDefault();
+      onMove({
+        pointerType: 'pen',
+        clientX: t.clientX, clientY: t.clientY,
+        pressure: t.force || 0.5,
+        preventDefault: function () {}
+      });
+    }
   }, { passive: false });
-  canvas.addEventListener('touchend', function (e) {
+  document.addEventListener('touchend', function (e) {
     if (e.touches.length === 0) state.pinching = false;
-    onUp();
-  });
-  canvas.addEventListener('touchcancel', function () {
-    state.pinching = false;
-    onUp();
+    if (state.live) onUp(e);
   });
 
   // ===========================================================
