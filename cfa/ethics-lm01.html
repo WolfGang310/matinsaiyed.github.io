@@ -1887,7 +1887,7 @@ function retryQuiz(){
   //  Detects straight lines, circles, and axis-aligned rectangles.
   //  Returns a replacement polyline of points, or null if no match.
   // -----------------------------------------------------------
-  function detectShape(pts) {
+  function detectShape(pts, strict) {
     if (!pts || pts.length < 8) return null;
     var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     var pathLen = 0;
@@ -1903,14 +1903,20 @@ function retryQuiz(){
       }
     }
     var w = maxX - minX, h = maxY - minY;
-    if (w < 30 && h < 30) return null;  // too small — probably a tap
+    // Reject anything smaller than ~3 letters tall — protects handwriting.
+    var minDim = strict ? 120 : 30;
+    if (Math.max(w, h) < minDim) return null;
     var diag = Math.sqrt(w * w + h * h);
     var first = pts[0], last = pts[pts.length - 1];
     var endGap = Math.hypot(first[0] - last[0], first[1] - last[1]);
     var closed = endGap < Math.min(w, h) * 0.30 + 20;
 
     // 1. LINE — drawn path is nearly the bbox diagonal (i.e. straight).
-    if (pathLen < diag * 1.18) {
+    //    Strict mode demands BOTH a long absolute path and a tighter
+    //    straightness ratio so an incidental flick isn't snapped.
+    var lineRatio = strict ? 1.10 : 1.18;
+    var minLineLen = strict ? 140 : 0;
+    if (pathLen < diag * lineRatio && pathLen >= minLineLen) {
       return { type: 'line', poly: samplePolyline([first, last], 32) };
     }
 
@@ -1932,13 +1938,16 @@ function retryQuiz(){
     }
     var rStdNorm = Math.sqrt(v / radii.length) / avgR;
     var aspect = Math.max(w, h) / Math.max(1, Math.min(w, h));
-    if (rStdNorm < 0.18 && aspect < 1.4) {
+    var circleVar = strict ? 0.13 : 0.18;
+    var circleAspect = strict ? 1.30 : 1.4;
+    if (rStdNorm < circleVar && aspect < circleAspect) {
       return { type: 'circle', poly: sampleCircle(cx, cy, avgR, 64) };
     }
 
     // 3. RECTANGLE — perimeter ≈ 2*(w+h).
     var perim = 2 * (w + h);
-    if (Math.abs(pathLen - perim) / perim < 0.20) {
+    var rectTol = strict ? 0.14 : 0.20;
+    if (Math.abs(pathLen - perim) / perim < rectTol) {
       return { type: 'rect', poly: sampleRect(minX, minY, w, h, 12) };
     }
     return null;
@@ -2135,7 +2144,11 @@ function retryQuiz(){
       return;
     }
     if (state.live.tool === 'eraser') {
-      var R = WIDTHS[state.widthIdx].px * (TOOLS.eraser.widthMul || 1.4) / 2 + 8;
+      // Eraser radius is keyed off the pen-width preset (WIDTHS items
+      // have no .px field — that was a bug that made R = NaN and the
+      // eraser appear dead). 1.6× pen width, plus a small floor so
+      // even the thinnest setting still erases something useful.
+      var R = WIDTHS[state.widthIdx].pen * 1.6 + 12;
       var keep = [];
       var changed = 0;
       for (var i = 0; i < state.strokes.length; i++) {
@@ -2169,16 +2182,19 @@ function retryQuiz(){
     } else {
       // Drop predicted points before final commit + render
       state.live.predicted = null;
-      // Apple-Notes-style shape snap: if user held still at the end of
-      // the stroke for >= 500ms and the stroke is recognisable as a line,
-      // circle, or rectangle, swap the freehand points for a perfect
-      // geometric polyline. Pen + marker only — pencil and highlighter
-      // skip snapping (they're meant to look hand-drawn).
+      // Apple-Notes-style shape snap. The previous threshold (500 ms +
+      // size > 30 px) was too loose — handwritten letters with brief
+      // end-pauses got snapped to perfect lines, which read as "glitchy
+      // line breaks". Tightened: 1.0 s hold AND stroke must be at least
+      // 120 px in its longest dimension (well above letter-height) AND
+      // the user must have a non-trivial path (line snap also requires
+      // an explicit minimum length so a quick straight slash isn't
+      // accidentally snapped). Pen + marker only.
       var snapTools = (state.live.tool === 'pen' || state.live.tool === 'marker');
       var heldStill = state.live.lastMoveTime &&
-        (Date.now() - state.live.lastMoveTime) >= 500;
-      if (snapTools && heldStill) {
-        var shape = detectShape(state.live.points);
+        (Date.now() - state.live.lastMoveTime) >= 1000;
+      if (snapTools && heldStill && state.live.points.length >= 12) {
+        var shape = detectShape(state.live.points, /*strict=*/true);
         if (shape) {
           state.live.points = shape.poly;
           state.live.snapped = shape.type;
@@ -2188,17 +2204,9 @@ function retryQuiz(){
       updatePath(state.live, true);
       state.strokes.push(state.live);
       state.redo = [];
-      // Diagnostic: show whether the device is actually sending varying
-      // pressure. If min == max, pressure isn't reaching us (mouse-style
-      // 0.5 every time). If they differ, the Pencil is reporting real data.
-      if (state.live.pMin !== undefined && state.live.pMax !== undefined) {
-        var pmin = state.live.pMin.toFixed(2);
-        var pmax = state.live.pMax.toFixed(2);
-        var msg = (pmin === pmax)
-          ? 'No pressure data (' + pmin + ')'
-          : 'Pressure ' + pmin + ' → ' + pmax;
-        showStatus(msg);
-      }
+      // (Pressure-diagnostic toast removed — useful during initial
+      // debug, but it fires on every stroke and reads as visual noise.
+      // Pressure is auto-handled now via simulatePressure fallback.)
     }
     state.live = null;
     save();
