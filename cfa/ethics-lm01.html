@@ -993,27 +993,22 @@ function retryQuiz(){
 
 <!-- ===== Apple Notes-inspired drawing surface (Pencil Pro features) ===== -->
 <style id="cfa-draw-styles">
-  /* Canvas — full viewport, fixed, ALWAYS pointer-events:none for the
-     element itself; pen drawing is captured via document-level pointer
-     events that filter on pointerType=='pen'. This keeps finger
-     scrolling 100% native on iPad. */
+  /* Canvas is part of the document flow (position:absolute over body) —
+     this is the ONLY way ink stays anchored through scroll AND
+     pinch-zoom on iOS. The browser scrolls and zooms the canvas along
+     with content, no JS translate needed.
+     Always pointer-events:none — drawing is captured via document-level
+     pointer events that filter on pointerType==='pen'. */
   #cfa-canvas {
-    position: fixed; top: 0; left: 0;
-    width: 100vw; height: 100vh;
+    position: absolute; top: 0; left: 0;
     pointer-events: none; z-index: 9999;
     -webkit-user-select: none; user-select: none;
     -webkit-touch-callout: none;
     -webkit-tap-highlight-color: transparent;
     background: transparent;
   }
-  /* When user explicitly chose "finger draw" we'll capture touches.
-     Default = pen only. */
-  #cfa-canvas.touch-draw {
-    pointer-events: auto;
-    touch-action: none;
-  }
-  /* Add bottom padding to body so the toolbar doesn't cover LM nav */
-  body { padding-bottom: 90px !important; }
+  /* Body needs to be the positioning context for the absolute canvas. */
+  body { position: relative; padding-bottom: 90px !important; }
   /* Hover preview dot for Pencil Pro */
   #cfa-hover {
     position: fixed; pointer-events: none; z-index: 10001;
@@ -1663,26 +1658,22 @@ function retryQuiz(){
     }
   } catch (_) {}
 
-  // ===========================================================
-  //  Scroll: redraw so ink stays anchored to page content
-  //  (cheap because canvas is full-viewport and we just re-render)
-  // ===========================================================
-  var scrollPending = false;
-  window.addEventListener('scroll', function () {
-    if (scrollPending) return;
-    scrollPending = true;
-    requestAnimationFrame(function () {
-      scrollPending = false;
-      redraw();
-    });
-  }, { passive: true });
+  // No scroll listener needed: canvas is part of the document flow,
+  // so the browser scrolls and zooms it together with content.
+  // Pinch-zoom now also "just works" because the canvas is part of
+  // what the browser is zooming.
 
   // ===========================================================
-  //  Canvas sizing (DPR-aware)
+  //  Canvas sizing (DPR-aware, document-sized)
+  //  Canvas covers the full document so ink anchors to content.
+  //  Re-runs whenever the document height changes (step swap, images
+  //  load, viewport resize).
   // ===========================================================
+  function docW() { return Math.max(document.documentElement.scrollWidth,  window.innerWidth); }
+  function docH() { return Math.max(document.documentElement.scrollHeight, window.innerHeight); }
   function size() {
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
-    var w = window.innerWidth, h = window.innerHeight;
+    var w = docW(), h = docH();
     canvas.style.width = w + 'px';
     canvas.style.height = h + 'px';
     canvas.width = Math.round(w * dpr);
@@ -1691,6 +1682,10 @@ function retryQuiz(){
     redraw();
   }
   window.addEventListener('resize', size);
+  // Watch for content-driven size changes (step swap, image load)
+  try {
+    new ResizeObserver(function () { size(); }).observe(document.body);
+  } catch (_) {}
 
   // ===========================================================
   //  Rendering
@@ -1740,11 +1735,10 @@ function retryQuiz(){
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.restore();
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
-    // Translate by scroll offset so PAGE-coord strokes render at the
-    // correct viewport position. Stroke storage is in page coords —
-    // they don't change as the user scrolls. The canvas itself is
-    // position:fixed, so we shift the drawing transform instead.
-    ctx.setTransform(dpr, 0, 0, dpr, -window.scrollX * dpr, -window.scrollY * dpr);
+    // Canvas is position:absolute at document (0,0) so canvas coords ==
+    // document coords. Stored stroke points are in document coords too —
+    // no translation needed.
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     state.strokes.forEach(drawStroke);
     if (state.live && state.live.tool !== 'eraser') drawStroke(state.live);
     if (state.live && state.live.tool === 'eraser') {
@@ -1818,7 +1812,7 @@ function retryQuiz(){
   }
 
   // Draw one fresh segment incrementally (no full clear) — fast and smooth.
-  // Set transform to translate page coords -> viewport before drawing.
+  // Canvas is at document (0,0) so stored doc coords map directly.
   function drawIncrement(s) {
     var pts = s.points;
     if (pts.length < 2) return;
@@ -1826,8 +1820,7 @@ function retryQuiz(){
     var a = pts[i], b = pts[i + 1];
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
     ctx.save();
-    ctx.setTransform(dpr, 0, 0, dpr,
-      -window.scrollX * dpr, -window.scrollY * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     applyStyle(s);
     var pr = s.pressureRange || [1, 1];
     var pa = pr[0] + (pr[1] - pr[0]) * (a[2] || 0.5);
