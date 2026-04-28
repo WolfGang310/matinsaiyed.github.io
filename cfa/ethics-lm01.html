@@ -1268,16 +1268,18 @@ function retryQuiz(){
     '#1d1d1f', '#e23b3b', '#f29423', '#f5c518',
     '#2da44e', '#1f6feb', '#7c3aed', '#db2777'
   ];
-  // perfect-freehand options per tool — tuned for Apple Notes feel:
-  //   thinning: small (0-0.4) so pressure changes are subtle (no wobble)
-  //   smoothing: small (0.2-0.4) — clean noise without adding latency
-  //   streamline: small (0.2-0.35) — tracks pen tip closely (no lag)
-  //   no start/end taper — cleaner stroke ends
+  // perfect-freehand per-tool config:
+  //   thinning   — pressure→width range. 0.5 = clear Apple-Notes-like
+  //                taper; lower = subtle; 0 = uniform.
+  //   smoothing  — input filtering. Higher = cleans slow-stroke noise,
+  //                costs latency.
+  //   streamline — input lerp. Higher = smoother slow strokes (lerps
+  //                toward pen tip), still tracks fast strokes.
   var TOOLS = {
-    pen:         { alpha: 1.0,  thinning: 0.30, smoothing: 0.30, streamline: 0.28 },
-    pencil:      { alpha: 0.85, thinning: 0.40, smoothing: 0.20, streamline: 0.25 },
-    marker:      { alpha: 1.0,  thinning: 0.05, smoothing: 0.35, streamline: 0.35 },
-    highlighter: { alpha: 0.30, thinning: 0.00, smoothing: 0.40, streamline: 0.35 },
+    pen:         { alpha: 1.0,  thinning: 0.55, smoothing: 0.42, streamline: 0.50 },
+    pencil:      { alpha: 0.85, thinning: 0.65, smoothing: 0.30, streamline: 0.45 },
+    marker:      { alpha: 1.0,  thinning: 0.10, smoothing: 0.45, streamline: 0.55 },
+    highlighter: { alpha: 0.30, thinning: 0.00, smoothing: 0.50, streamline: 0.55 },
     eraser:      { alpha: 0,    thinning: 0,    smoothing: 0,    streamline: 0    }
   };
   var WIDTHS = [
@@ -1644,10 +1646,12 @@ function retryQuiz(){
   function pushPoint(x, y, pressure) {
     var last = state.live.points[state.live.points.length - 1];
     var dx = x - last[0], dy = y - last[1];
-    // Only drop true duplicates (< 0.04 px²) — keep all micro-detail so
-    // perfect-freehand's smoothing has rich input to work with.
     if (dx * dx + dy * dy < 0.04) return;
-    state.live.points.push([x, y, pressure != null ? pressure : 0.5]);
+    var p = pressure != null ? pressure : 0.5;
+    state.live.points.push([x, y, p]);
+    // Track min/max pressure for diagnostic readout
+    if (state.live.pMin === undefined || p < state.live.pMin) state.live.pMin = p;
+    if (state.live.pMax === undefined || p > state.live.pMax) state.live.pMax = p;
   }
   function onMove(e) {
     if (state.live) {
@@ -1691,6 +1695,17 @@ function retryQuiz(){
       updatePath(state.live, true);
       state.strokes.push(state.live);
       state.redo = [];
+      // Diagnostic: show whether the device is actually sending varying
+      // pressure. If min == max, pressure isn't reaching us (mouse-style
+      // 0.5 every time). If they differ, the Pencil is reporting real data.
+      if (state.live.pMin !== undefined && state.live.pMax !== undefined) {
+        var pmin = state.live.pMin.toFixed(2);
+        var pmax = state.live.pMax.toFixed(2);
+        var msg = (pmin === pmax)
+          ? 'No pressure data (' + pmin + ')'
+          : 'Pressure ' + pmin + ' → ' + pmax;
+        showStatus(msg);
+      }
     }
     state.live = null;
     save();
