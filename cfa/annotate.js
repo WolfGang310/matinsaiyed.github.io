@@ -309,18 +309,30 @@
       .cfa-canvas {
         position: fixed; top: 0; left: 0;
         width: 100vw; height: 100vh;
-        pointer-events: none; z-index: 2147483640;
+        pointer-events: none; z-index: 2147483645;
         -webkit-user-select: none; user-select: none;
         -webkit-touch-callout: none;
         -webkit-tap-highlight-color: transparent;
         background: transparent;
       }
       .cfa-canvas.drawing {
-        pointer-events: auto;
-        touch-action: none;
+        pointer-events: auto !important;
+        touch-action: none !important;
         cursor: crosshair;
       }
-      .cfa-canvas.flash { background: rgba(29,78,216,0.06); transition: background .25s; }
+      .cfa-canvas.flash { background: rgba(29,78,216,0.08); transition: background .2s; }
+      /* Drawing-active body indicator so user knows a tool is armed */
+      .cfa-mode-pill {
+        position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);
+        padding: 7px 14px; border-radius: 999px;
+        background: linear-gradient(135deg,#1d4ed8,#7c3aed); color: #fff;
+        font: 600 12px/1 -apple-system, sans-serif;
+        letter-spacing: 0.04em; text-transform: uppercase;
+        box-shadow: 0 6px 18px rgba(29,78,216,0.35);
+        z-index: 2147483647; pointer-events: none;
+        opacity: 0; transition: opacity .2s;
+      }
+      .cfa-mode-pill.show { opacity: 1; }
 
       .cfa-notes-drawer {
         position: fixed; top: 0; right: -640px; width: min(620px, 96vw); height: 100vh;
@@ -543,6 +555,12 @@
       d.canvas = el('canvas', 'cfa-canvas');
       d.ctx = d.canvas.getContext('2d');
       document.body.appendChild(d.canvas);
+
+      // Drawing-mode pill (bottom center, shows when a tool is armed)
+      d.modePill = el('div', 'cfa-mode-pill');
+      d.modePill.textContent = '✎ DRAW';
+      document.body.appendChild(d.modePill);
+
       sizeCanvas();
       window.addEventListener('resize', sizeCanvas);
       try {
@@ -743,6 +761,16 @@
         .forEach(function (b) { b.classList.remove('on'); });
       if (state.tool) btn.classList.add('on');
       dom.canvas.classList.toggle('drawing', !!state.tool);
+      // Show / hide the bottom-center mode pill
+      if (dom.modePill) {
+        if (state.tool) {
+          dom.modePill.textContent = '✎ ' + prettyTool(state.tool).toUpperCase() +
+            (penOnlyMode ? ' · PENCIL ONLY' : ' · DRAW');
+          dom.modePill.classList.add('show');
+        } else {
+          dom.modePill.classList.remove('show');
+        }
+      }
       if (state.tool) {
         toast(prettyTool(state.tool) + (penOnlyMode ? ' • Pencil only' : ''));
       } else {

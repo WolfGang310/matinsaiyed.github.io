@@ -1062,7 +1062,7 @@ body{display:flex;flex-direction:column}
   <button data-tab="plan"><span class="ic">📅</span> 21-Day Plan <span class="badge">21</span></button>
   <button data-tab="mustknow"><span class="ic">📌</span> Must-Know <span class="badge">92/92</span></button>
   <button data-tab="worked"><span class="ic">💪</span> Worked <span class="badge">30</span></button>
-  <button data-tab="exam"><span class="ic">⏱</span> Mock Exam <span class="badge">180</span></button>
+  <button data-tab="exam"><span class="ic">⏱</span> Mock Exam <span class="badge" id="badge-exam">177</span></button>
   <button data-tab="formulas"><span class="ic">∑</span> Formulas <span class="badge">109</span></button>
   <button data-tab="pitfalls"><span class="ic">⚠</span> Pitfalls <span class="badge">49</span></button>
   <button data-tab="index"><span class="ic">🔤</span> A–Z Index <span class="badge">102</span></button>
@@ -2313,8 +2313,12 @@ function renderBannerExtras(){
   const p = (typeof loadPlan==='function'?loadPlan():{}) || {};
   const cd = $('#hd-countdown .val');
   if (cd){
-    if (p.examDate){
-      const d = new Date(p.examDate+'T00:00:00'); const t = new Date(); t.setHours(0,0,0,0);
+    // Default to the canonical CFA L1 exam date (CRASH_EXAM) when the
+    // user hasn't entered their own in the Planner — keeps the header
+    // chip useful for everyone, not just users who set the planner.
+    const examDate = p.examDate || (typeof CRASH_EXAM !== 'undefined' ? CRASH_EXAM : null);
+    if (examDate){
+      const d = new Date(examDate+'T00:00:00'); const t = new Date(); t.setHours(0,0,0,0);
       const days = Math.max(0,Math.ceil((d-t)/86400000));
       cd.textContent = days;
     } else { cd.textContent = '—'; }
