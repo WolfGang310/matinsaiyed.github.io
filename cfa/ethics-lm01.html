@@ -1873,7 +1873,12 @@ function retryQuiz(){
   // ===========================================================
   load();
   size();
-  setTool(state.tool || 'pen');
+  // Force-enable saved (or default) tool. setTool() toggles when called
+  // with the already-active tool, so clear first to guarantee a fresh
+  // activation.
+  var bootTool = state.tool && TOOLS[state.tool] ? state.tool : 'pen';
+  state.tool = null;
+  setTool(bootTool);
 })();
 </script>
 
