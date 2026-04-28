@@ -991,24 +991,20 @@ function retryQuiz(){
 </script>
 
 
-<!-- ===== Apple Notes-inspired drawing surface (Pencil Pro features) ===== -->
+
+<!-- ===== SVG ink layer (vector, perfect at any zoom) ===== -->
 <style id="cfa-draw-styles">
-  /* Canvas is part of the document flow (position:absolute over body) —
-     this is the ONLY way ink stays anchored through scroll AND
-     pinch-zoom on iOS. The browser scrolls and zooms the canvas along
-     with content, no JS translate needed.
-     Always pointer-events:none — drawing is captured via document-level
-     pointer events that filter on pointerType==='pen'. */
-  #cfa-canvas {
+  /* SVG ink layer — part of document flow, scrolls AND zooms with content.
+     SVG re-renders at every zoom level, so strokes stay crisp.
+     pointer-events:none so finger touches scroll the page natively. */
+  #cfa-svg {
     position: absolute; top: 0; left: 0;
     pointer-events: none; z-index: 9999;
-    -webkit-user-select: none; user-select: none;
-    -webkit-touch-callout: none;
-    -webkit-tap-highlight-color: transparent;
-    background: transparent;
+    overflow: visible;
   }
-  /* Body needs to be the positioning context for the absolute canvas. */
-  body { position: relative; padding-bottom: 90px !important; }
+  #cfa-svg path { vector-effect: non-scaling-stroke; }
+  body { position: relative; padding-bottom: 100px !important; }
+
   /* Hover preview dot for Pencil Pro */
   #cfa-hover {
     position: fixed; pointer-events: none; z-index: 10001;
@@ -1016,7 +1012,6 @@ function retryQuiz(){
     border: 1.5px solid currentColor;
     transform: translate(-50%, -50%);
     opacity: 0; transition: opacity .12s;
-    background: transparent;
   }
   #cfa-hover.show { opacity: 0.55; }
 
@@ -1067,8 +1062,7 @@ function retryQuiz(){
   }
   @media (prefers-color-scheme: dark) {
     .cfa-btn.on {
-      background: rgba(99,131,255,0.22);
-      color: #93b8ff;
+      background: rgba(99,131,255,0.22); color: #93b8ff;
       box-shadow: inset 0 0 0 1px rgba(99,131,255,0.4);
     }
   }
@@ -1088,7 +1082,7 @@ function retryQuiz(){
     .cfa-sep { background: rgba(255,255,255,0.12); }
   }
 
-  /* Tool sub-menu (color + width) — pops above the active tool */
+  /* Sub-menu */
   #cfa-submenu {
     position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
     background: rgba(245,245,247,0.95); backdrop-filter: blur(20px);
@@ -1111,15 +1105,11 @@ function retryQuiz(){
   @media (prefers-color-scheme: dark) {
     #cfa-submenu h5 { color: rgba(255,255,255,0.55); }
   }
-  .cfa-colors {
-    display: flex; gap: 8px; flex-wrap: wrap;
-    margin-bottom: 14px;
-  }
+  .cfa-colors { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
   .cfa-swatch {
     width: 28px; height: 28px; border-radius: 50%;
-    cursor: pointer; transition: transform .1s, box-shadow .12s;
-    border: 2px solid transparent;
-    position: relative;
+    cursor: pointer; transition: transform .1s;
+    border: 2px solid transparent; position: relative;
   }
   .cfa-swatch:hover { transform: scale(1.1); }
   .cfa-swatch.on {
@@ -1131,10 +1121,7 @@ function retryQuiz(){
     color: #fff; display: flex; align-items: center; justify-content: center;
     font-size: 14px; font-weight: 700;
   }
-  .cfa-widths {
-    display: flex; align-items: center; gap: 10px;
-    margin-bottom: 6px;
-  }
+  .cfa-widths { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
   .cfa-width-btn {
     flex: 1; min-height: 36px; cursor: pointer; padding: 0 8px;
     background: transparent; border: 1px solid rgba(0,0,0,0.1);
@@ -1145,20 +1132,15 @@ function retryQuiz(){
   @media (prefers-color-scheme: dark) {
     .cfa-width-btn { border-color: rgba(255,255,255,0.14); }
   }
-  .cfa-width-btn:hover { background: rgba(0,0,0,0.04); }
   .cfa-width-btn.on {
     background: rgba(29,78,216,0.18);
     border-color: rgba(29,78,216,0.5);
   }
-  .cfa-width-bar {
-    background: currentColor; border-radius: 999px;
-    color: #1d1d1f;
-  }
+  .cfa-width-bar { background: currentColor; border-radius: 999px; color: #1d1d1f; }
   @media (prefers-color-scheme: dark) {
     .cfa-width-bar { color: #f5f5f7; }
   }
 
-  /* Status / mode indicator */
   #cfa-status {
     position: fixed; left: 16px; bottom: 26px;
     padding: 6px 12px; border-radius: 999px;
@@ -1170,7 +1152,6 @@ function retryQuiz(){
   }
   #cfa-status.show { opacity: 1; }
 
-  /* Notes drawer */
   #cfa-notes {
     position: fixed; top: 0; right: -640px; width: min(560px, 95vw);
     height: 100vh; background: #fff; color: #14171c;
@@ -1188,9 +1169,6 @@ function retryQuiz(){
     padding: 14px 18px; font-weight: 700;
     border-bottom: 1px solid rgba(0,0,0,0.08);
   }
-  @media (prefers-color-scheme: dark) {
-    #cfa-notes header { border-bottom-color: rgba(255,255,255,0.08); }
-  }
   #cfa-notes textarea {
     flex: 1; padding: 16px 20px; border: 0; outline: 0; resize: none;
     background: transparent; color: inherit;
@@ -1200,29 +1178,23 @@ function retryQuiz(){
     background: none; border: 0; cursor: pointer; font-size: 22px;
     padding: 4px 12px; border-radius: 8px; color: inherit;
   }
-  #cfa-notes-close:hover { background: rgba(0,0,0,0.06); }
-  @media (prefers-color-scheme: dark) {
-    #cfa-notes-close:hover { background: rgba(255,255,255,0.08); }
-  }
   #cfa-notes-status {
     padding: 10px 18px; font-size: 11px; opacity: 0.55;
     border-top: 1px solid rgba(0,0,0,0.06);
   }
 
-  /* Smaller bar on phone */
   @media (max-width: 540px) {
     #cfa-bar { gap: 2px; padding: 4px; }
     .cfa-btn { width: 38px; height: 38px; }
     .cfa-btn svg { width: 20px; height: 20px; }
   }
 
-  /* Hide print artifacts */
   @media print {
     #cfa-bar, #cfa-submenu, #cfa-status, #cfa-hover, #cfa-notes { display: none !important; }
   }
 </style>
 
-<canvas id="cfa-canvas"></canvas>
+<svg id="cfa-svg" xmlns="http://www.w3.org/2000/svg"></svg>
 <div id="cfa-hover"></div>
 <div id="cfa-status">DRAWING</div>
 
@@ -1231,7 +1203,7 @@ function retryQuiz(){
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4l5 5L9 19H4v-5L14 4Z"/><path d="M13 5 18 10"/></svg>
     <span class="dot" id="cfa-pen-dot"></span>
   </button>
-  <button class="cfa-btn" id="cfa-pencil" title="Pencil (tilt-shading)">
+  <button class="cfa-btn" id="cfa-pencil" title="Pencil">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l3-3 11-11-3-3L3 15v6Z"/><path d="M14 4l3 3"/></svg>
     <span class="dot" id="cfa-pencil-dot"></span>
   </button>
@@ -1243,7 +1215,7 @@ function retryQuiz(){
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M6 18 14 10l3 3-8 8H6v-3Z"/><rect x="13" y="6" width="6" height="5" rx="1" transform="rotate(45 16 8.5)" fill="currentColor" opacity="0.5"/></svg>
     <span class="dot" id="cfa-hi-dot"></span>
   </button>
-  <button class="cfa-btn" id="cfa-er" title="Eraser (tap stroke to remove)">
+  <button class="cfa-btn" id="cfa-er" title="Eraser">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M16 5 5 16l3.5 3.5 5-5L20 8.5 16 5Z"/><path d="M11 11l4.5 4.5"/></svg>
   </button>
   <div class="cfa-sep"></div>
@@ -1253,19 +1225,15 @@ function retryQuiz(){
   <button class="cfa-btn" id="cfa-redo" title="Redo">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7l5 5-5 5"/><path d="M20 12H10a5 5 0 0 0 0 10h2"/></svg>
   </button>
-  <button class="cfa-btn" id="cfa-clear" title="Clear all">
+  <button class="cfa-btn" id="cfa-clear" title="Clear">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M7 7l1 13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l1-13"/></svg>
   </button>
   <div class="cfa-sep"></div>
   <button class="cfa-btn" id="cfa-notes-btn" title="Notes">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="16" rx="2"/><path d="M8 9h8M8 12h8M8 15h5"/></svg>
   </button>
-  <button class="cfa-btn" id="cfa-toggle" title="Show/hide ink">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
-  </button>
 </div>
 
-<!-- Sub-menu: tap-and-hold a tool to open color/width chooser -->
 <div id="cfa-submenu" role="menu">
   <h5>Color</h5>
   <div class="cfa-colors" id="cfa-color-list"></div>
@@ -1273,66 +1241,49 @@ function retryQuiz(){
   <div class="cfa-widths" id="cfa-width-list"></div>
 </div>
 
-<!-- Notes drawer -->
 <div id="cfa-notes">
   <header>
     <span>Notes — Ethics LM01</span>
     <button id="cfa-notes-close">×</button>
   </header>
-  <textarea id="cfa-notes-area" placeholder="Type notes that stick with this LM. Saved automatically."></textarea>
+  <textarea id="cfa-notes-area" placeholder="Type notes that stick with this LM."></textarea>
   <div id="cfa-notes-status">Saved</div>
 </div>
 
 <script>
 (function () {
   'use strict';
-  // ===========================================================
-  //  Constants
-  // ===========================================================
-  var STORAGE_KEY = 'cfa_lm01_ethics_v1';
+  var SVG_NS = 'http://www.w3.org/2000/svg';
+  var STORAGE_KEY = 'cfa_lm01_ethics_v3_svg';
+
   var COLORS = [
-    '#1d1d1f', // black
-    '#e23b3b', // red
-    '#f29423', // orange
-    '#f5c518', // yellow
-    '#2da44e', // green
-    '#1f6feb', // blue
-    '#7c3aed', // purple
-    '#db2777'  // pink
+    '#1d1d1f', '#e23b3b', '#f29423', '#f5c518',
+    '#2da44e', '#1f6feb', '#7c3aed', '#db2777'
   ];
   var TOOLS = {
-    pen:         { stroke: 1.6, alpha: 1.0,  composite: 'source-over', useTilt: false, pressureRange: [0.5, 2.4] },
-    pencil:      { stroke: 0.9, alpha: 0.9,  composite: 'source-over', useTilt: true,  pressureRange: [0.4, 1.6] },
-    marker:      { stroke: 3.5, alpha: 1.0,  composite: 'source-over', useTilt: false, pressureRange: [1.0, 1.6] },
-    highlighter: { stroke: 14,  alpha: 0.32, composite: 'source-over', useTilt: false, pressureRange: [1.0, 1.0] },
-    eraser:      { stroke: 22,  alpha: 1.0,  composite: 'source-over', useTilt: false, pressureRange: [1.0, 1.0] }
+    pen:         { alpha: 1.0,  widthMul: 1.0 },
+    pencil:      { alpha: 0.85, widthMul: 0.7 },
+    marker:      { alpha: 1.0,  widthMul: 2.4 },
+    highlighter: { alpha: 0.32, widthMul: 8.0 },
+    eraser:      { alpha: 0,    widthMul: 14   }
   };
   var WIDTHS = [
-    { id: 'thin',   pen: 0.9, pencil: 0.6, marker: 2.0, highlighter: 9 },
-    { id: 'medium', pen: 1.6, pencil: 0.9, marker: 3.5, highlighter: 14 },
-    { id: 'thick',  pen: 2.6, pencil: 1.4, marker: 5.5, highlighter: 22 },
-    { id: 'xthick', pen: 4.0, pencil: 2.0, marker: 8.0, highlighter: 30 }
+    { id: 'thin',   px: 1.2 },
+    { id: 'medium', px: 2.0 },
+    { id: 'thick',  px: 3.4 },
+    { id: 'xthick', px: 5.4 }
   ];
 
-  // ===========================================================
-  //  State
-  //  - strokesByStep: dict of stepIdx -> strokes[]
-  //  - state.strokes (a getter) returns the current step's bucket
-  //  - all stored coords are PAGE coords (clientX + scrollX) so ink
-  //    stays anchored when the user scrolls
-  // ===========================================================
+  // strokes: { tool, color, width, alpha, points: [[x,y],...], pathEl }
   var state = {
     tool: 'pen',
     color: COLORS[0],
     widthIdx: 1,
-    strokesByStep: {},  // { 0: [...], 1: [...], ... }
+    strokesByStep: {},
     currentStep: 0,
     redo: [],
     live: null,
-    inkVisible: true,
-    drawingOn: true,
-    saveTimer: null,
-    pinching: false
+    saveTimer: null
   };
   Object.defineProperty(state, 'strokes', {
     get: function () {
@@ -1343,11 +1294,7 @@ function retryQuiz(){
     set: function (v) { state.strokesByStep[state.currentStep] = v; }
   });
 
-  // ===========================================================
-  //  DOM refs
-  // ===========================================================
-  var canvas    = document.getElementById('cfa-canvas');
-  var ctx       = canvas.getContext('2d');
+  var svg       = document.getElementById('cfa-svg');
   var hover     = document.getElementById('cfa-hover');
   var bar       = document.getElementById('cfa-bar');
   var submenu   = document.getElementById('cfa-submenu');
@@ -1355,21 +1302,12 @@ function retryQuiz(){
   var notes     = document.getElementById('cfa-notes');
   var notesArea = document.getElementById('cfa-notes-area');
   var notesStatus= document.getElementById('cfa-notes-status');
-  var btnPen    = document.getElementById('cfa-pen');
-  var btnPencil = document.getElementById('cfa-pencil');
-  var btnMarker = document.getElementById('cfa-marker');
-  var btnHi     = document.getElementById('cfa-hi');
-  var btnEr     = document.getElementById('cfa-er');
-  var btnUndo   = document.getElementById('cfa-undo');
-  var btnRedo   = document.getElementById('cfa-redo');
-  var btnClear  = document.getElementById('cfa-clear');
-  var btnNotes  = document.getElementById('cfa-notes-btn');
-  var btnToggle = document.getElementById('cfa-toggle');
-  var btnClose  = document.getElementById('cfa-notes-close');
-
-  var TOOL_BUTTONS = {
-    pen: btnPen, pencil: btnPencil, marker: btnMarker,
-    highlighter: btnHi, eraser: btnEr
+  var TOOL_BTNS = {
+    pen: document.getElementById('cfa-pen'),
+    pencil: document.getElementById('cfa-pencil'),
+    marker: document.getElementById('cfa-marker'),
+    highlighter: document.getElementById('cfa-hi'),
+    eraser: document.getElementById('cfa-er')
   };
   var TOOL_DOTS = {
     pen: document.getElementById('cfa-pen-dot'),
@@ -1379,7 +1317,70 @@ function retryQuiz(){
   };
 
   // ===========================================================
-  //  Sub-menu (color + width)
+  //  SVG sizing — match document
+  // ===========================================================
+  function sizeSvg() {
+    var w = Math.max(document.documentElement.scrollWidth, window.innerWidth);
+    var h = Math.max(document.documentElement.scrollHeight, window.innerHeight);
+    svg.setAttribute('width', w);
+    svg.setAttribute('height', h);
+    svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+    svg.style.width = w + 'px';
+    svg.style.height = h + 'px';
+  }
+  sizeSvg();
+  window.addEventListener('resize', sizeSvg);
+  try {
+    new ResizeObserver(sizeSvg).observe(document.body);
+  } catch (_) {}
+
+  // ===========================================================
+  //  Stroke -> SVG path
+  // ===========================================================
+  function strokeWidth(stroke) {
+    var preset = WIDTHS[stroke.widthIdx];
+    var def = TOOLS[stroke.tool];
+    return preset.px * def.widthMul;
+  }
+  function buildPathD(points) {
+    if (!points.length) return '';
+    var d = 'M ' + points[0][0].toFixed(1) + ' ' + points[0][1].toFixed(1);
+    for (var i = 1; i < points.length; i++) {
+      // Use S-shaped smoothing via L for now (fast, no jitter)
+      d += ' L ' + points[i][0].toFixed(1) + ' ' + points[i][1].toFixed(1);
+    }
+    return d;
+  }
+  function makePathEl(stroke) {
+    var p = document.createElementNS(SVG_NS, 'path');
+    p.setAttribute('d', buildPathD(stroke.points));
+    p.setAttribute('fill', 'none');
+    p.setAttribute('stroke', stroke.color);
+    p.setAttribute('stroke-width', strokeWidth(stroke));
+    p.setAttribute('stroke-linecap', 'round');
+    p.setAttribute('stroke-linejoin', 'round');
+    p.setAttribute('opacity', TOOLS[stroke.tool].alpha);
+    return p;
+  }
+  function attachPath(stroke) {
+    var p = makePathEl(stroke);
+    stroke.pathEl = p;
+    svg.appendChild(p);
+  }
+  function updatePath(stroke) {
+    if (stroke.pathEl) {
+      stroke.pathEl.setAttribute('d', buildPathD(stroke.points));
+    }
+  }
+  function rebuildAll() {
+    // Clear svg
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    state.strokes.forEach(attachPath);
+    if (state.live && state.live.tool !== 'eraser') attachPath(state.live);
+  }
+
+  // ===========================================================
+  //  Sub-menu render
   // ===========================================================
   function renderColorList() {
     var list = document.getElementById('cfa-color-list');
@@ -1388,21 +1389,14 @@ function retryQuiz(){
       var sw = document.createElement('div');
       sw.className = 'cfa-swatch' + (c === state.color ? ' on' : '');
       sw.style.background = c;
-      sw.title = c;
       sw.addEventListener('click', function () {
-        state.color = c;
-        renderColorList();
-        updateDots();
-        save();
+        state.color = c; renderColorList(); updateDots(); save();
       });
       list.appendChild(sw);
     });
-    // Custom color picker
     var custom = document.createElement('label');
     custom.className = 'cfa-swatch custom';
-    custom.title = 'Custom color';
     custom.textContent = '+';
-    custom.style.position = 'relative';
     var input = document.createElement('input');
     input.type = 'color';
     input.value = state.color;
@@ -1412,9 +1406,7 @@ function retryQuiz(){
       custom.style.background = input.value;
       custom.style.color = '';
       custom.textContent = '';
-      renderColorList();
-      updateDots();
-      save();
+      renderColorList(); updateDots(); save();
     });
     custom.appendChild(input);
     list.appendChild(custom);
@@ -1427,158 +1419,128 @@ function retryQuiz(){
       b.className = 'cfa-width-btn' + (i === state.widthIdx ? ' on' : '');
       var bar = document.createElement('div');
       bar.className = 'cfa-width-bar';
-      // Show width as a horizontal bar based on actual pen width for that preset
       bar.style.height = (1 + i * 1.5) + 'px';
       bar.style.width = (40 + i * 12) + 'px';
       b.appendChild(bar);
       b.addEventListener('click', function () {
-        state.widthIdx = i;
-        renderWidthList();
-        save();
+        state.widthIdx = i; renderWidthList(); save();
       });
       list.appendChild(b);
     });
   }
   function updateDots() {
     Object.keys(TOOL_DOTS).forEach(function (t) {
-      var d = TOOL_DOTS[t];
-      if (d) d.style.background = state.color;
+      var d = TOOL_DOTS[t]; if (d) d.style.background = state.color;
     });
   }
-  renderColorList();
-  renderWidthList();
-  updateDots();
+  renderColorList(); renderWidthList(); updateDots();
 
   // ===========================================================
-  //  Tap helper — fires on click OR pointerup OR touchend
-  //  with debounce to never double-fire
+  //  Tap helpers
   // ===========================================================
   function tap(el, fn) {
     var lastFire = 0;
-    var downX = 0, downY = 0, moved = false;
-    function tryFire(e) {
+    var dx0=0, dy0=0, moved=false;
+    function go(e) {
       if (Date.now() - lastFire < 280) return;
       lastFire = Date.now();
       e.preventDefault(); e.stopPropagation();
       try { fn(e); } catch (err) { console.error(err); }
     }
-    el.addEventListener('pointerdown', function (e) {
-      downX = e.clientX; downY = e.clientY; moved = false;
-    });
+    el.addEventListener('pointerdown', function (e) { dx0=e.clientX; dy0=e.clientY; moved=false; });
     el.addEventListener('pointermove', function (e) {
-      if (Math.abs(e.clientX - downX) > 8 || Math.abs(e.clientY - downY) > 8) moved = true;
+      if (Math.abs(e.clientX-dx0)>8 || Math.abs(e.clientY-dy0)>8) moved=true;
     });
-    el.addEventListener('pointerup', function (e) { if (!moved) tryFire(e); });
+    el.addEventListener('pointerup',  function (e) { if (!moved) go(e); });
     el.addEventListener('touchstart', function (e) {
-      var t = e.touches[0]; if (t) { downX = t.clientX; downY = t.clientY; moved = false; }
+      var t=e.touches[0]; if (t) { dx0=t.clientX; dy0=t.clientY; moved=false; }
     }, { passive: true });
     el.addEventListener('touchmove', function (e) {
-      var t = e.touches[0]; if (!t) return;
-      if (Math.abs(t.clientX - downX) > 8 || Math.abs(t.clientY - downY) > 8) moved = true;
+      var t=e.touches[0]; if (!t) return;
+      if (Math.abs(t.clientX-dx0)>8 || Math.abs(t.clientY-dy0)>8) moved=true;
     }, { passive: true });
-    el.addEventListener('touchend', function (e) { if (!moved) tryFire(e); });
-    el.addEventListener('click', function (e) { tryFire(e); });
+    el.addEventListener('touchend', function (e) { if (!moved) go(e); });
+    el.addEventListener('click', go);
   }
-
-  // Long-press handler — open submenu after 450ms hold
   function longPress(el, fn) {
-    var timer = null;
-    function start(e) {
-      timer = setTimeout(function () { timer = null; fn(e); }, 450);
-    }
-    function cancel() { if (timer) { clearTimeout(timer); timer = null; } }
-    el.addEventListener('pointerdown', start);
-    el.addEventListener('pointerup', cancel);
-    el.addEventListener('pointermove', cancel);
-    el.addEventListener('pointercancel', cancel);
-    el.addEventListener('pointerleave', cancel);
-    el.addEventListener('touchstart', start, { passive: true });
-    el.addEventListener('touchend', cancel);
-    el.addEventListener('touchmove', cancel);
+    var t = null;
+    el.addEventListener('pointerdown', function (e) { t = setTimeout(function(){ t=null; fn(e); }, 450); });
+    ['pointerup','pointermove','pointercancel','pointerleave','touchend','touchmove']
+      .forEach(function (ev) { el.addEventListener(ev, function(){ if (t) { clearTimeout(t); t=null; } }); });
+    el.addEventListener('touchstart', function (e) { t = setTimeout(function(){ t=null; fn(e); }, 450); }, { passive: true });
   }
 
   // ===========================================================
   //  Tool selection
   // ===========================================================
-  function setTool(name) {
-    var same = state.tool === name;
-    state.tool = same ? null : name;
-    Object.keys(TOOL_BUTTONS).forEach(function (t) {
-      TOOL_BUTTONS[t].classList.toggle('on', t === state.tool);
-    });
-    state.drawingOn = !!state.tool;
-    showStatus(state.drawingOn
-      ? prettyTool(state.tool) + ' · Pencil/mouse only'
-      : 'Drawing off');
-    submenu.classList.remove('show');
-  }
-  function prettyTool(t) {
-    return ({ pen: 'Pen', pencil: 'Pencil', marker: 'Marker',
-              highlighter: 'Highlighter', eraser: 'Eraser' })[t] || t;
-  }
   function showStatus(msg) {
     statusPill.textContent = msg;
     statusPill.classList.add('show');
     clearTimeout(showStatus._t);
     showStatus._t = setTimeout(function () { statusPill.classList.remove('show'); }, 1500);
   }
+  function prettyTool(t) {
+    return ({ pen:'Pen', pencil:'Pencil', marker:'Marker', highlighter:'Highlighter', eraser:'Eraser' })[t] || t;
+  }
+  function setTool(name) {
+    var same = state.tool === name;
+    state.tool = same ? null : name;
+    Object.keys(TOOL_BTNS).forEach(function (t) {
+      TOOL_BTNS[t].classList.toggle('on', t === state.tool);
+    });
+    showStatus(state.tool ? prettyTool(state.tool) + ' · Pencil/mouse' : 'Drawing off');
+    submenu.classList.remove('show');
+  }
 
-  // Tool buttons — tap selects, long-press opens sub-menu
   ['pen','pencil','marker','highlighter','eraser'].forEach(function (t) {
-    var btn = TOOL_BUTTONS[t];
+    var btn = TOOL_BTNS[t];
     tap(btn, function () { setTool(t); });
     if (t !== 'eraser') {
       longPress(btn, function () {
         if (state.tool !== t) setTool(t);
-        renderColorList();
-        renderWidthList();
+        renderColorList(); renderWidthList();
         submenu.classList.add('show');
       });
     }
   });
 
-  // Misc buttons
-  tap(btnUndo, function () {
+  tap(document.getElementById('cfa-undo'), function () {
     if (!state.strokes.length) return showStatus('Nothing to undo');
-    state.redo.push(state.strokes.pop());
-    redraw(); save();
+    var last = state.strokes.pop();
+    state.redo.push(last);
+    if (last.pathEl && last.pathEl.parentNode) last.pathEl.parentNode.removeChild(last.pathEl);
+    save();
   });
-  tap(btnRedo, function () {
+  tap(document.getElementById('cfa-redo'), function () {
     if (!state.redo.length) return showStatus('Nothing to redo');
-    state.strokes.push(state.redo.pop());
-    redraw(); save();
+    var s = state.redo.pop();
+    state.strokes.push(s);
+    attachPath(s);
+    save();
   });
-  tap(btnClear, function () {
+  tap(document.getElementById('cfa-clear'), function () {
     if (!state.strokes.length) return showStatus('Already clean');
-    if (!confirm('Erase all ink on this LM?')) return;
+    if (!confirm('Erase all ink on this step?')) return;
     state.redo = state.strokes.slice();
+    state.strokes.forEach(function (s) {
+      if (s.pathEl && s.pathEl.parentNode) s.pathEl.parentNode.removeChild(s.pathEl);
+    });
     state.strokes = [];
-    redraw(); save();
+    save();
   });
-  tap(btnNotes, function () {
+  tap(document.getElementById('cfa-notes-btn'), function () {
     notes.classList.toggle('open');
     if (notes.classList.contains('open')) setTimeout(function () { notesArea.focus(); }, 280);
   });
-  tap(btnClose, function () { notes.classList.remove('open'); });
-  tap(btnToggle, function () {
-    state.inkVisible = !state.inkVisible;
-    canvas.style.opacity = state.inkVisible ? '1' : '0.18';
-    btnToggle.classList.toggle('on', !state.inkVisible);
-    showStatus(state.inkVisible ? 'Ink visible' : 'Ink dimmed');
-  });
+  tap(document.getElementById('cfa-notes-close'), function () { notes.classList.remove('open'); });
 
-  // Tap outside submenu closes it
   document.addEventListener('pointerdown', function (e) {
     if (submenu.classList.contains('show') &&
-        !submenu.contains(e.target) &&
-        !bar.contains(e.target)) {
+        !submenu.contains(e.target) && !bar.contains(e.target)) {
       submenu.classList.remove('show');
     }
   });
 
-  // ===========================================================
-  //  Notes auto-save
-  // ===========================================================
   notesArea.addEventListener('input', function () {
     notesStatus.textContent = 'Saving…';
     clearTimeout(notesArea._t);
@@ -1589,20 +1551,155 @@ function retryQuiz(){
   });
 
   // ===========================================================
-  //  Persistence (localStorage)
-  //  Saves the FULL strokesByStep map so each step keeps its own ink.
+  //  Drawing — listen at document level, only pen/mouse draws
   // ===========================================================
+  function isDrawingInput(e) {
+    if (!state.tool) return false;
+    if (e.pointerType === 'pen') return true;
+    if (e.pointerType === 'mouse') return true;
+    return false;
+  }
+  function makeStroke(x, y) {
+    return {
+      tool: state.tool,
+      color: state.tool === 'eraser' ? '#000' : state.color,
+      widthIdx: state.widthIdx,
+      points: [[x, y]]
+    };
+  }
+  function strokeHits(s, eraserPts, R) {
+    var R2 = R * R;
+    for (var i = 0; i < s.points.length; i++) {
+      for (var j = 0; j < eraserPts.length; j++) {
+        var dx = s.points[i][0] - eraserPts[j][0];
+        var dy = s.points[i][1] - eraserPts[j][1];
+        if (dx*dx + dy*dy < R2) return true;
+      }
+    }
+    return false;
+  }
+
+  function onDown(e) {
+    if (!isDrawingInput(e)) return;
+    e.preventDefault();
+    var x = e.clientX + window.scrollX, y = e.clientY + window.scrollY;
+    state.live = makeStroke(x, y);
+    if (state.live.tool !== 'eraser') {
+      attachPath(state.live);
+    }
+  }
+  function onMove(e) {
+    if (state.live) {
+      e.preventDefault();
+      var x = e.clientX + window.scrollX, y = e.clientY + window.scrollY;
+      var last = state.live.points[state.live.points.length - 1];
+      var dx = x - last[0], dy = y - last[1];
+      if (dx*dx + dy*dy < 1.2) return;
+      state.live.points.push([x, y]);
+      updatePath(state.live);
+      return;
+    }
+    if (e.pointerType === 'pen' && state.tool) {
+      hover.style.left = e.clientX + 'px';
+      hover.style.top = e.clientY + 'px';
+      hover.style.color = state.color;
+      hover.classList.add('show');
+    } else {
+      hover.classList.remove('show');
+    }
+  }
+  function onUp() {
+    if (!state.live) return;
+    if (state.live.tool === 'eraser') {
+      var R = WIDTHS[state.widthIdx].px * TOOLS.eraser.widthMul / 2 + 8;
+      var keep = [];
+      for (var i = 0; i < state.strokes.length; i++) {
+        if (strokeHits(state.strokes[i], state.live.points, R)) {
+          state.redo.push(state.strokes[i]);
+          if (state.strokes[i].pathEl && state.strokes[i].pathEl.parentNode) {
+            state.strokes[i].pathEl.parentNode.removeChild(state.strokes[i].pathEl);
+          }
+        } else keep.push(state.strokes[i]);
+      }
+      state.strokes = keep;
+    } else {
+      state.strokes.push(state.live);
+      state.redo = [];
+    }
+    state.live = null;
+    save();
+  }
+
+  document.addEventListener('pointerdown', onDown);
+  document.addEventListener('pointermove', onMove);
+  document.addEventListener('pointerup', onUp);
+  document.addEventListener('pointercancel', onUp);
+
+  // iOS Safari stylus fallback
+  document.addEventListener('touchstart', function (e) {
+    var t = e.changedTouches[0]; if (!t) return;
+    if (t.touchType === 'stylus' && !state.live) {
+      e.preventDefault();
+      onDown({ pointerType: 'pen', clientX: t.clientX, clientY: t.clientY,
+               preventDefault: function(){} });
+    }
+  }, { passive: false });
+  document.addEventListener('touchmove', function (e) {
+    if (!state.live) return;
+    var t = e.changedTouches[0]; if (!t) return;
+    if (t.touchType === 'stylus') {
+      e.preventDefault();
+      onMove({ pointerType:'pen', clientX:t.clientX, clientY:t.clientY,
+               preventDefault: function(){} });
+    }
+  }, { passive: false });
+  document.addEventListener('touchend', function () { if (state.live) onUp(); });
+
+  // ===========================================================
+  //  Step layer tracking (per-step ink)
+  // ===========================================================
+  function detectStep() {
+    var els = document.querySelectorAll('#steps > .step');
+    for (var i = 0; i < els.length; i++)
+      if (els[i].classList.contains('active')) return i;
+    return 0;
+  }
+  function syncStep() {
+    var idx = detectStep();
+    if (idx !== state.currentStep) {
+      state.currentStep = idx;
+      state.live = null;
+      state.redo = [];
+      rebuildAll();
+    }
+  }
+  state.currentStep = detectStep();
+  try {
+    var stepsContainer = document.getElementById('steps');
+    if (stepsContainer) new MutationObserver(syncStep)
+      .observe(stepsContainer, { attributes: true, attributeFilter: ['class'], subtree: true });
+  } catch (_) {}
+
+  // ===========================================================
+  //  Persistence
+  // ===========================================================
+  function strokesPlain(byStep) {
+    var out = {};
+    Object.keys(byStep).forEach(function (k) {
+      out[k] = byStep[k].map(function (s) {
+        return { tool: s.tool, color: s.color, widthIdx: s.widthIdx, points: s.points };
+      });
+    });
+    return out;
+  }
   function save() {
     clearTimeout(state.saveTimer);
     state.saveTimer = setTimeout(function () {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify({
-          v: 2,
-          strokesByStep: state.strokesByStep,
-          notes: notesArea.value,
-          tool: state.tool,
-          color: state.color,
-          widthIdx: state.widthIdx
+          strokesByStep: strokesPlain(state.strokesByStep),
+          notes: notesArea.value, tool: state.tool,
+          color: state.color, widthIdx: state.widthIdx
         }));
       } catch (_) {}
     }, 600);
@@ -1613,335 +1710,19 @@ function retryQuiz(){
       if (!raw) return;
       var v = JSON.parse(raw);
       if (v.strokesByStep) state.strokesByStep = v.strokesByStep;
-      else if (Array.isArray(v.strokes)) state.strokesByStep = { 0: v.strokes }; // legacy
       notesArea.value = v.notes || '';
       if (v.tool && TOOLS[v.tool]) state.tool = v.tool;
       if (typeof v.color === 'string') state.color = v.color;
       if (typeof v.widthIdx === 'number') state.widthIdx = v.widthIdx;
-      renderColorList();
-      renderWidthList();
-      updateDots();
+      renderColorList(); renderWidthList(); updateDots();
     } catch (_) {}
   }
-
-  // ===========================================================
-  //  Step tracking — observe which .step.active is currently shown
-  //  and switch ink layers when the user clicks Previous/Next.
-  // ===========================================================
-  function detectCurrentStep() {
-    var steps = document.querySelectorAll('#steps > .step');
-    for (var i = 0; i < steps.length; i++) {
-      if (steps[i].classList.contains('active')) return i;
-    }
-    return 0;
-  }
-  function syncStepLayer() {
-    var idx = detectCurrentStep();
-    if (idx !== state.currentStep) {
-      state.currentStep = idx;
-      state.live = null;
-      state.redo = [];
-      redraw();
-    }
-  }
-  // Initial detection
-  state.currentStep = detectCurrentStep();
-  // Observe the steps container for class changes (.active toggling)
-  try {
-    var stepsContainer = document.getElementById('steps');
-    if (stepsContainer) {
-      var mo = new MutationObserver(syncStepLayer);
-      mo.observe(stepsContainer, {
-        attributes: true, attributeFilter: ['class'],
-        subtree: true
-      });
-    }
-  } catch (_) {}
-
-  // No scroll listener needed: canvas is part of the document flow,
-  // so the browser scrolls and zooms it together with content.
-  // Pinch-zoom now also "just works" because the canvas is part of
-  // what the browser is zooming.
-
-  // ===========================================================
-  //  Canvas sizing (DPR-aware, document-sized)
-  //  Canvas covers the full document so ink anchors to content.
-  //  Re-runs whenever the document height changes (step swap, images
-  //  load, viewport resize).
-  // ===========================================================
-  function docW() { return Math.max(document.documentElement.scrollWidth,  window.innerWidth); }
-  function docH() { return Math.max(document.documentElement.scrollHeight, window.innerHeight); }
-  function size() {
-    var dpr = Math.min(window.devicePixelRatio || 1, 2);
-    var w = docW(), h = docH();
-    canvas.style.width = w + 'px';
-    canvas.style.height = h + 'px';
-    canvas.width = Math.round(w * dpr);
-    canvas.height = Math.round(h * dpr);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    redraw();
-  }
-  window.addEventListener('resize', size);
-  // Watch for content-driven size changes (step swap, image load)
-  try {
-    new ResizeObserver(function () { size(); }).observe(document.body);
-  } catch (_) {}
-
-  // ===========================================================
-  //  Rendering
-  // ===========================================================
-  function applyStyle(s) {
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.globalCompositeOperation = s.composite || 'source-over';
-    ctx.globalAlpha = s.alpha != null ? s.alpha : 1;
-    ctx.strokeStyle = s.color;
-    ctx.fillStyle = s.color;
-  }
-
-  // Render a saved stroke. Variable width based on per-point pressure.
-  // No multi-pass offsets — that caused jitter. Pencil = thinner, slightly
-  // less alpha for a softer look.
-  function drawStroke(s) {
-    if (!s || !s.points || s.points.length === 0) return;
-    var pts = s.points;
-    ctx.save();
-    applyStyle(s);
-    if (pts.length === 1) {
-      var p = pts[0];
-      ctx.beginPath();
-      ctx.arc(p[0], p[1], s.baseWidth / 2, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-      return;
-    }
-    var pr = s.pressureRange || [1, 1];
-    for (var i = 0; i < pts.length - 1; i++) {
-      var a = pts[i], b = pts[i + 1];
-      var pa = pr[0] + (pr[1] - pr[0]) * (a[2] || 0.5);
-      var pb = pr[0] + (pr[1] - pr[0]) * (b[2] || 0.5);
-      ctx.lineWidth = s.baseWidth * (pa + pb) / 2;
-      ctx.beginPath();
-      ctx.moveTo(a[0], a[1]);
-      ctx.lineTo(b[0], b[1]);
-      ctx.stroke();
-    }
-    ctx.restore();
-  }
-
-  function redraw() {
-    ctx.save();
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.restore();
-    var dpr = Math.min(window.devicePixelRatio || 1, 2);
-    // Canvas is position:absolute at document (0,0) so canvas coords ==
-    // document coords. Stored stroke points are in document coords too —
-    // no translation needed.
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    state.strokes.forEach(drawStroke);
-    if (state.live && state.live.tool !== 'eraser') drawStroke(state.live);
-    if (state.live && state.live.tool === 'eraser') {
-      ctx.save();
-      ctx.strokeStyle = 'rgba(255,80,120,0.35)';
-      ctx.lineWidth = state.live.baseWidth;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      var pts = state.live.points;
-      if (pts.length) {
-        ctx.moveTo(pts[0][0], pts[0][1]);
-        for (var i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
-        ctx.stroke();
-      }
-      ctx.restore();
-    }
-  }
-
-  // ===========================================================
-  //  Pointer / touch handling
-  //
-  //  Strategy: listen at the DOCUMENT level (not on the canvas),
-  //  filter for pointerType==='pen' (or mouse on desktop).
-  //  This way the canvas can stay pointer-events:none and finger
-  //  scrolling works 100% natively on iPad.
-  // ===========================================================
-  var rafPending = false;
-  function scheduleRedraw() {
-    if (rafPending) return;
-    rafPending = true;
-    requestAnimationFrame(function () {
-      rafPending = false;
-      redraw();
-    });
-  }
-
-  function isDrawingInput(e) {
-    if (!state.tool) return false;
-    if (e.pointerType === 'pen') return true;
-    if (e.pointerType === 'mouse') return true;  // desktop testing
-    // Finger drawing: only when user explicitly opted in (touch-draw class)
-    if (e.pointerType === 'touch' && canvas.classList.contains('touch-draw')) return true;
-    return false;
-  }
-
-  function makeStroke(e, x, y) {
-    var def = TOOLS[state.tool];
-    var preset = WIDTHS[state.widthIdx];
-    var base = preset[state.tool] !== undefined ? preset[state.tool] : def.stroke;
-    return {
-      tool: state.tool,
-      color: state.color,
-      composite: def.composite,
-      alpha: def.alpha,
-      baseWidth: base,
-      pressureRange: def.pressureRange,
-      points: [[x, y, e.pressure || 0.5]]
-    };
-  }
-
-  function strokeHits(stroke, eraserPts, R) {
-    var R2 = R * R;
-    for (var i = 0; i < stroke.points.length; i++) {
-      for (var j = 0; j < eraserPts.length; j++) {
-        var dx = stroke.points[i][0] - eraserPts[j][0];
-        var dy = stroke.points[i][1] - eraserPts[j][1];
-        if (dx * dx + dy * dy < R2) return true;
-      }
-    }
-    return false;
-  }
-
-  // Draw one fresh segment incrementally (no full clear) — fast and smooth.
-  // Canvas is at document (0,0) so stored doc coords map directly.
-  function drawIncrement(s) {
-    var pts = s.points;
-    if (pts.length < 2) return;
-    var i = pts.length - 2;
-    var a = pts[i], b = pts[i + 1];
-    var dpr = Math.min(window.devicePixelRatio || 1, 2);
-    ctx.save();
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    applyStyle(s);
-    var pr = s.pressureRange || [1, 1];
-    var pa = pr[0] + (pr[1] - pr[0]) * (a[2] || 0.5);
-    var pb = pr[0] + (pr[1] - pr[0]) * (b[2] || 0.5);
-    ctx.lineWidth = s.baseWidth * (pa + pb) / 2;
-    ctx.beginPath();
-    ctx.moveTo(a[0], a[1]);
-    ctx.lineTo(b[0], b[1]);
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  function onDown(e) {
-    if (!isDrawingInput(e)) return;
-    if (state.pinching) return;
-    e.preventDefault();
-    var px = e.clientX + window.scrollX, py = e.clientY + window.scrollY;
-    state.live = makeStroke(e, px, py);
-    drawIncrement(state.live);
-  }
-  function onMove(e) {
-    if (state.live) {
-      e.preventDefault();
-      var px = e.clientX + window.scrollX, py = e.clientY + window.scrollY;
-      var last = state.live.points[state.live.points.length - 1];
-      var dx = px - last[0], dy = py - last[1];
-      if (dx * dx + dy * dy < 1.2) return;
-      state.live.points.push([px, py, e.pressure || 0.5]);
-      drawIncrement(state.live);
-      return;
-    }
-    // Hover preview for Pencil Pro
-    if (e.pointerType === 'pen' && state.drawingOn) {
-      hover.style.left = e.clientX + 'px';
-      hover.style.top = e.clientY + 'px';
-      hover.style.color = state.color;
-      hover.classList.add('show');
-    } else {
-      hover.classList.remove('show');
-    }
-  }
-  function onUp(e) {
-    if (!state.live) return;
-    if (state.live.tool === 'eraser') {
-      var R = state.live.baseWidth / 2 + 8;
-      var keep = [];
-      for (var i = 0; i < state.strokes.length; i++) {
-        if (strokeHits(state.strokes[i], state.live.points, R)) {
-          state.redo.push(state.strokes[i]);
-        } else keep.push(state.strokes[i]);
-      }
-      if (keep.length !== state.strokes.length) {
-        state.strokes = keep;
-      }
-      // After eraser path ends, full redraw to clear preview
-      state.live = null;
-      redraw();
-      save();
-      return;
-    }
-    // Pen-family stroke: commit
-    state.strokes.push(state.live);
-    state.redo = [];
-    state.live = null;
-    save();
-    // No full redraw needed — incremental segments are already on canvas
-  }
-
-  // Document-level pointer events. This is the trick that lets finger
-  // touches scroll natively (canvas is pointer-events:none) while still
-  // letting Pencil/mouse draw.
-  document.addEventListener('pointerdown', onDown);
-  document.addEventListener('pointermove', onMove);
-  document.addEventListener('pointerup', onUp);
-  document.addEventListener('pointercancel', onUp);
-
-  // iOS Safari legacy: touch events with touchType==='stylus' may be
-  // dispatched without corresponding pointer events. Catch those too.
-  document.addEventListener('touchstart', function (e) {
-    if (e.touches.length >= 2) { state.pinching = true; if (state.live) onUp(e); return; }
-    var t = e.changedTouches[0]; if (!t) return;
-    if (t.touchType === 'stylus' && !state.live) {
-      e.preventDefault();
-      onDown({
-        pointerType: 'pen',
-        clientX: t.clientX, clientY: t.clientY,
-        pressure: t.force || 0.5,
-        preventDefault: function () {}
-      });
-    }
-  }, { passive: false });
-  document.addEventListener('touchmove', function (e) {
-    if (e.touches.length >= 2) { if (state.live) onUp(e); return; }
-    if (!state.live) return;
-    var t = e.changedTouches[0]; if (!t) return;
-    if (t.touchType === 'stylus') {
-      e.preventDefault();
-      onMove({
-        pointerType: 'pen',
-        clientX: t.clientX, clientY: t.clientY,
-        pressure: t.force || 0.5,
-        preventDefault: function () {}
-      });
-    }
-  }, { passive: false });
-  document.addEventListener('touchend', function (e) {
-    if (e.touches.length === 0) state.pinching = false;
-    if (state.live) onUp(e);
-  });
-
-  // ===========================================================
-  //  Save before unload
-  // ===========================================================
   window.addEventListener('beforeunload', function () {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        strokes: state.strokes,
-        notes: notesArea.value,
-        tool: state.tool,
-        color: state.color,
-        widthIdx: state.widthIdx
+        strokesByStep: strokesPlain(state.strokesByStep),
+        notes: notesArea.value, tool: state.tool,
+        color: state.color, widthIdx: state.widthIdx
       }));
     } catch (_) {}
   });
@@ -1950,10 +1731,8 @@ function retryQuiz(){
   //  Boot
   // ===========================================================
   load();
-  size();
-  // Force-enable saved (or default) tool. setTool() toggles when called
-  // with the already-active tool, so clear first to guarantee a fresh
-  // activation.
+  rebuildAll();
+  // Force-enable saved tool (or pen). setTool() toggles, so clear first.
   var bootTool = state.tool && TOOLS[state.tool] ? state.tool : 'pen';
   state.tool = null;
   setTool(bootTool);
