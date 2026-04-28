@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="color-scheme" content="light">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CFA L1 Ethics — LM01 Ethics and Trust in the Investment Profession</title>
+<style>
+:root{--bg:#f8f7f4;--fg:#1a1a1a;--card:#fff;--card-b:1px solid #e0ddd8;--accent:#1e3a8a;--accent-l:#dbeafe;--accent-ll:#eff6ff;--teal:#0d9488;--teal-l:#ccfbf1;--teal-ll:#f0fdfa;--coral:#e74c3c;--coral-l:#fee2e2;--amber:#d97706;--amber-l:#fef3c7;--green:#16a34a;--green-l:#dcfce7;--red:#dc2626;--red-l:#fee2e2;--purple:#7c3aed;--purple-l:#ede9fe;--muted:#6b7280;--muted-bg:#f3f2ef;--radius:12px;--font:'Newsreader',Georgia,serif;--font-h:'DM Sans','Segoe UI',sans-serif;--font-m:'JetBrains Mono','Courier New',monospace}
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Newsreader:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--fg);font-size:15px;line-height:1.7;min-height:100vh}
+h1,h2,h3,h4{font-family:var(--font-h);line-height:1.3}
+h1{font-size:26px;font-weight:700;margin-bottom:6px}
+h2{font-size:20px;font-weight:600;margin-bottom:12px}
+h3{font-size:16px;font-weight:600;margin-bottom:8px}
+h4{font-size:14px;font-weight:600;margin-bottom:6px}
+.wrap{max-width:800px;margin:0 auto;padding:16px}
+.dots{display:flex;justify-content:center;gap:7px;flex-wrap:wrap;padding:12px 0;position:sticky;top:0;background:var(--bg);z-index:50;border-bottom:1px solid var(--muted-bg)}
+.dot{width:12px;height:12px;border-radius:50%;background:var(--muted-bg);border:2px solid #ccc;cursor:pointer;transition:all .25s}
+.dot.active{background:var(--accent);border-color:var(--accent);transform:scale(1.35)}
+.dot.quiz{border-color:var(--amber)}
+.dot.quiz.active{background:var(--amber);border-color:var(--amber)}
+.dot.viz{border-color:var(--teal)}
+.dot.viz.active{background:var(--teal);border-color:var(--teal)}
+.step{display:none;animation:fadeIn .35s}
+.step.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.cd{background:var(--card);border:var(--card-b);border-radius:var(--radius);padding:18px 20px;margin-bottom:16px}
+.hl{border-radius:10px;padding:16px 18px;margin-bottom:14px}
+.hl.blue{background:var(--accent-l);border-left:4px solid var(--accent)}
+.hl.teal{background:var(--teal-l);border-left:4px solid var(--teal)}
+.hl.coral{background:var(--coral-l);border-left:4px solid var(--coral)}
+.hl.amber{background:var(--amber-l);border-left:4px solid var(--amber)}
+.hl.green{background:var(--green-l);border-left:4px solid var(--green)}
+.hl.purple{background:var(--purple-l);border-left:4px solid var(--purple)}
+.p{display:inline-block;font-family:var(--font-h);font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;padding:3px 10px;border-radius:20px;margin-bottom:8px}
+.p.blue{background:var(--accent-l);color:var(--accent)}
+.p.teal{background:var(--teal-l);color:var(--teal)}
+.p.coral{background:var(--coral-l);color:var(--coral)}
+.p.amber{background:var(--amber-l);color:var(--amber)}
+.p.purple{background:var(--purple-l);color:var(--purple)}
+.p.green{background:var(--green-l);color:var(--green)}
+.fm{font-family:var(--font-m);background:var(--muted-bg);padding:12px 16px;border-radius:8px;margin:10px 0;font-size:13.5px;text-align:center;overflow-x:auto}
+.tb{width:100%;border-collapse:collapse;margin:12px 0;font-size:13.5px}
+.tb th,.tb td{padding:10px 12px;border:1px solid var(--muted-bg);text-align:left;vertical-align:top}
+.tb th{background:var(--accent-l);font-family:var(--font-h);font-weight:600;font-size:12.5px;text-transform:uppercase;letter-spacing:.3px}
+.tb tr:nth-child(even){background:var(--muted-bg)}
+.tb td strong{color:var(--fg)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:640px){.g2,.g3,.g4{grid-template-columns:1fr}}
+.qo{display:block;width:100%;text-align:left;font-family:var(--font);font-size:14px;padding:12px 16px;margin:6px 0;border:2px solid var(--muted-bg);border-radius:10px;background:var(--card);cursor:pointer;transition:all .2s;color:var(--fg)}
+.qo:hover:not(.locked){border-color:var(--accent);background:var(--accent-l)}
+.qo.correct{border-color:var(--green);background:var(--green-l);font-weight:600}
+.qo.wrong{border-color:var(--red);background:var(--red-l);opacity:.7}
+.qo.locked{cursor:default;opacity:.6}
+.qo.locked.correct{opacity:1}
+.fb{display:none;padding:14px 16px;border-radius:10px;margin-top:10px;font-size:13.5px;line-height:1.6}
+.fb.show{display:block}
+.fb.ok{background:var(--green-l);border-left:4px solid var(--green)}
+.fb.no{background:var(--red-l);border-left:4px solid var(--red)}
+.mt{text-align:center;padding:20px;border-radius:var(--radius)}
+.mt .num{font-family:var(--font-h);font-size:32px;font-weight:700}
+.mt .lbl{font-size:12px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.5px}
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:12px 0}
+.stat-box{background:var(--card);border:var(--card-b);border-radius:10px;padding:14px;text-align:center}
+.stat-box .v{font-family:var(--font-h);font-size:22px;font-weight:700;color:var(--accent)}
+.stat-box .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
+.calc-input{display:flex;align-items:center;gap:10px;margin:8px 0;flex-wrap:wrap}
+.calc-input label{font-family:var(--font-h);font-size:13px;font-weight:500;min-width:170px}
+.calc-input input,.calc-input select{font-family:var(--font-m);font-size:14px;padding:8px 12px;border:2px solid var(--muted-bg);border-radius:8px;background:var(--card);color:var(--fg);width:130px}
+.calc-result{background:var(--accent-l);border-radius:10px;padding:16px;margin-top:14px;text-align:center}
+.calc-result .num{font-family:var(--font-h);font-size:28px;font-weight:700;color:var(--accent)}
+.nav-bar{display:flex;justify-content:space-between;align-items:center;padding:16px 0;margin-top:20px;border-top:1px solid var(--muted-bg)}
+.nav-bar button{font-family:var(--font-h);font-size:14px;font-weight:600;padding:10px 24px;border:none;border-radius:10px;cursor:pointer;transition:all .2s}
+.btn-prev{background:var(--muted-bg);color:var(--fg)}
+.btn-next{background:var(--accent);color:#fff}
+.btn-prev:hover{background:#d1d5db}.btn-next:hover{filter:brightness(1.1)}
+.btn-prev:disabled,.btn-next:disabled{opacity:.3;cursor:not-allowed}
+.step-counter{font-family:var(--font-h);font-size:13px;color:var(--muted)}
+svg text{font-family:var(--font-h);fill:var(--fg)}
+.pbar{width:100%;height:14px;background:var(--muted-bg);border-radius:8px;overflow:hidden;margin:10px 0}
+.pbar .fill{height:100%;background:linear-gradient(90deg,var(--green),var(--teal));border-radius:8px;transition:width .6s}
+.exam-tip{background:var(--amber-l);border-left:4px solid var(--amber);border-radius:10px;padding:14px 16px;margin:12px 0;font-size:13.5px}
+.exam-tip::before{content:'Exam Tip: ';font-weight:700;font-family:var(--font-h)}
+.ex-box{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:16px;margin:12px 0}
+.ex-box::before{content:'Worked Example';display:block;font-family:var(--font-h);font-size:11px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px}
+.soln{background:var(--green-l);border-left:4px solid var(--green);border-radius:8px;padding:14px 16px;margin-top:10px}
+.soln::before{content:'Solution';display:block;font-family:var(--font-h);font-size:11px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+.topic-hdr{font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);font-family:var(--font-h);font-weight:600;margin-bottom:4px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:8px 14px;margin:8px 0;font-size:13.5px}
+.kv dt{font-family:var(--font-h);font-weight:600;color:var(--muted)}
+.kv dd{color:var(--fg)}
+.chip{display:inline-block;background:var(--muted-bg);padding:3px 10px;border-radius:20px;font-size:11.5px;font-family:var(--font-h);font-weight:500;margin:2px 2px}
+.compare-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0}
+.compare-col{padding:14px;border-radius:10px}
+.compare-col.a{background:var(--accent-ll);border:1px solid var(--accent-l)}
+.compare-col.b{background:#fff7ed;border:1px solid #fed7aa}
+.spectrum{display:flex;align-items:center;margin:14px 0;gap:0;position:relative}
+.spec-seg{flex:1;padding:12px 8px;text-align:center;font-family:var(--font-h);font-size:12px;font-weight:600;color:#fff;position:relative}
+.spec-seg:first-child{border-radius:8px 0 0 8px}
+.spec-seg:last-child{border-radius:0 8px 8px 0}
+.spec-seg .v{font-size:14px;display:block;margin-top:2px}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;margin:10px 0;font-family:var(--font-h)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend .sw{width:12px;height:12px;border-radius:3px;display:inline-block}
+.viz-title{font-family:var(--font-h);font-weight:600;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;text-align:center}
+.diagram-box{background:#fafaf7;border:1px dashed #d1d5db;border-radius:10px;padding:14px;margin:10px 0;overflow-x:auto}
+.num-badge{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-family:var(--font-h);font-size:12px;font-weight:700;margin-right:8px;flex-shrink:0}
+.step-item{display:flex;align-items:flex-start;gap:8px;margin:8px 0}
+.wex{background:#fff;border:1px solid #e0ddd8;border-radius:14px;overflow:hidden;margin:14px 0;box-shadow:0 1px 4px rgba(0,0,0,0.04)}
+.wex-head{background:linear-gradient(135deg,#fef3c7 0%,#fde68a 100%);padding:12px 18px;border-bottom:2px solid #fde68a;display:flex;align-items:center;gap:10px}
+.wex-head .wex-badge{font-family:var(--font-h);font-size:10.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#92400e;background:#fff;padding:3px 10px;border-radius:12px;border:1px solid #fbbf24}
+.wex-head .wex-title{font-family:var(--font-h);font-weight:700;font-size:15px;color:#78350f}
+.wex-body{padding:16px 20px}
+.wex-sec{margin:14px 0;padding:0;border-radius:10px;overflow:hidden;border:1px solid #e5e7eb}
+.wex-sec-hdr{font-family:var(--font-h);font-size:11.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:8px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #e5e7eb}
+.wex-sec-hdr .ico{font-size:14px}
+.wex-sec.given .wex-sec-hdr{background:#eff6ff;color:#1e40af}
+.wex-sec.find .wex-sec-hdr{background:#fef3c7;color:#92400e}
+.wex-sec.soln .wex-sec-hdr{background:#ecfdf5;color:#166534}
+.wex-sec.ans .wex-sec-hdr{background:#16a34a;color:#fff}
+.wex-sec.takeaway .wex-sec-hdr{background:#ede9fe;color:#5b21b6}
+.wex-sec-body{padding:12px 16px;background:#fff;font-size:13.5px}
+.wex-sec-body .tb{margin:6px 0}
+.wex-sec-body p{margin:6px 0}
+.wex-step-row{display:grid;grid-template-columns:34px 1fr;gap:10px;padding:10px 0;border-top:1px dashed #e5e7eb}
+.wex-step-row:first-child{border-top:none}
+.wex-step-num{font-family:var(--font-h);font-weight:700;font-size:13px;color:#fff;background:var(--accent);width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.wex-step-body{font-size:13.5px}
+.wex-step-body .formula{font-family:var(--font-m);background:#f9fafb;border:1px solid #e5e7eb;padding:8px 12px;border-radius:6px;margin:6px 0;font-size:12.5px;display:block;overflow-x:auto}
+.wex-step-body .note{font-size:12px;color:var(--muted);font-style:italic;margin-top:4px}
+.wex-ans-value{font-family:var(--font-h);font-size:24px;font-weight:700;color:#166534;text-align:center;padding:10px;background:#ecfdf5;border-radius:8px;margin:6px 0}
+.wex-ans-line{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px dashed #d1fae5;font-size:13.5px}
+.wex-ans-line:last-child{border-bottom:none}
+.wex-ans-line .lbl{font-family:var(--font-h);font-weight:600;color:#065f46}
+.wex-ans-line .val{font-family:var(--font-m);font-weight:700;color:#166534}
+
+/* === formula/legend upgrades === */
+.fm{font-family:var(--font-m,'JetBrains Mono',monospace);background:linear-gradient(180deg,#fbfaf7,#f5f3ee);padding:14px 18px;border-radius:10px;margin:14px 0 10px;font-size:15px;text-align:center;overflow-x:auto;border:1px solid #ece8df;border-left:3px solid var(--accent,#0ea5e9);position:relative;line-height:1.5;color:#1a1a1a}
+.fm .katex{font-size:1.08em}
+.fm .katex-display{margin:.2em 0}
+.fm.fm-tight{margin:8px 0}
+.legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:6px 18px;background:#faf9f6;border:1px solid #ece8df;border-radius:8px;padding:10px 14px;margin:-6px 0 16px;font-size:12.5px;color:#374151;line-height:1.45}
+.legend-item{display:flex;align-items:baseline;gap:8px}
+.legend-sym{font-family:'KaTeX_Math',Times,serif;font-style:italic;color:var(--accent,#0ea5e9);font-weight:500;min-width:44px;font-size:13.5px;flex-shrink:0}
+.legend-sym.greek{font-style:normal}
+.formula-label{position:absolute;top:-9px;left:14px;font-family:var(--font-h,sans-serif);font-size:10px;font-weight:700;letter-spacing:1px;color:var(--accent,#0ea5e9);background:var(--bg,#f8f7f4);padding:0 8px;text-transform:uppercase}
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'\\[',right:'\\]',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false}],throwOnError:false,strict:false});"></script>
+</head>
+<body>
+<div class="wrap">
+<div class="dots" id="dots"></div>
+<div id="steps">
+
+<!-- ============ STEP 1: Foundation ============ -->
+<div class="step" data-title="Foundation">
+<div class="topic-hdr">LM01 · Ethical and Professional Standards · CFA Level I</div>
+<h1>Ethics and Trust in the Investment Profession</h1>
+<p style="color:var(--muted);margin-bottom:18px">Why ethics is the foundation of capital markets — and the single most important topic area on the Level I exam</p>
+
+<div class="hl blue">
+<h3>Why This Module Matters</h3>
+<p>Ethics is <strong>15%–20%</strong> of the Level I examination. Unlike topic areas you can partially skip, Ethics is "extremely important to your overall success." You can fail a topic area and still pass the exam, but failing Ethics is not recommended. Many ethics questions turn on small details, and the day-before-exam strategy is to re-read the ethics material from the curriculum.</p>
+</div>
+
+<h3>What You Will Learn</h3>
+<div class="cd">
+<div class="kv">
+<dt>1</dt><dd>The definition of <strong>ethics</strong>, <strong>ethical conduct</strong>, and a <strong>code of ethics</strong></dd>
+<dt>2</dt><dd>What makes an occupation a <strong>profession</strong> and how professions establish trust</dd>
+<dt>3</dt><dd>The distinction between <strong>ethical</strong> and <strong>legal</strong> standards</dd>
+<dt>4</dt><dd>Why <strong>trust</strong> is the cornerstone of investment management</dd>
+<dt>5</dt><dd><strong>Suitability</strong> vs <strong>fiduciary</strong> standards</dd>
+<dt>6</dt><dd>Challenges to ethical behaviour: overconfidence, situational influences, rules-based culture</dd>
+<dt>7</dt><dd>A four-step <strong>framework for ethical decision-making</strong></dd>
+<dt>8</dt><dd>The role of the <strong>Standards of Practice Handbook</strong> and the CFA Institute Professional Conduct Program</dd>
+</div>
+</div>
+
+<div class="exam-tip">On exam day the first session begins with Ethics. Read the full question carefully — questions often use phrases like <em>most accurate</em>, <em>least likely</em>, or <em>closest to</em>. Words like <em>true</em>, <em>false</em>, and <em>except</em> will not appear.</div>
+</div>
+
+<!-- ============ STEP 2: What is Ethics ============ -->
+<div class="step" data-title="Defining Ethics">
+<div class="topic-hdr">Core Definitions</div>
+<h2>What is Ethics?</h2>
+
+<div class="diagram-box">
+<div class="viz-title">From Character to Conduct</div>
+<svg viewBox="0 0 760 240" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:760px;display:block;margin:0 auto">
+<rect x="10" y="15" width="740" height="210" rx="12" fill="#fafaf7" stroke="#e5e7eb"/>
+<rect x="30" y="40" width="220" height="165" rx="10" fill="#dbeafe" stroke="#1e3a8a" stroke-width="1.5"/>
+<text x="140" y="68" text-anchor="middle" font-size="13" font-weight="700" fill="#1e3a8a">ETHICS</text>
+<text x="140" y="94" text-anchor="middle" font-size="11" fill="#1e40af">Greek: "ethos" = character</text>
+<text x="140" y="118" text-anchor="middle" font-size="11" fill="#374151">Shared beliefs about</text>
+<text x="140" y="134" text-anchor="middle" font-size="11" fill="#374151">good or bad behaviour</text>
+<text x="140" y="162" text-anchor="middle" font-size="11" fill="#374151">A set of moral principles</text>
+<text x="140" y="178" text-anchor="middle" font-size="11" fill="#374151">and rules of conduct</text>
+<text x="140" y="194" text-anchor="middle" font-size="11" fill="#374151">that guide behaviour</text>
+
+<rect x="270" y="40" width="220" height="165" rx="10" fill="#ccfbf1" stroke="#0d9488" stroke-width="1.5"/>
+<text x="380" y="68" text-anchor="middle" font-size="13" font-weight="700" fill="#115e59">ETHICAL CONDUCT</text>
+<text x="380" y="98" text-anchor="middle" font-size="11" fill="#374151">Follows moral principles</text>
+<text x="380" y="122" text-anchor="middle" font-size="11" fill="#374151">Consistent with society's</text>
+<text x="380" y="138" text-anchor="middle" font-size="11" fill="#374151">ethical expectations</text>
+<text x="380" y="166" text-anchor="middle" font-size="11" fill="#374151">Improves outcomes</text>
+<text x="380" y="182" text-anchor="middle" font-size="11" fill="#374151">for stakeholders</text>
+
+<rect x="510" y="40" width="220" height="165" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+<text x="620" y="68" text-anchor="middle" font-size="13" font-weight="700" fill="#92400e">CODE OF ETHICS</text>
+<text x="620" y="98" text-anchor="middle" font-size="11" fill="#374151">A written set of</text>
+<text x="620" y="114" text-anchor="middle" font-size="11" fill="#374151">moral principles</text>
+<text x="620" y="140" text-anchor="middle" font-size="11" fill="#374151">Communicates an org's</text>
+<text x="620" y="156" text-anchor="middle" font-size="11" fill="#374151">values &amp; expectations</text>
+<text x="620" y="184" text-anchor="middle" font-size="11" fill="#374151">May include rules or</text>
+<text x="620" y="200" text-anchor="middle" font-size="11" fill="#374151">minimum standards</text>
+</svg>
+</div>
+
+<div class="cd">
+<h3>The Three Layers</h3>
+<div class="kv">
+<dt>Ethics</dt><dd>From the Greek word <em>ethos</em> meaning <strong>character</strong>. Ethics means making good choices — a set of moral principles and rules of conduct that help guide our behaviour. It can also be described as <strong>shared beliefs about what behaviour is good or acceptable</strong>.</dd>
+<dt>Ethical conduct</dt><dd>Behaviour that (a) follows moral principles, (b) is consistent with society's ethical expectations, and (c) <strong>improves outcomes for stakeholders</strong> — those who are directly or indirectly affected by the conduct.</dd>
+<dt>Code of ethics</dt><dd>A <strong>written set</strong> of moral principles that can guide behaviour. A code is a way to communicate an organization's values, principles, and expectations. Some codes include <strong>rules or standards</strong> that require a minimum level of ethical behaviour.</dd>
+</div>
+</div>
+
+<div class="hl teal">
+<h4>Stakeholders — remember the breadth</h4>
+<p>Stakeholders are not just clients. They include employees, the employer, colleagues in the investment profession, other market participants, regulators, and society at large. Ethical conduct is measured by its effect on <em>all</em> of them.</p>
+</div>
+</div>
+
+<!-- ============ STEP 3: Ethical vs Legal ============ -->
+<div class="step" data-title="Ethical vs Legal">
+<div class="topic-hdr">Ethical vs Legal Standards</div>
+<h2>Law Is Not the Same as Ethics</h2>
+
+<div class="hl blue">
+<p><strong>Not all unethical actions are illegal, and not all illegal actions are unethical.</strong> Ethical principles often set a <em>higher</em> standard of behaviour than laws and regulations.</p>
+</div>
+
+<div class="compare-row">
+<div class="compare-col a">
+<h4>Illegal but arguably ethical</h4>
+<p style="font-size:13.5px"><strong>Civil disobedience</strong> — protesting laws or policies you believe are unjust, even if you get arrested.</p>
+<p style="font-size:13.5px;margin-top:6px"><strong>Whistleblowing</strong> — disclosing otherwise-confidential information to authorities to expose wrongdoing or protect the integrity of financial markets.</p>
+</div>
+<div class="compare-col b">
+<h4>Legal but arguably unethical</h4>
+<p style="font-size:13.5px"><strong>Preferential allocation of oversubscribed IPO shares</strong> to favoured clients.</p>
+<p style="font-size:13.5px;margin-top:6px"><strong>Recommending investment in a relative's firm without disclosure</strong> may not be illegal, but many would consider it unethical.</p>
+</div>
+</div>
+
+<h3>Why Law Is Not Always Enough</h3>
+<div class="cd">
+<div class="step-item"><span class="num-badge">1</span><div>Legal standards are often created <strong>in reaction to past ethical failings</strong>. They do not provide direction for an ever-changing and increasingly complex world.</div></div>
+<div class="step-item"><span class="num-badge">2</span><div>Laws are often <strong>rule-based</strong> — focused on the letter rather than the spirit.</div></div>
+<div class="step-item"><span class="num-badge">3</span><div>Laws <strong>vary across countries</strong>, so an action that is legal in one jurisdiction may be illegal in another.</div></div>
+<div class="step-item"><span class="num-badge">4</span><div>Ethical decisions require <strong>more judgment</strong> and consideration of impact on many stakeholders than legal decisions.</div></div>
+</div>
+
+<div class="exam-tip">On the exam, look for distractors that equate "legal" with "ethical." The CFA framework is explicit: <strong>ethical conduct goes beyond legal standards</strong>. If a recommendation is legal but creates an undisclosed conflict of interest, it is still unethical.</div>
+</div>
+
+<!-- ============ STEP 4: Code of Ethics vs Standards ============ -->
+<div class="step" data-title="Code vs Standards">
+<div class="topic-hdr">Code of Ethics vs Standards of Professional Conduct</div>
+<h2>Two Related but Distinct Documents</h2>
+
+<table class="tb">
+<tr><th>Feature</th><th>Code of Ethics</th><th>Standards of Professional Conduct</th></tr>
+<tr><td><strong>What it is</strong></td><td>Statement of moral principles &amp; values</td><td>Specific rules applying the Code to real situations</td></tr>
+<tr><td><strong>Tone</strong></td><td>Aspirational — the ethical ideals members commit to</td><td>Prescriptive — what members must and must not do</td></tr>
+<tr><td><strong>Coverage</strong></td><td>Six broad commitments (integrity, diligence, independence, etc.)</td><td>Seven numbered Standards (I – VII), each with sub-parts (A, B, C…)</td></tr>
+<tr><td><strong>Tested as</strong></td><td>Recognition of principles</td><td>Application questions — given a scenario, identify the violation</td></tr>
+</table>
+
+<h3>The Six Commitments in the CFA Institute Code of Ethics</h3>
+<div class="cd">
+<p>Members of CFA Institute (including CFA charterholders) and candidates for the CFA designation (Members and Candidates) must:</p>
+<div class="step-item"><span class="num-badge">1</span><div>Act with <strong>integrity, competence, diligence, and respect</strong> and in an ethical manner with the public, clients, prospective clients, employers, employees, colleagues in the investment profession, and other participants in the global capital markets.</div></div>
+<div class="step-item"><span class="num-badge">2</span><div><strong>Place the integrity of the investment profession and the interests of clients above their own personal interests.</strong></div></div>
+<div class="step-item"><span class="num-badge">3</span><div>Use <strong>reasonable care and independent, professional judgment</strong> when conducting investment analysis, making recommendations, taking investment actions, and other professional activities.</div></div>
+<div class="step-item"><span class="num-badge">4</span><div><strong>Practice and encourage others</strong> to practice in a professional and ethical manner that will reflect credit on themselves and the profession.</div></div>
+<div class="step-item"><span class="num-badge">5</span><div><strong>Promote the integrity and viability of the global capital markets</strong> for the ultimate benefit of society.</div></div>
+<div class="step-item"><span class="num-badge">6</span><div><strong>Maintain and improve their professional competence</strong> and strive to maintain and improve the competence of other investment professionals.</div></div>
+</div>
+
+<h3>The Seven Standards of Professional Conduct</h3>
+<div class="g2">
+<div class="cd" style="border-top:4px solid var(--accent)">
+<strong>I. Professionalism</strong>
+<p style="font-size:12.5px;margin-top:4px">A. Knowledge of the Law · B. Independence &amp; Objectivity · C. Misrepresentation · D. Misconduct · E. Competence</p>
+</div>
+<div class="cd" style="border-top:4px solid var(--teal)">
+<strong>II. Integrity of Capital Markets</strong>
+<p style="font-size:12.5px;margin-top:4px">A. Material Nonpublic Information · B. Market Manipulation</p>
+</div>
+<div class="cd" style="border-top:4px solid var(--amber)">
+<strong>III. Duties to Clients</strong>
+<p style="font-size:12.5px;margin-top:4px">A. Loyalty, Prudence &amp; Care · B. Fair Dealing · C. Suitability · D. Performance Presentation · E. Preservation of Confidentiality</p>
+</div>
+<div class="cd" style="border-top:4px solid var(--purple)">
+<strong>IV. Duties to Employers</strong>
+<p style="font-size:12.5px;margin-top:4px">A. Loyalty · B. Additional Compensation Arrangements · C. Responsibilities of Supervisors</p>
+</div>
+<div class="cd" style="border-top:4px solid var(--coral)">
+<strong>V. Investment Analysis, Recommendations &amp; Actions</strong>
+<p style="font-size:12.5px;margin-top:4px">A. Diligence &amp; Reasonable Basis · B. Communication with Clients · C. Record Retention</p>
+</div>
+<div class="cd" style="border-top:4px solid var(--green)">
+<strong>VI. Conflicts of Interest</strong>
+<p style="font-size:12.5px;margin-top:4px">A. Avoid or Disclose Conflicts · B. Priority of Transactions · C. Referral Fees</p>
+</div>
+</div>
+<div class="cd" style="border-top:4px solid #6b7280">
+<strong>VII. Responsibilities as a CFA Institute Member or CFA Candidate</strong>
+<p style="font-size:12.5px;margin-top:4px">A. Conduct as Participants in CFA Institute Programs · B. Reference to CFA Institute, the CFA Designation, and the CFA Program</p>
+</div>
+
+<div class="exam-tip">You are <em>not</em> required to know the Standards by number — just by name. Questions will give you a situation and ask you to identify whether a violation occurs, what it is, or the appropriate course of action.</div>
+</div>
+
+<!-- ============ STEP 5: Professions ============ -->
+<div class="step" data-title="Professions">
+<div class="topic-hdr">What Is a Profession?</div>
+<h2>Professions and the Establishment of Trust</h2>
+
+<div class="hl blue">
+<p>A <strong>profession</strong> is an occupational community having specialized knowledge and skills. A profession is different from craft guilds and trade bodies in two ways: unlike trade bodies, members of professions are required to <strong>uphold high ethical standards</strong> and their mission is to <strong>serve society</strong>.</p>
+</div>
+
+<h3>Characteristics That Define a Profession</h3>
+<div class="cd">
+<div class="g2">
+<div>
+<div class="step-item"><span class="num-badge">1</span><div>Normalize practitioner behaviour via a <strong>code and standards</strong></div></div>
+<div class="step-item"><span class="num-badge">2</span><div>Provide a <strong>service to society</strong></div></div>
+<div class="step-item"><span class="num-badge">3</span><div>Have <strong>high entry standards</strong> and a body of expert knowledge</div></div>
+<div class="step-item"><span class="num-badge">4</span><div>Are <strong>client-focused</strong> — put client interests first</div></div>
+<div class="step-item"><span class="num-badge">5</span><div>Encourage and facilitate <strong>continuing education</strong></div></div>
+</div>
+<div>
+<div class="step-item"><span class="num-badge">6</span><div><strong>Monitor professional conduct</strong> to maintain integrity and reputation of the industry</div></div>
+<div class="step-item"><span class="num-badge">7</span><div>Are <strong>collegial</strong> — respect the rights, dignity, and autonomy of others</div></div>
+<div class="step-item"><span class="num-badge">8</span><div>Have <strong>recognized oversight bodies</strong></div></div>
+<div class="step-item"><span class="num-badge">9</span><div>Encourage the <strong>engagement of members</strong></div></div>
+<div class="step-item"><span class="num-badge">10</span><div>Mentor and inspire others in the profession</div></div>
+</div>
+</div>
+</div>
+
+<h3>How Professions Establish Trust</h3>
+<div class="hl teal">
+<ul style="margin-left:18px;font-size:13.5px;line-height:1.8">
+<li>Require <strong>high standards of expertise, knowledge, and skill</strong></li>
+<li>Establish <strong>standards of ethical behaviour</strong></li>
+<li><strong>Monitor professional conduct</strong></li>
+<li>Encourage continuing education to maintain and increase competence</li>
+<li>Focus on <strong>clients' needs</strong></li>
+<li>Mentor and inspire others</li>
+</ul>
+</div>
+
+<div class="cd">
+<h4>CFA Institute as a Professional Body</h4>
+<p>CFA Institute is the largest body for investment management professionals. CFA Institute candidates and charterholders are required to meet the <strong>highest standards</strong> among those established by CFA Institute, regulators, or the employer.</p>
+</div>
+</div>
+
+<!-- ============ STEP 6: Quiz 1 ============ -->
+<div class="step" data-title="Quiz 1">
+<span class="p amber">Quiz 1 · Checkpoint</span>
+<h2>Test Your Understanding: Foundations of Ethics</h2>
+
+<div class="cd">
+<p><strong>Q1.</strong> The Greek word <em>ethos</em>, from which "ethics" is derived, most closely means:</p>
+<button class="qo" onclick="chk(this,'q1','wrong')">A. truth</button>
+<button class="qo" onclick="chk(this,'q1','correct')">B. character</button>
+<button class="qo" onclick="chk(this,'q1','wrong')">C. obedience</button>
+<div class="fb" id="q1-fb-ok">Correct. Ethics is derived from the Greek word <em>ethos</em>, meaning character. Ethics means making good choices — a set of moral principles and rules of conduct that guide behaviour.</div>
+<div class="fb" id="q1-fb-no"><em>Ethos</em> means character. Ethics is a set of moral principles and rules of conduct that guide behaviour, and can be described as shared beliefs about what behaviour is good or acceptable.</div>
+</div>
+
+<div class="cd">
+<p><strong>Q2.</strong> Ethical conduct is <em>best</em> described as behaviour that:</p>
+<button class="qo" onclick="chk(this,'q2','wrong')">A. complies with all applicable laws and regulations</button>
+<button class="qo" onclick="chk(this,'q2','correct')">B. follows moral principles and improves outcomes for stakeholders</button>
+<button class="qo" onclick="chk(this,'q2','wrong')">C. maximizes the long-term return of the firm's clients</button>
+<div class="fb" id="q2-fb-ok">Correct. Ethical conduct follows moral principles, is consistent with society's ethical expectations, and improves outcomes for stakeholders — those directly or indirectly affected. Legal compliance is <em>not</em> the defining criterion.</div>
+<div class="fb" id="q2-fb-no">Ethical conduct follows moral principles, is consistent with society's ethical expectations, and improves outcomes for stakeholders. Legal compliance is necessary but not sufficient; returns alone do not define ethical behaviour.</div>
+</div>
+
+<div class="cd">
+<p><strong>Q3.</strong> Which of the following is <em>least likely</em> a reason that law is an imperfect mechanism for ensuring ethical behaviour?</p>
+<button class="qo" onclick="chk(this,'q3','wrong')">A. Legal standards are often created to address past ethical failings</button>
+<button class="qo" onclick="chk(this,'q3','wrong')">B. Laws vary across countries</button>
+<button class="qo" onclick="chk(this,'q3','correct')">C. Laws are typically principles-based rather than rule-based</button>
+<div class="fb" id="q3-fb-ok">Correct. Laws are usually <em>rule-based</em>, not principles-based — that is one of the reasons they cannot fully substitute for ethics. The other two statements (backward-looking nature and cross-country variation) are genuine weaknesses.</div>
+<div class="fb" id="q3-fb-no">Laws are typically <em>rule-based</em>, not principles-based. The true weaknesses are that laws address past failings, vary across countries, and are rule-based.</div>
+</div>
+
+<div class="cd">
+<p><strong>Q4.</strong> A code of ethics is <em>best</em> described as:</p>
+<button class="qo" onclick="chk(this,'q4','wrong')">A. a list of legally enforceable regulations</button>
+<button class="qo" onclick="chk(this,'q4','correct')">B. a written set of moral principles that can guide behaviour</button>
+<button class="qo" onclick="chk(this,'q4','wrong')">C. an annual certification of regulatory compliance</button>
+<div class="fb" id="q4-fb-ok">Correct. A code of ethics is a written set of moral principles that can guide behaviour. It communicates an organization's values, principles, and expectations; some codes include rules or standards setting minimum ethical behaviour.</div>
+<div class="fb" id="q4-fb-no">A code of ethics is a written set of moral principles that guide behaviour and communicate an organization's values. It is not the same as a regulation or a compliance filing.</div>
+</div>
+
+<div class="cd">
+<p><strong>Q5.</strong> Which of the following is <em>most likely</em> a characteristic of a profession?</p>
+<button class="qo" onclick="chk(this,'q5','wrong')">A. The absence of any formal oversight body</button>
+<button class="qo" onclick="chk(this,'q5','wrong')">B. A primary focus on maximizing members' revenue</button>
+<button class="qo" onclick="chk(this,'q5','correct')">C. Monitoring of members' professional conduct</button>
+<div class="fb" id="q5-fb-ok">Correct. Professions monitor members' professional conduct to maintain integrity and reputation. They also have recognized oversight bodies, high entry standards, and focus on serving society and clients.</div>
+<div class="fb" id="q5-fb-no">Professions monitor members' conduct, have recognized oversight bodies, and are client- and society-focused — not primarily revenue-focused.</div>
+</div>
+</div>
+
+<!-- ============ STEP 7: Challenges — Overconfidence ============ -->
+<div class="step" data-title="Challenges">
+<div class="topic-hdr">Challenges to Ethical Behaviour</div>
+<h2>Why Good People Still Make Bad Decisions</h2>
+
+<div class="hl coral">
+<h3>The Overconfidence Trap</h3>
+<p>A key challenge is that individuals tend to <strong>overrate the ethical quality of their own behaviour</strong> and <strong>overemphasize personal traits</strong> in determining that quality. In other words, people tend to believe their ethical standards are above average — which leads to overconfidence bias. They place too much importance on internal traits (character, values) and too little on the external pressures shaping their decisions.</p>
+</div>
+
+<div class="diagram-box">
+<div class="viz-title">Self-Perception vs Reality</div>
+<svg viewBox="0 0 760 220" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:760px;display:block;margin:0 auto">
+<rect x="10" y="10" width="740" height="200" rx="12" fill="#fafaf7" stroke="#e5e7eb"/>
+<rect x="40" y="40" width="300" height="150" rx="10" fill="#fee2e2" stroke="#e74c3c" stroke-width="1.5"/>
+<text x="190" y="68" text-anchor="middle" font-size="13" font-weight="700" fill="#991b1b">WHAT PEOPLE BELIEVE</text>
+<text x="190" y="100" text-anchor="middle" font-size="11.5" fill="#374151">"My ethics are above average"</text>
+<text x="190" y="124" text-anchor="middle" font-size="11.5" fill="#374151">"I would never do that"</text>
+<text x="190" y="148" text-anchor="middle" font-size="11.5" fill="#374151">"My character will carry me"</text>
+<text x="190" y="176" text-anchor="middle" font-size="10.5" fill="#991b1b" font-style="italic">Focus: internal traits</text>
+
+<path d="M 355 115 L 410 115" stroke="#6b7280" stroke-width="2" fill="none" marker-end="url(#arrow1)"/>
+<defs><marker id="arrow1" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><polygon points="0 0, 10 3, 0 6" fill="#6b7280"/></marker></defs>
+
+<rect x="420" y="40" width="300" height="150" rx="10" fill="#dbeafe" stroke="#1e3a8a" stroke-width="1.5"/>
+<text x="570" y="68" text-anchor="middle" font-size="13" font-weight="700" fill="#1e3a8a">WHAT STUDIES SHOW</text>
+<text x="570" y="100" text-anchor="middle" font-size="11.5" fill="#374151">External / situational factors</text>
+<text x="570" y="116" text-anchor="middle" font-size="11.5" fill="#374151">are the main determinant</text>
+<text x="570" y="132" text-anchor="middle" font-size="11.5" fill="#374151">of ethical behaviour</text>
+<text x="570" y="160" text-anchor="middle" font-size="10.5" fill="#1e3a8a" font-style="italic">They shift focus from long-term</text>
+<text x="570" y="176" text-anchor="middle" font-size="10.5" fill="#1e3a8a" font-style="italic">to immediate impacts</text>
+</svg>
+</div>
+
+<div class="cd">
+<h3>Two Root Causes of Ethical Failure</h3>
+<div class="step-item"><span class="num-badge">1</span><div><strong>Overconfidence bias</strong> — Believing your own ethical standards exceed others'. You underestimate how much you are influenced by environment.</div></div>
+<div class="step-item"><span class="num-badge">2</span><div><strong>Overweighting internal traits</strong> — Believing personality, values, and character alone will steer you right. Research shows <em>external / situational influences</em> dominate.</div></div>
+</div>
+
+<div class="hl purple">
+<h4>Rules-Based Compliance Culture — A Hidden Trap</h4>
+<p>A <strong>rules-based compliance culture</strong> can itself be a challenge to ethical conduct. When employees focus on "following the rule" rather than the spirit of ethics, they may miss situations the rules don't explicitly cover — or find loopholes. Ethical culture is stronger than a checklist.</p>
+</div>
+</div>
+
+<!-- ============ STEP 8: Situational Influences ============ -->
+<div class="step" data-title="Situational Influences">
+<div class="topic-hdr">External Factors That Push Us Off Course</div>
+<h2>The Three Main Situational Influences</h2>
+
+<p>External or situational influences have a <strong>greater effect</strong> on the ethical quality of behaviour than personal traits. They shift our focus to the <em>immediate</em> rather than the <em>long-term</em> impacts of a decision.</p>
+
+<div class="g3">
+<div class="cd" style="border-top:4px solid var(--accent)">
+<span class="p blue">#1</span>
+<h4>Money &amp; Prestige</h4>
+<p style="font-size:13px">The prospect of acquiring <strong>more money or greater prestige</strong> can distort judgment. Bonuses, promotions, and status are powerful short-term incentives that obscure long-term ethical costs.</p>
+</div>
+<div class="cd" style="border-top:4px solid var(--teal)">
+<span class="p teal">#2</span>
+<h4>Loyalty</h4>
+<p style="font-size:13px">Social pressure from <strong>employer and/or colleagues</strong>. "Go along to get along" — loyalty to a team can override loyalty to clients, the profession, or the integrity of the markets.</p>
+</div>
+<div class="cd" style="border-top:4px solid var(--amber)">
+<span class="p amber">#3</span>
+<h4>Strong Compliance Culture</h4>
+<p style="font-size:13px">A <strong>strong (rules-based) compliance culture</strong> — counter-intuitively a challenge, because people stop asking "is this ethical?" and start asking only "is this within the rule?"</p>
+</div>
+</div>
+
+<div class="hl amber">
+<h4>Why Situational Pressure Wins</h4>
+<p>Situational influences shift focus to <strong>immediate rather than long-term impacts</strong>. An immediate bonus feels real; the long-term cost to trust, career, and capital markets is abstract. This is why a good decision-making <em>framework</em> matters — it forces you to surface the long-term view before you act.</p>
+</div>
+
+<div class="exam-tip">Memorize the three situational influences: <strong>money &amp; prestige · loyalty · strong (rules-based) compliance culture</strong>. A common distractor is "personal traits" — which is the <em>opposite</em> of a situational influence.</div>
+</div>
+
+<!-- ============ STEP 9: Trust ============ -->
+<div class="step" data-title="Trust in the Industry">
+<div class="topic-hdr">Why Ethics Matters in Investment Management</h2></div>
+<h2>Trust Is the Product</h2>
+
+<div class="hl blue">
+<p><strong>Trust is the key in investment management</strong>, and that trust is established by acting with <strong>care, due diligence, and judgment</strong> for clients. The investment management profession — combined with ethical corporate governance — plays a vital role in the growth and development of the capital market.</p>
+</div>
+
+<h3>The Trust → Growth Chain</h3>
+<div class="diagram-box">
+<div class="viz-title">From Individual Ethics to Economic Development</div>
+<svg viewBox="0 0 760 120" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:760px;display:block;margin:0 auto">
+<rect x="10" y="30" width="140" height="60" rx="8" fill="#dbeafe" stroke="#1e3a8a"/>
+<text x="80" y="56" text-anchor="middle" font-size="11" font-weight="700" fill="#1e3a8a">ETHICAL</text>
+<text x="80" y="72" text-anchor="middle" font-size="11" font-weight="700" fill="#1e3a8a">PROFESSIONALS</text>
+<path d="M 152 60 L 178 60" stroke="#6b7280" stroke-width="2" marker-end="url(#ar2)"/>
+<defs><marker id="ar2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><polygon points="0 0, 10 3, 0 6" fill="#6b7280"/></marker></defs>
+<rect x="180" y="30" width="140" height="60" rx="8" fill="#ccfbf1" stroke="#0d9488"/>
+<text x="250" y="56" text-anchor="middle" font-size="11" font-weight="700" fill="#115e59">CLIENT &amp; MARKET</text>
+<text x="250" y="72" text-anchor="middle" font-size="11" font-weight="700" fill="#115e59">TRUST</text>
+<path d="M 322 60 L 348 60" stroke="#6b7280" stroke-width="2" marker-end="url(#ar2)"/>
+<rect x="350" y="30" width="140" height="60" rx="8" fill="#fef3c7" stroke="#d97706"/>
+<text x="420" y="56" text-anchor="middle" font-size="11" font-weight="700" fill="#92400e">EFFICIENT</text>
+<text x="420" y="72" text-anchor="middle" font-size="11" font-weight="700" fill="#92400e">CAPITAL MARKETS</text>
+<path d="M 492 60 L 518 60" stroke="#6b7280" stroke-width="2" marker-end="url(#ar2)"/>
+<rect x="520" y="30" width="140" height="60" rx="8" fill="#dcfce7" stroke="#16a34a"/>
+<text x="590" y="56" text-anchor="middle" font-size="11" font-weight="700" fill="#166534">ECONOMIC</text>
+<text x="590" y="72" text-anchor="middle" font-size="11" font-weight="700" fill="#166534">DEVELOPMENT</text>
+</svg>
+</div>
+
+<h3>Why Investment Professionals Are Different</h3>
+<div class="cd">
+<p>Investment professionals have a <strong>special responsibility</strong> because they are <strong>entrusted with their clients' wealth</strong>. Because investment advice and management are <strong>intangible products</strong>, the quality and value received are more difficult to evaluate than for tangible products — so trust takes on an even greater importance.</p>
+</div>
+
+<div class="compare-row">
+<div class="compare-col a">
+<h4>When Trust Is Present</h4>
+<p style="font-size:13px">Investors commit capital · Cost of raising capital falls · Markets function smoothly · Economic development accelerates</p>
+</div>
+<div class="compare-col b">
+<h4>When Trust Breaks Down</h4>
+<p style="font-size:13px">Investors withhold funds · Cost of capital rises · Firms and professionals suffer · Allocation of capital is distorted by false or misleading information</p>
+</div>
+</div>
+
+<div class="hl coral">
+<h4>Knock-on Effects of Unethical Behaviour</h4>
+<p>Failure to act in a highly ethical manner can damage not only <em>client wealth</em> but also impede the success of investment firms and professionals — potential clients will be less likely to use their services. For society as a whole, a lack of trust reduces funds entrusted to advisors and <strong>increases the cost of raising capital</strong> for business investment and growth. Unethical behaviour — providing incomplete, misleading, or false information — can <strong>distort the allocation of capital</strong>.</p>
+</div>
+</div>
+
+<!-- ============ STEP 10: Suitability vs Fiduciary ============ -->
+<div class="step" data-title="Suitability vs Fiduciary">
+<div class="topic-hdr">Standards of Care</div>
+<h2>Suitability vs Fiduciary Standards</h2>
+
+<p>Financial professionals may be held to different levels of responsibility to their clients. The two principal standards are <strong>suitability</strong> and, more demanding, <strong>fiduciary</strong>.</p>
+
+<table class="tb">
+<tr><th>Feature</th><th>Suitability Standard</th><th>Fiduciary Standard</th></tr>
+<tr><td><strong>Requirement</strong></td><td>Match between client's return requirements and risk tolerance and the characteristics of recommended securities</td><td>Use knowledge and expertise to <strong>act in the best interests of the client</strong></td></tr>
+<tr><td><strong>Strength</strong></td><td>Lower bar</td><td><strong>Stronger</strong> — higher ethical obligation</td></tr>
+<tr><td><strong>Implied by</strong></td><td>Broker-dealer-style duty</td><td>Advisory relationships, trust/retirement accounts</td></tr>
+</table>
+
+<div class="hl teal">
+<h4>CFA Framing</h4>
+<p>Under the CFA Institute Standards, a member in an advisory relationship must make <strong>suitable recommendations</strong> in a <strong>portfolio context</strong> (Standard III-C) while also placing clients' interests above their own (Standard III-A, Loyalty, Prudence, and Care). In substance, CFA members are held to a fiduciary-style standard of care.</p>
+</div>
+
+<div class="exam-tip">On the exam, if a scenario says "broker recommended investment X that matches the client's risk tolerance and return needs" — that satisfies suitability. If the question asks whether the recommendation was in the client's <em>best interest</em>, look for conflicts (commissions, proprietary products) — that triggers the fiduciary lens.</div>
+</div>
+
+<!-- ============ STEP 11: Framework ============ -->
+<div class="step" data-title="Decision Framework">
+<div class="topic-hdr">Framework for Ethical Decision-Making</div>
+<h2>A Four-Step Framework</h2>
+
+<p>A framework for ethical decision-making helps people look at and assess a decision from <strong>different perspectives</strong>. This enables them to make good decisions and to limit unplanned consequences. Ethical decisions are improved when ethics are integrated into a firm's decision-making process.</p>
+
+<div class="diagram-box">
+<div class="viz-title">The Four-Step Ethical Decision-Making Framework</div>
+<svg viewBox="0 0 760 260" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:760px;display:block;margin:0 auto">
+<rect x="10" y="15" width="740" height="230" rx="12" fill="#fafaf7" stroke="#e5e7eb"/>
+<rect x="30" y="40" width="170" height="185" rx="10" fill="#dbeafe" stroke="#1e3a8a" stroke-width="1.5"/>
+<circle cx="115" cy="72" r="18" fill="#1e3a8a"/>
+<text x="115" y="78" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">1</text>
+<text x="115" y="108" text-anchor="middle" font-size="13" font-weight="700" fill="#1e3a8a">IDENTIFY</text>
+<text x="115" y="132" text-anchor="middle" font-size="10.5" fill="#374151">Relevant facts</text>
+<text x="115" y="148" text-anchor="middle" font-size="10.5" fill="#374151">Stakeholders</text>
+<text x="115" y="164" text-anchor="middle" font-size="10.5" fill="#374151">Duties owed</text>
+<text x="115" y="180" text-anchor="middle" font-size="10.5" fill="#374151">Ethical principles</text>
+<text x="115" y="196" text-anchor="middle" font-size="10.5" fill="#374151">Conflicts of interest</text>
+
+<rect x="210" y="40" width="170" height="185" rx="10" fill="#ccfbf1" stroke="#0d9488" stroke-width="1.5"/>
+<circle cx="295" cy="72" r="18" fill="#0d9488"/>
+<text x="295" y="78" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">2</text>
+<text x="295" y="108" text-anchor="middle" font-size="13" font-weight="700" fill="#115e59">CONSIDER</text>
+<text x="295" y="136" text-anchor="middle" font-size="10.5" fill="#374151">Situational</text>
+<text x="295" y="152" text-anchor="middle" font-size="10.5" fill="#374151">influences</text>
+<text x="295" y="172" text-anchor="middle" font-size="10.5" fill="#374151">Additional guidance</text>
+<text x="295" y="192" text-anchor="middle" font-size="10.5" fill="#374151">Alternative actions</text>
+
+<rect x="390" y="40" width="170" height="185" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+<circle cx="475" cy="72" r="18" fill="#d97706"/>
+<text x="475" y="78" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">3</text>
+<text x="475" y="108" text-anchor="middle" font-size="13" font-weight="700" fill="#92400e">DECIDE</text>
+<text x="475" y="124" text-anchor="middle" font-size="13" font-weight="700" fill="#92400e">&amp; ACT</text>
+<text x="475" y="158" text-anchor="middle" font-size="10.5" fill="#374151">Choose the</text>
+<text x="475" y="174" text-anchor="middle" font-size="10.5" fill="#374151">ethical option</text>
+<text x="475" y="190" text-anchor="middle" font-size="10.5" fill="#374151">and implement it</text>
+
+<rect x="570" y="40" width="170" height="185" rx="10" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.5"/>
+<circle cx="655" cy="72" r="18" fill="#7c3aed"/>
+<text x="655" y="78" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">4</text>
+<text x="655" y="108" text-anchor="middle" font-size="13" font-weight="700" fill="#5b21b6">REFLECT</text>
+<text x="655" y="140" text-anchor="middle" font-size="10.5" fill="#374151">Was the outcome</text>
+<text x="655" y="156" text-anchor="middle" font-size="10.5" fill="#374151">as anticipated?</text>
+<text x="655" y="180" text-anchor="middle" font-size="10.5" fill="#374151">Why or why not?</text>
+</svg>
+</div>
+
+<div class="cd">
+<h3>Step-by-Step Detail</h3>
+<div class="step-item"><span class="num-badge">1</span><div><strong>Identify</strong> — Relevant facts, stakeholders and duties owed, ethical principles, and conflicts of interest.</div></div>
+<div class="step-item"><span class="num-badge">2</span><div><strong>Consider</strong> — Situational influences, additional guidance (from the Code, Standards, compliance officer, outside counsel), and alternative actions.</div></div>
+<div class="step-item"><span class="num-badge">3</span><div><strong>Decide and act</strong> — Choose the ethical course and implement it.</div></div>
+<div class="step-item"><span class="num-badge">4</span><div><strong>Reflect</strong> — Was the outcome as anticipated? Why or why not? Feed the lesson back into future decisions.</div></div>
+</div>
+
+<div class="hl green">
+<h4>Why Reflect Matters</h4>
+<p>Reflection closes the loop. Without it, even well-intentioned professionals repeat mistakes. The reflect step converts experience into learning — and learning into the character traits that resist situational pressure.</p>
+</div>
+</div>
+
+<!-- ============ STEP 12: Quiz 2 ============ -->
+<div class="step" data-title="Quiz 2">
+<span class="p amber">Quiz 2 · Checkpoint</span>
+<h2>Test Your Understanding: Challenges, Trust &amp; Framework</h2>
+
+<div class="cd">
+<p><strong>Q6.</strong> Research on ethical behaviour shows that the <em>main determinant</em> of whether individuals act ethically is:</p>
+<button class="qo" onclick="chk(this,'q6','wrong')">A. personal traits and character</button>
+<button class="qo" onclick="chk(this,'q6','correct')">B. external / situational influences</button>
+<button class="qo" onclick="chk(this,'q6','wrong')">C. the individual's level of education</button>
+<div class="fb" id="q6-fb-ok">Correct. Studies show external / situational influences — not personal traits — are the main determinant of ethical behaviour. They shift focus to immediate rather than long-term impacts of a decision.</div>
+<div class="fb" id="q6-fb-no">The evidence is that situational influences dominate. A key challenge to ethical behaviour is that people overemphasize internal traits and underestimate the effect of their environment.</div>
+</div>
+
+<div class="cd">
+<p><strong>Q7.</strong> Which of the following is <em>not</em> one of the three main types of situational influences on ethical behaviour?</p>
+<button class="qo" onclick="chk(this,'q7','wrong')">A. Money and prestige</button>
+<button class="qo" onclick="chk(this,'q7','correct')">B. A client's investment time horizon</button>
+<button class="qo" onclick="chk(this,'q7','wrong')">C. Loyalty to employer and/or colleagues</button>
+<div class="fb" id="q7-fb-ok">Correct. The three situational influences are (1) money &amp; prestige, (2) loyalty to employer and/or colleagues, and (3) a strong (rules-based) compliance culture. A client's time horizon is unrelated.</div>
+<div class="fb" id="q7-fb-no">The three situational influences are money &amp; prestige, loyalty, and a strong (rules-based) compliance culture. A client's time horizon is a portfolio-management concept, not an ethical pressure.</div>
+</div>
+
+<div class="cd">
+<p><strong>Q8.</strong> The suitability standard and the fiduciary standard differ in that only the fiduciary standard requires the professional to:</p>
+<button class="qo" onclick="chk(this,'q8','wrong')">A. match recommendations to a client's risk tolerance and return requirements</button>
+<button class="qo" onclick="chk(this,'q8','correct')">B. act in the best interests of the client</button>
+<button class="qo" onclick="chk(this,'q8','wrong')">C. avoid recommending securities that pay commissions</button>
+<div class="fb" id="q8-fb-ok">Correct. Suitability requires a match between client requirements and recommendations. The fiduciary standard is <em>stronger</em>, requiring the professional to use knowledge and expertise to act in the client's best interests.</div>
+<div class="fb" id="q8-fb-no">Suitability requires matching recommendations to the client's risk and return profile. The fiduciary standard goes further and requires acting in the client's best interests.</div>
+</div>
+
+<div class="cd">
+<p><strong>Q9.</strong> In the CFA Level I ethical decision-making framework, identifying the <em>relevant facts, stakeholders and duties owed, ethical principles, and conflicts of interest</em> is part of which step?</p>
+<button class="qo" onclick="chk(this,'q9','correct')">A. Identify</button>
+<button class="qo" onclick="chk(this,'q9','wrong')">B. Consider</button>
+<button class="qo" onclick="chk(this,'q9','wrong')">C. Reflect</button>
+<div class="fb" id="q9-fb-ok">Correct. Step 1 — Identify — covers relevant facts, stakeholders and duties owed, ethical principles, and conflicts of interest. Step 2 (Consider) brings in situational influences, additional guidance, and alternative actions.</div>
+<div class="fb" id="q9-fb-no">Step 1 (Identify) covers facts, stakeholders, duties owed, ethical principles, and conflicts of interest. Step 2 (Consider) handles situational influences and alternatives; Step 4 (Reflect) reviews outcomes.</div>
+</div>
+
+<div class="cd">
+<p><strong>Q10.</strong> Unethical behaviour by investment professionals is <em>most likely</em> to:</p>
+<button class="qo" onclick="chk(this,'q10','wrong')">A. reduce the cost of raising capital</button>
+<button class="qo" onclick="chk(this,'q10','correct')">B. increase the cost of raising capital and distort the allocation of capital</button>
+<button class="qo" onclick="chk(this,'q10','wrong')">C. have no measurable impact on capital allocation</button>
+<div class="fb" id="q10-fb-ok">Correct. A lack of trust reduces funds entrusted to advisors and <em>increases</em> the cost of raising capital. Unethical behaviour — incomplete, misleading, or false information — distorts the allocation of the capital that is raised.</div>
+<div class="fb" id="q10-fb-no">Unethical behaviour erodes trust, which <em>increases</em> the cost of raising capital and, through misleading information, distorts how capital is allocated.</div>
+</div>
+</div>
+
+<!-- ============ STEP 13: Worked Examples ============ -->
+<div class="step" data-title="Worked Examples">
+<div class="topic-hdr">Applying the Framework</div>
+<h2>Ethical Dilemma Scenarios</h2>
+
+<p>Ethics questions at Level I are almost always <em>application</em> questions. Work through the following scenarios using the four-step framework before reading the solution.</p>
+
+<div class="wex">
+<div class="wex-head"><span class="wex-badge">Scenario 1</span><span class="wex-title">Gift from a Grateful Client</span></div>
+<div class="wex-body">
+<div class="wex-sec given">
+<div class="wex-sec-hdr"><span class="ico">•</span>FACTS</div>
+<div class="wex-sec-body">
+<p>Anika manages a portfolio for a long-standing individual client. After a strong year, the client sends Anika two expensive tickets to a sporting event and a handwritten thank-you note. The tickets are clearly a gift for <em>past</em> performance. Anika's firm policy is silent on gifts from clients. Anika is also managing the accounts of several other clients.</p>
+</div>
+</div>
+<div class="wex-sec find">
+<div class="wex-sec-hdr"><span class="ico">?</span>THE QUESTION</div>
+<div class="wex-sec-body">
+<p>May Anika accept the tickets? What must she do?</p>
+</div>
+</div>
+<div class="wex-sec soln">
+<div class="wex-sec-hdr"><span class="ico">→</span>APPLY THE FRAMEWORK</div>
+<div class="wex-sec-body">
+<div class="wex-step-row"><div class="wex-step-num">1</div><div class="wex-step-body"><strong>Identify</strong> — Stakeholders: the client, the employer, the other clients. Duty owed: independence and objectivity; must not be unduly influenced in the treatment of other clients.</div></div>
+<div class="wex-step-row"><div class="wex-step-num">2</div><div class="wex-step-body"><strong>Consider</strong> — Situational influence: "money / prestige" pressure. A modest gift is permissible, but the <em>appearance</em> of differential treatment matters. The curriculum explicitly states that a member <em>may accept gifts from clients, but must disclose to employer</em>. If a gift is tied to <em>future</em> performance, written permission from the employer is required in advance.</div></div>
+<div class="wex-step-row"><div class="wex-step-num">3</div><div class="wex-step-body"><strong>Decide &amp; act</strong> — Anika may accept the gift because it is for past performance and from an existing client, but she must <strong>disclose it to her employer</strong>. If the gift had been offered as an inducement for future performance, she would need <em>written permission</em> from the employer before accepting.</div></div>
+<div class="wex-step-row"><div class="wex-step-num">4</div><div class="wex-step-body"><strong>Reflect</strong> — Did the gift subtly change how she treats this client vs others? The disclosure obligation is what preserves independence.</div></div>
+</div>
+</div>
+<div class="wex-sec takeaway">
+<div class="wex-sec-hdr"><span class="ico">★</span>KEY POINT</div>
+<div class="wex-sec-body">
+<p>You <em>can</em> accept gifts from clients and referral fees — <strong>as long as they are properly disclosed</strong>. The issue is never the gift itself but the undisclosed potential to compromise objectivity in the treatment of other clients.</p>
+</div>
+</div>
+</div>
+</div>
+
+<div class="wex">
+<div class="wex-head"><span class="wex-badge">Scenario 2</span><span class="wex-title">Overheard Material Nonpublic Information</span></div>
+<div class="wex-body">
+<div class="wex-sec given">
+<div class="wex-sec-hdr"><span class="ico">•</span>FACTS</div>
+<div class="wex-sec-body">
+<p>Dev, a portfolio manager, is in a coffee shop when he overhears two executives from a publicly listed pharmaceutical company loudly discuss an imminent — and still unannounced — FDA rejection of their lead drug. Dev has a position in the stock and his clients do as well.</p>
+</div>
+</div>
+<div class="wex-sec find">
+<div class="wex-sec-hdr"><span class="ico">?</span>THE QUESTION</div>
+<div class="wex-sec-body">
+<p>What may Dev do with the information?</p>
+</div>
+</div>
+<div class="wex-sec soln">
+<div class="wex-sec-hdr"><span class="ico">→</span>APPLY THE FRAMEWORK</div>
+<div class="wex-sec-body">
+<div class="wex-step-row"><div class="wex-step-num">1</div><div class="wex-step-body"><strong>Identify</strong> — The information is clearly <em>material</em> (disclosure would move the price) and <em>nonpublic</em> (not yet released to the market). Stakeholders: Dev's clients, the pharma company's other shareholders, the integrity of the capital markets.</div></div>
+<div class="wex-step-row"><div class="wex-step-num">2</div><div class="wex-step-body"><strong>Consider</strong> — Standard II(A) requires that members in possession of material nonpublic information <strong>must not act or cause others to act</strong> on it. Dev's duty to clients does <em>not</em> override this — he cannot rationalize trading on the information as "helping clients." The Mosaic Theory does not apply; this is a single material, nonpublic piece.</div></div>
+<div class="wex-step-row"><div class="wex-step-num">3</div><div class="wex-step-body"><strong>Decide &amp; act</strong> — Dev must <strong>not trade</strong> (for himself or clients), must <strong>not tip</strong> others, and should consult his firm's compliance officer. He may encourage the issuer to disclose publicly, but he cannot act until the information is available to the marketplace.</div></div>
+<div class="wex-step-row"><div class="wex-step-num">4</div><div class="wex-step-body"><strong>Reflect</strong> — The client may ultimately lose money when the news breaks. That consequence, painful as it is, is less damaging than violating market integrity — which is a duty owed to the public, not just to Dev's book.</div></div>
+</div>
+</div>
+<div class="wex-sec takeaway">
+<div class="wex-sec-hdr"><span class="ico">★</span>KEY POINT</div>
+<div class="wex-sec-body">
+<p>Do <strong>not</strong> act or cause others to act on material nonpublic information. Information is nonpublic until made available to investors in general. You <em>can</em> combine several pieces of <em>nonmaterial, nonpublic</em> information to build recommendations — that is the <strong>Mosaic Theory</strong>.</p>
+</div>
+</div>
+</div>
+</div>
+
+<div class="wex">
+<div class="wex-head"><span class="wex-badge">Scenario 3</span><span class="wex-title">Relative's Firm and an Undisclosed Conflict</span></div>
+<div class="wex-body">
+<div class="wex-sec given">
+<div class="wex-sec-hdr"><span class="ico">•</span>FACTS</div>
+<div class="wex-sec-body">
+<p>Priya, an adviser, believes her brother's private investment firm is a genuinely attractive opportunity. She recommends it to several clients without telling them her brother owns the firm. The investment is legal in her jurisdiction and consistent with the clients' risk tolerances.</p>
+</div>
+</div>
+<div class="wex-sec find">
+<div class="wex-sec-hdr"><span class="ico">?</span>THE QUESTION</div>
+<div class="wex-sec-body">
+<p>Has Priya acted ethically?</p>
+</div>
+</div>
+<div class="wex-sec soln">
+<div class="wex-sec-hdr"><span class="ico">→</span>APPLY THE FRAMEWORK</div>
+<div class="wex-sec-body">
+<div class="wex-step-row"><div class="wex-step-num">1</div><div class="wex-step-body"><strong>Identify</strong> — The recommendation is legal and may even be suitable. But Priya has an obvious <strong>conflict of interest</strong> (family tie to issuer) that she has not disclosed.</div></div>
+<div class="wex-step-row"><div class="wex-step-num">2</div><div class="wex-step-body"><strong>Consider</strong> — Ethical principles often set a higher standard than laws. Ethical conduct requires avoiding or <em>fully disclosing</em> matters that could impair independence and objectivity, so clients can judge biases for themselves.</div></div>
+<div class="wex-step-row"><div class="wex-step-num">3</div><div class="wex-step-body"><strong>Decide &amp; act</strong> — Priya must <strong>disclose</strong> the family relationship to clients (and to her employer) <em>before</em> any investment is made. Clients who are family members must be treated as any other client.</div></div>
+<div class="wex-step-row"><div class="wex-step-num">4</div><div class="wex-step-body"><strong>Reflect</strong> — Even if the investment performs well, undisclosed conflicts corrode trust. If it performs poorly, litigation and reputational damage are almost certain.</div></div>
+</div>
+</div>
+<div class="wex-sec takeaway">
+<div class="wex-sec-hdr"><span class="ico">★</span>KEY POINT</div>
+<div class="wex-sec-body">
+<p><strong>Legal ≠ ethical.</strong> Recommending investment in a relative's firm without disclosure is a classic case of behaviour that may be legal but is widely considered unethical. The cure is disclosure — let clients judge the effects of any conflict for themselves.</p>
+</div>
+</div>
+</div>
+</div>
+
+<div class="exam-tip">For every ethics vignette, ask: "Who are the stakeholders? What duty is owed to each? Is there an undisclosed conflict?" These three questions will drive the correct answer on nearly every exam question.</div>
+</div>
+
+<!-- ============ STEP 14: Handbook & Professional Conduct Program ============ -->
+<div class="step" data-title="Standards Handbook">
+<div class="topic-hdr">Standards of Practice Handbook &amp; the PCP</div>
+<h2>The Role of the Standards of Practice Handbook</h2>
+
+<div class="hl blue">
+<p>The <strong>Standards of Practice Handbook</strong> (currently 12th Edition, updated 2024) is the authoritative guide to applying the CFA Institute Code and Standards. Most ethics questions on the exam will likely come <strong>directly from the text and examples in the Handbook</strong>. Candidates should read both the summaries and the original Handbook, working through all the examples.</p>
+</div>
+
+<h3>What the Handbook Contains</h3>
+<div class="cd">
+<div class="step-item"><span class="num-badge">1</span><div>The <strong>Code of Ethics</strong> — six high-level commitments</div></div>
+<div class="step-item"><span class="num-badge">2</span><div>The <strong>Seven Standards of Professional Conduct</strong>, each broken into lettered sub-standards</div></div>
+<div class="step-item"><span class="num-badge">3</span><div><strong>Guidance</strong> — interpretation and clarification of each Standard</div></div>
+<div class="step-item"><span class="num-badge">4</span><div><strong>Recommended Procedures for Compliance</strong> — operational practices firms can adopt</div></div>
+<div class="step-item"><span class="num-badge">5</span><div><strong>Application</strong> — numerous worked examples of violations and proper conduct</div></div>
+</div>
+
+<h3>The CFA Institute Professional Conduct Program (PCP)</h3>
+<div class="cd">
+<p>The PCP is covered by the CFA Institute <strong>Bylaws</strong> and the <strong>Rules of Procedure for Proceedings Related to Professional Conduct</strong>. The <strong>Disciplinary Review Committee</strong> of the CFA Institute Board of Governors has overall responsibility for the PCP and enforcement of the Code and Standards. Professional Conduct staff conduct inquiries.</p>
+</div>
+
+<h4>Circumstances That Can Prompt an Inquiry</h4>
+<div class="hl purple">
+<ul style="margin-left:18px;font-size:13.5px;line-height:1.8">
+<li><strong>Self-disclosure</strong> on the annual Professional Conduct Statement (civil litigation, criminal investigation, written complaint)</li>
+<li><strong>Written complaints</strong> about a member or candidate's professional conduct</li>
+<li>Evidence of <strong>misconduct from public sources</strong> — media articles, broadcasts</li>
+<li>A <strong>report by a CFA exam proctor</strong> of a possible violation during the examination</li>
+<li><strong>Analysis of exam scores and materials</strong>, and monitoring of websites and social media by CFA Institute</li>
+</ul>
+</div>
+
+<h4>Possible Outcomes of an Inquiry</h4>
+<div class="g3">
+<div class="cd" style="border-top:4px solid var(--green)"><strong>No sanction</strong><p style="font-size:13px;margin-top:4px">Staff determines no disciplinary action is appropriate.</p></div>
+<div class="cd" style="border-top:4px solid var(--amber)"><strong>Cautionary letter</strong><p style="font-size:13px;margin-top:4px">A formal caution issued by Professional Conduct staff.</p></div>
+<div class="cd" style="border-top:4px solid var(--coral)"><strong>Discipline</strong><p style="font-size:13px;margin-top:4px">Sanctions may include <em>condemnation by peers</em> or <em>suspension of candidacy</em> in the CFA Program. The member or candidate may accept or reject the sanction; rejection triggers a hearing panel.</p></div>
+</div>
+
+<div class="exam-tip">The PCP details are frequently tested as recognition questions. Memorize the <strong>six triggers</strong> for an inquiry and the <strong>three possible outcomes</strong>.</div>
+</div>
+
+<!-- ============ STEP 15: Quiz 3 ============ -->
+<div class="step" data-title="Quiz 3">
+<span class="p amber">Quiz 3 · Checkpoint</span>
+<h2>Test Your Understanding: Handbook, Applications &amp; Integration</h2>
+
+<div class="cd">
+<p><strong>Q11.</strong> A portfolio manager overhears material nonpublic information about a company in which her clients are invested. She should <em>most likely</em>:</p>
+<button class="qo" onclick="chk(this,'q11','wrong')">A. trade immediately for the benefit of her clients</button>
+<button class="qo" onclick="chk(this,'q11','wrong')">B. share the information with colleagues so they can evaluate it</button>
+<button class="qo" onclick="chk(this,'q11','correct')">C. not act or cause others to act on the information</button>
+<div class="fb" id="q11-fb-ok">Correct. Standard II(A) prohibits acting, or causing others to act, on material nonpublic information. The duty to clients does not override this; waiting until the information is public preserves market integrity.</div>
+<div class="fb" id="q11-fb-no">Members in possession of material nonpublic information must not act or cause someone else to act on it. Tipping colleagues would also be a violation.</div>
+</div>
+
+<div class="cd">
+<p><strong>Q12.</strong> Which of the following gifts is <em>most likely</em> permissible under the CFA Institute Standards without seeking advance written permission from an employer?</p>
+<button class="qo" onclick="chk(this,'q12','correct')">A. A modest gift from a client for past performance, disclosed to the employer</button>
+<button class="qo" onclick="chk(this,'q12','wrong')">B. A luxury vacation offered by a client conditional on achieving future targets</button>
+<button class="qo" onclick="chk(this,'q12','wrong')">C. A cash bonus from a corporate issuer whose stock the analyst covers</button>
+<div class="fb" id="q12-fb-ok">Correct. A member may accept gifts from clients but must <em>disclose</em> them to the employer. If a gift is contingent on <em>future</em> performance, <strong>written</strong> employer permission is required in advance. Gifts from entities trying to influence research are more problematic.</div>
+<div class="fb" id="q12-fb-no">Gifts from clients are permissible with disclosure to the employer. Gifts contingent on future performance require advance written permission. Gifts from covered issuers threaten independence.</div>
+</div>
+
+<div class="cd">
+<p><strong>Q13.</strong> Which of the following is <em>least likely</em> a circumstance that can prompt a CFA Institute Professional Conduct inquiry?</p>
+<button class="qo" onclick="chk(this,'q13','wrong')">A. A written complaint about a candidate's professional conduct</button>
+<button class="qo" onclick="chk(this,'q13','wrong')">B. A report by an exam proctor of a possible violation during the exam</button>
+<button class="qo" onclick="chk(this,'q13','correct')">C. An anonymous telephone tip from a competitor firm</button>
+<div class="fb" id="q13-fb-ok">Correct. The listed triggers are self-disclosure on the PCS, written complaints, evidence of misconduct from public sources, a proctor's report, and analysis of exam scores/materials and monitoring of websites and social media. An anonymous phone tip is not enumerated.</div>
+<div class="fb" id="q13-fb-no">Triggers include self-disclosure, written complaints, public-source evidence, proctor reports, and exam score analysis plus website/social media monitoring.</div>
+</div>
+
+<div class="cd">
+<p><strong>Q14.</strong> An adviser recommends a relative's investment firm to several clients without disclosing the family connection. The recommendation is legal and suits the clients' risk profiles. This conduct is <em>best</em> described as:</p>
+<button class="qo" onclick="chk(this,'q14','wrong')">A. ethical because it is legal and suitable</button>
+<button class="qo" onclick="chk(this,'q14','correct')">B. unethical because it fails to disclose a conflict of interest</button>
+<button class="qo" onclick="chk(this,'q14','wrong')">C. ethical only if the investment performs well</button>
+<div class="fb" id="q14-fb-ok">Correct. Ethical principles often set a higher standard than law. Undisclosed conflicts of interest — including family relationships to a recommended issuer — are widely considered unethical even when legal and suitable. Ethical requirements are independent of outcomes.</div>
+<div class="fb" id="q14-fb-no">Legal and suitable are not enough. Undisclosed conflicts of interest are unethical; disclosure allows clients to judge motives and biases for themselves.</div>
+</div>
+</div>
+
+<!-- ============ STEP 16: Summary ============ -->
+<div class="step" data-title="Summary">
+<span class="p green">Module Complete</span>
+<h2>Your Scorecard</h2>
+
+<div class="cd" style="text-align:center;padding:24px">
+<div style="font-size:48px;font-family:var(--font-h);font-weight:700" id="finalScore">0 / 14</div>
+<div class="pbar"><div class="fill" id="scoreFill" style="width:0%"></div></div>
+<p id="scoreMsg" style="margin-top:10px;font-size:15px;color:var(--muted)"></p>
+<button onclick="retryQuiz()" style="margin-top:12px;padding:10px 20px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-family:var(--font-h);font-weight:600;font-size:13px;cursor:pointer;transition:all .2s">Retry Quizzes</button>
+</div>
+
+<h2 style="margin-top:24px">LM01 Key Takeaways — Exam-Ready Cheat Sheet</h2>
+
+<div class="cd">
+<h3>Core Definitions</h3>
+<div class="step-item"><span class="num-badge">1</span><div><strong>Ethics</strong> (from Greek <em>ethos</em> = character): shared beliefs about good/acceptable behaviour; a set of moral principles and rules of conduct guiding behaviour.</div></div>
+<div class="step-item"><span class="num-badge">2</span><div><strong>Ethical conduct</strong>: follows moral principles, consistent with society's expectations, improves outcomes for stakeholders.</div></div>
+<div class="step-item"><span class="num-badge">3</span><div><strong>Code of ethics</strong>: a written set of moral principles; may include rules/standards for minimum behaviour. <strong>Standards</strong> apply the Code to specific situations.</div></div>
+</div>
+
+<div class="cd">
+<h3>Ethical vs Legal</h3>
+<div class="step-item"><span class="num-badge">4</span><div>Not all unethical acts are illegal; not all illegal acts are unethical. <strong>Civil disobedience</strong> and <strong>whistleblowing</strong> may be illegal but ethical; preferential IPO allocation may be legal but unethical.</div></div>
+<div class="step-item"><span class="num-badge">5</span><div>Law is imperfect because: reactive to past failures · rule-based · varies by country.</div></div>
+</div>
+
+<div class="cd">
+<h3>Professions, Trust &amp; Standards of Care</h3>
+<div class="step-item"><span class="num-badge">6</span><div>A <strong>profession</strong>: specialized knowledge, high ethical standards, serves society, client-focused, has oversight body, requires continuing education, monitors conduct.</div></div>
+<div class="step-item"><span class="num-badge">7</span><div><strong>Trust</strong> is the key in investment management because advice/management are <em>intangible</em>. Trust → efficient capital markets → economic development.</div></div>
+<div class="step-item"><span class="num-badge">8</span><div><strong>Suitability</strong>: match client risk/return to recommendations. <strong>Fiduciary</strong> (stronger): act in the client's best interests.</div></div>
+</div>
+
+<div class="cd">
+<h3>Challenges &amp; Framework</h3>
+<div class="step-item"><span class="num-badge">9</span><div><strong>Overconfidence bias</strong>: people overrate their own ethics and overemphasize internal traits.</div></div>
+<div class="step-item"><span class="num-badge">10</span><div><strong>Three situational influences</strong> (external): (1) money &amp; prestige, (2) loyalty to employer/colleagues, (3) strong (rules-based) compliance culture.</div></div>
+<div class="step-item"><span class="num-badge">11</span><div><strong>Four-step framework</strong>: <strong>Identify</strong> (facts, stakeholders, duties, conflicts) → <strong>Consider</strong> (situational influences, guidance, alternatives) → <strong>Decide &amp; act</strong> → <strong>Reflect</strong>.</div></div>
+</div>
+
+<div class="cd">
+<h3>Handbook &amp; PCP</h3>
+<div class="step-item"><span class="num-badge">12</span><div><strong>Standards of Practice Handbook</strong> (12th Ed., 2024): source of Code, Seven Standards, Guidance, Recommended Procedures, and Application examples. Most exam ethics questions come from Handbook text/examples.</div></div>
+<div class="step-item"><span class="num-badge">13</span><div><strong>PCP triggers</strong>: self-disclosure · written complaints · public-source evidence · proctor reports · analysis of exam scores and website/social-media monitoring.</div></div>
+<div class="step-item"><span class="num-badge">14</span><div><strong>PCP outcomes</strong>: no sanction · cautionary letter · discipline (peer condemnation, suspension of candidacy).</div></div>
+</div>
+
+<div class="hl amber">
+<h3>Last-Minute Exam Checklist</h3>
+<p style="font-size:13.5px;line-height:1.9">
+<strong>Ethics = 15–20%</strong> of Level I · Read the original Handbook · Re-read Ethics the day before the exam<br>
+<strong>Ethical conduct:</strong> principles · society's expectations · improves stakeholder outcomes<br>
+<strong>Situational influences:</strong> money/prestige · loyalty · strong (rules-based) compliance culture<br>
+<strong>Framework:</strong> Identify → Consider → Decide &amp; Act → Reflect<br>
+<strong>Gifts:</strong> client gifts OK with disclosure; future-performance gifts need <em>written</em> employer permission<br>
+<strong>MNPI:</strong> do not act, do not tip — Mosaic Theory applies only to <em>non-material</em> non-public pieces<br>
+<strong>Disclose conflicts</strong> so clients can judge biases themselves
+</p>
+</div>
+</div>
+
+</div>
+
+<div class="nav-bar">
+<button class="btn-prev" id="prevBtn" onclick="go(cur-1)" disabled>← Previous</button>
+<span class="step-counter" id="counter">Step 1 of 16</span>
+<button class="btn-next" id="nextBtn" onclick="go(cur+1)">Next →</button>
+</div>
+</div>
+
+<script>
+const steps=document.querySelectorAll('.step'),dotsC=document.getElementById('dots');
+const qz=[5,11,14]; // Quiz step indices (0-based)
+let cur=0,sc=0,total=14,ans={};
+steps.forEach((_,i)=>{const d=document.createElement('div');d.className='dot'+(qz.includes(i)?' quiz':'');d.onclick=()=>go(i);dotsC.appendChild(d)});
+const dots=document.querySelectorAll('.dot');
+function go(n){if(n<0||n>=steps.length)return;steps[cur].classList.remove('active');dots[cur].classList.remove('active');cur=n;steps[cur].classList.add('active');dots[cur].classList.add('active');document.getElementById('prevBtn').disabled=cur===0;document.getElementById('nextBtn').disabled=cur===steps.length-1;document.getElementById('counter').textContent='Step '+(cur+1)+' of '+steps.length;window.scrollTo({top:0,behavior:'smooth'});if(cur===steps.length-1)updSc();}
+function chk(el,qid,ok){if(ans[qid])return;ans[qid]=true;const parent=el.parentElement;const opts=parent.querySelectorAll('.qo');opts.forEach(o=>o.classList.add('locked'));if(ok==='correct'){el.classList.add('correct');sc++;const fb=document.getElementById(qid+'-fb-ok');if(fb)fb.classList.add('show','ok');}else{el.classList.add('wrong');opts.forEach(o=>{const oc=o.getAttribute('onclick');if(oc&&oc.includes("'correct'"))o.classList.add('correct')});const fb=document.getElementById(qid+'-fb-no');if(fb)fb.classList.add('show','no');}}
+function updSc(){document.getElementById('finalScore').textContent=sc+' / '+total;const pct=Math.round(sc/total*100);document.getElementById('scoreFill').style.width=pct+'%';document.getElementById('scoreMsg').textContent=pct===100?'Perfect score! You have mastered LM01 Ethics and Trust.':pct>=80?'Strong performance! Review any missed concepts.':pct>=60?'Good foundation. Review the sections where you missed questions.':'Keep studying — revisit the content steps and try the quizzes again.'; try{if(window.parent!==window)window.parent.postMessage({type:'moduleComplete',module:'lm01',correct:sc,total:total},'*')}catch(e){}}
+go(0);
+
+function retryQuiz(){
+  if(!confirm('Reset all quiz answers and try again?'))return;
+  sc=0;ans={};
+  document.querySelectorAll('.qo').forEach(btn=>{
+    btn.classList.remove('correct','wrong','locked');
+  });
+  document.querySelectorAll('.fb').forEach(fb=>{
+    fb.classList.remove('show','ok','no');
+  });
+  document.getElementById('finalScore').textContent='0 / '+total;
+  document.getElementById('scoreFill').style.width='0%';
+  document.getElementById('scoreMsg').textContent='';
+  if(qz&&qz.length>0)go(qz[0]);
+}
+</script>
+
+<!-- ===== Direct drawing surface (no iframe nesting) ===== -->
+<style id="cfa-draw-styles">
+  #cfa-canvas {
+    position: fixed; top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    pointer-events: none; z-index: 9999;
+    -webkit-user-select: none; user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+    background: transparent;
+  }
+  #cfa-canvas.on {
+    pointer-events: auto;
+    touch-action: none;
+    cursor: crosshair;
+  }
+  #cfa-tools {
+    position: fixed; top: 14px; right: 14px;
+    display: flex; flex-direction: column; gap: 6px;
+    padding: 8px; border-radius: 14px;
+    background: linear-gradient(180deg,#fafbfc,#eef0f3);
+    border: 1px solid rgba(0,0,0,0.08);
+    box-shadow: 0 4px 14px rgba(0,0,0,.10), 0 1px 2px rgba(0,0,0,.06);
+    z-index: 10000;
+    font: 600 12px -apple-system, sans-serif;
+    pointer-events: auto;
+  }
+  #cfa-tools button {
+    width: 40px; height: 40px;
+    border: none; border-radius: 9px;
+    background: transparent; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; padding: 0;
+    color: #2a2d33;
+    transition: background .12s, transform .08s, box-shadow .12s;
+    touch-action: manipulation;
+  }
+  #cfa-tools button:hover { background: rgba(0,0,0,0.06); }
+  #cfa-tools button:active {
+    transform: scale(0.92);
+    background: rgba(29,78,216,0.18);
+    box-shadow: 0 0 0 2px rgba(29,78,216,0.4) inset;
+  }
+  #cfa-tools button.on {
+    background: linear-gradient(180deg,#e9eefb,#d6dffb);
+    color: #1d4ed8;
+    box-shadow: inset 0 0 0 1px #b8c5f5;
+  }
+  #cfa-status {
+    position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);
+    padding: 7px 14px; border-radius: 999px;
+    background: linear-gradient(135deg,#1d4ed8,#7c3aed); color: #fff;
+    font: 600 12px/1 -apple-system, sans-serif;
+    letter-spacing: .04em; text-transform: uppercase;
+    box-shadow: 0 6px 18px rgba(29,78,216,.35);
+    z-index: 10000; pointer-events: none;
+    opacity: 0; transition: opacity .2s;
+  }
+  #cfa-status.show { opacity: 1; }
+</style>
+
+<canvas id="cfa-canvas"></canvas>
+<div id="cfa-tools">
+  <button id="cfa-pen"   title="Pen — toggle drawing">✎</button>
+  <button id="cfa-color" title="Color">●</button>
+  <button id="cfa-undo"  title="Undo">↶</button>
+  <button id="cfa-clear" title="Clear">🗑</button>
+</div>
+<div id="cfa-status">DRAWING ON</div>
+
+<script>
+(function () {
+  'use strict';
+  var canvas = document.getElementById('cfa-canvas');
+  var ctx = canvas.getContext('2d');
+  var tools = document.getElementById('cfa-tools');
+  var btnPen = document.getElementById('cfa-pen');
+  var btnColor = document.getElementById('cfa-color');
+  var btnUndo = document.getElementById('cfa-undo');
+  var btnClear = document.getElementById('cfa-clear');
+  var statusPill = document.getElementById('cfa-status');
+
+  var COLORS = ['#1f2227', '#e23b3b', '#f29423', '#2da44e', '#1f6feb', '#7c3aed'];
+  var colorIdx = 0;
+  var drawingOn = false;
+  var strokes = [];   // [{color, width, points: [[x,y],...]}, ...]
+  var live = null;
+
+  function size() {
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var w = window.innerWidth, h = window.innerHeight;
+    canvas.style.width = w + 'px';
+    canvas.style.height = h + 'px';
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    redraw();
+  }
+  size();
+  window.addEventListener('resize', size);
+
+  function redraw() {
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.restore();
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    function drawOne(s) {
+      if (!s || !s.points || !s.points.length) return;
+      ctx.strokeStyle = s.color;
+      ctx.lineWidth = s.width;
+      ctx.beginPath();
+      ctx.moveTo(s.points[0][0], s.points[0][1]);
+      for (var i = 1; i < s.points.length; i++) ctx.lineTo(s.points[i][0], s.points[i][1]);
+      ctx.stroke();
+    }
+    strokes.forEach(drawOne);
+    if (live) drawOne(live);
+  }
+
+  function setOn(on) {
+    drawingOn = on;
+    canvas.classList.toggle('on', on);
+    btnPen.classList.toggle('on', on);
+    statusPill.classList.toggle('show', on);
+    statusPill.textContent = on ? '✎ DRAWING' : 'OFF';
+  }
+
+  // Click-tap helpers
+  function tap(el, fn) {
+    var lastFire = 0;
+    function go(e) {
+      if (Date.now() - lastFire < 300) return;
+      lastFire = Date.now();
+      e.preventDefault(); e.stopPropagation();
+      try { fn(e); } catch (err) { console.error(err); }
+    }
+    el.addEventListener('pointerup', go);
+    el.addEventListener('click', go);
+    el.addEventListener('touchend', go);
+  }
+  tap(btnPen,   function () { setOn(!drawingOn); });
+  tap(btnColor, function () {
+    colorIdx = (colorIdx + 1) % COLORS.length;
+    btnColor.style.color = COLORS[colorIdx];
+  });
+  tap(btnUndo,  function () { strokes.pop(); redraw(); });
+  tap(btnClear, function () { if (confirm('Erase all ink?')) { strokes = []; redraw(); } });
+  btnColor.style.color = COLORS[colorIdx];
+
+  // Drawing — simple and reliable
+  function px(e) {
+    return [e.clientX, e.clientY];
+  }
+  canvas.addEventListener('pointerdown', function (e) {
+    if (!drawingOn) return;
+    e.preventDefault();
+    try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
+    live = { color: COLORS[colorIdx], width: 2.4, points: [px(e)] };
+    redraw();
+  });
+  canvas.addEventListener('pointermove', function (e) {
+    if (!live) return;
+    e.preventDefault();
+    live.points.push(px(e));
+    redraw();
+  });
+  function end() {
+    if (!live) return;
+    if (live.points.length > 1) strokes.push(live);
+    live = null;
+    redraw();
+  }
+  canvas.addEventListener('pointerup', end);
+  canvas.addEventListener('pointercancel', end);
+  canvas.addEventListener('pointerleave', end);
+
+  // Touch fallback for iOS Safari (sometimes pen doesn't fire pointer events)
+  canvas.addEventListener('touchstart', function (e) {
+    if (!drawingOn) return;
+    if (live) return; // pointer event already handled it
+    e.preventDefault();
+    var t = e.changedTouches[0]; if (!t) return;
+    live = { color: COLORS[colorIdx], width: 2.4, points: [[t.clientX, t.clientY]] };
+    redraw();
+  }, { passive: false });
+  canvas.addEventListener('touchmove', function (e) {
+    if (!live) return;
+    e.preventDefault();
+    var t = e.changedTouches[0]; if (!t) return;
+    live.points.push([t.clientX, t.clientY]);
+    redraw();
+  }, { passive: false });
+  canvas.addEventListener('touchend', function (e) {
+    e.preventDefault();
+    end();
+  }, { passive: false });
+  canvas.addEventListener('touchcancel', function (e) {
+    e.preventDefault();
+    end();
+  }, { passive: false });
+
+  // Auto-enable on load — user opens the page already in draw mode
+  setOn(true);
+})();
+</script>
+
+</body>
+</html>
