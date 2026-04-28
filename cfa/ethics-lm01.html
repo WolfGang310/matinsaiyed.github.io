@@ -1401,16 +1401,22 @@ function retryQuiz(){
   }
 
   function buildPathD(stroke, isLast) {
-    if (!stroke.points.length) return '';
+    var pts = stroke.points;
+    if (!pts.length) return '';
+    // Predicted points: extend the rendered curve into the near future
+    // (where the pen is heading) to hide processing latency. They're
+    // dropped on stroke commit (isLast === true).
+    if (!isLast && stroke.predicted && stroke.predicted.length) {
+      pts = pts.concat(stroke.predicted);
+    }
     if (!window.__cfaGetStroke) {
-      // Fallback while the ESM import is still in flight: simple polyline.
-      var d = 'M ' + stroke.points[0][0].toFixed(2) + ' ' + stroke.points[0][1].toFixed(2);
-      for (var i = 1; i < stroke.points.length; i++) {
-        d += ' L ' + stroke.points[i][0].toFixed(2) + ' ' + stroke.points[i][1].toFixed(2);
+      var d = 'M ' + pts[0][0].toFixed(2) + ' ' + pts[0][1].toFixed(2);
+      for (var i = 1; i < pts.length; i++) {
+        d += ' L ' + pts[i][0].toFixed(2) + ' ' + pts[i][1].toFixed(2);
       }
       return d;
     }
-    var outline = window.__cfaGetStroke(stroke.points, strokeOptions(stroke, isLast));
+    var outline = window.__cfaGetStroke(pts, strokeOptions(stroke, isLast));
     return outlineToSvgPath(outline);
   }
 
@@ -1713,11 +1719,28 @@ function retryQuiz(){
         }
         return;
       }
+      // Coalesced: high-resolution real samples (~120Hz from Pencil)
       var pts = (e.getCoalescedEvents && e.getCoalescedEvents()) || [e];
       for (var i = 0; i < pts.length; i++) {
         pushPoint(pts[i].clientX + window.scrollX,
                   pts[i].clientY + window.scrollY,
                   pts[i].pressure);
+      }
+      // Predicted: where the pen is likely heading. Render but don't commit.
+      // This is Apple's main latency-hiding technique for Pencil — the
+      // visible line leads the hardware by ~16-32ms.
+      var pred = (e.getPredictedEvents && e.getPredictedEvents()) || [];
+      if (pred.length) {
+        state.live.predicted = [];
+        for (var p = 0; p < pred.length; p++) {
+          state.live.predicted.push([
+            pred[p].clientX + window.scrollX,
+            pred[p].clientY + window.scrollY,
+            pred[p].pressure != null ? pred[p].pressure : 0.5
+          ]);
+        }
+      } else {
+        state.live.predicted = null;
       }
       updatePath(state.live, false);
       return;
@@ -1780,7 +1803,8 @@ function retryQuiz(){
       }
       state.strokes = keep;
     } else {
-      // Final render with last:true so end caps / tapers apply
+      // Drop predicted points before final commit + render
+      state.live.predicted = null;
       updatePath(state.live, true);
       state.strokes.push(state.live);
       state.redo = [];
