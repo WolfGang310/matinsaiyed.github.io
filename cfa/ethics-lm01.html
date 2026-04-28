@@ -1002,7 +1002,8 @@ function retryQuiz(){
     pointer-events: none; z-index: 9999;
     overflow: visible;
   }
-  #cfa-svg path { vector-effect: non-scaling-stroke; }
+  /* Let stroke width scale with the document — feels more natural like
+     drawing on actual paper. */
   body { position: relative; padding-bottom: 100px !important; }
 
   /* Hover preview dot for Pencil Pro */
@@ -1342,12 +1343,34 @@ function retryQuiz(){
     var def = TOOLS[stroke.tool];
     return preset.px * def.widthMul;
   }
+  // Catmull-Rom spline through all points, expressed as cubic Bezier.
+  // This produces curves that pass smoothly through every input point —
+  // no straight-line segments, no corners on curved paths.
+  // Algorithm: for each pair (P1, P2), use neighbours (P0, P3) to compute
+  // tangent control points (factor 1/6 = tension 0.5, matches Apple Notes).
   function buildPathD(points) {
     if (!points.length) return '';
-    var d = 'M ' + points[0][0].toFixed(1) + ' ' + points[0][1].toFixed(1);
-    for (var i = 1; i < points.length; i++) {
-      // Use S-shaped smoothing via L for now (fast, no jitter)
-      d += ' L ' + points[i][0].toFixed(1) + ' ' + points[i][1].toFixed(1);
+    if (points.length === 1) {
+      var p = points[0];
+      return 'M ' + p[0].toFixed(2) + ' ' + p[1].toFixed(2);
+    }
+    if (points.length === 2) {
+      return 'M ' + points[0][0].toFixed(2) + ' ' + points[0][1].toFixed(2) +
+             ' L ' + points[1][0].toFixed(2) + ' ' + points[1][1].toFixed(2);
+    }
+    var d = 'M ' + points[0][0].toFixed(2) + ' ' + points[0][1].toFixed(2);
+    for (var i = 0; i < points.length - 1; i++) {
+      var p0 = points[i - 1] || points[i];
+      var p1 = points[i];
+      var p2 = points[i + 1];
+      var p3 = points[i + 2] || p2;
+      var cp1x = p1[0] + (p2[0] - p0[0]) / 6;
+      var cp1y = p1[1] + (p2[1] - p0[1]) / 6;
+      var cp2x = p2[0] - (p3[0] - p1[0]) / 6;
+      var cp2y = p2[1] - (p3[1] - p1[1]) / 6;
+      d += ' C ' + cp1x.toFixed(2) + ' ' + cp1y.toFixed(2)
+        +  ' '  + cp2x.toFixed(2) + ' ' + cp2y.toFixed(2)
+        +  ' '  + p2[0].toFixed(2) + ' ' + p2[1].toFixed(2);
     }
     return d;
   }
@@ -1588,14 +1611,23 @@ function retryQuiz(){
       attachPath(state.live);
     }
   }
+  function pushPoint(x, y) {
+    var last = state.live.points[state.live.points.length - 1];
+    var dx = x - last[0], dy = y - last[1];
+    if (dx * dx + dy * dy < 0.4) return;  // sub-px dedupe — keep the detail
+    state.live.points.push([x, y]);
+  }
   function onMove(e) {
     if (state.live) {
       e.preventDefault();
-      var x = e.clientX + window.scrollX, y = e.clientY + window.scrollY;
-      var last = state.live.points[state.live.points.length - 1];
-      var dx = x - last[0], dy = y - last[1];
-      if (dx*dx + dy*dy < 1.2) return;
-      state.live.points.push([x, y]);
+      // Use coalesced events for high-resolution input (Apple Pencil samples
+      // at ~120Hz; pointermove fires at ~60Hz; the missing samples come back
+      // through getCoalescedEvents).
+      var pts = (e.getCoalescedEvents && e.getCoalescedEvents()) || [e];
+      for (var i = 0; i < pts.length; i++) {
+        pushPoint(pts[i].clientX + window.scrollX,
+                  pts[i].clientY + window.scrollY);
+      }
       updatePath(state.live);
       return;
     }
