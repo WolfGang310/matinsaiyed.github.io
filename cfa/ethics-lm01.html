@@ -3,7 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="color-scheme" content="light">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=yes">
+<!-- iOS standalone-app polish: gives Pencil drawing a fullscreen surface
+     when the page is "Add to Home Screen"-installed, matching how Apple's
+     own PencilKit demo hides the home indicator for lower latency. -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Ethics LM01">
+<meta name="theme-color" content="#f8f7f4">
 <title>CFA L1 Ethics — LM01 Ethics and Trust in the Investment Profession</title>
 <style>
 :root{--bg:#f8f7f4;--fg:#1a1a1a;--card:#fff;--card-b:1px solid #e0ddd8;--accent:#1e3a8a;--accent-l:#dbeafe;--accent-ll:#eff6ff;--teal:#0d9488;--teal-l:#ccfbf1;--teal-ll:#f0fdfa;--coral:#e74c3c;--coral-l:#fee2e2;--amber:#d97706;--amber-l:#fef3c7;--green:#16a34a;--green-l:#dcfce7;--red:#dc2626;--red-l:#fee2e2;--purple:#7c3aed;--purple-l:#ede9fe;--muted:#6b7280;--muted-bg:#f3f2ef;--radius:12px;--font:'Newsreader',Georgia,serif;--font-h:'DM Sans','Segoe UI',sans-serif;--font-m:'JetBrains Mono','Courier New',monospace}
@@ -1002,6 +1009,8 @@ function retryQuiz(){
     pointer-events: none; z-index: 9999;
     overflow: visible;
   }
+  /* Crisp anti-aliased paths at every zoom — matches PencilKit feel. */
+  #cfa-svg, #cfa-svg path { shape-rendering: geometricPrecision; }
   /* Let stroke width scale with the document — feels more natural like
      drawing on actual paper. */
   body { position: relative; padding-bottom: 100px !important; }
@@ -1239,6 +1248,9 @@ function retryQuiz(){
   <button class="cfa-btn" id="cfa-clear" title="Clear">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M7 7l1 13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l1-13"/></svg>
   </button>
+  <button class="cfa-btn" id="cfa-export" title="Save drawing as PNG">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/></svg>
+  </button>
   <div class="cfa-sep"></div>
   <button class="cfa-btn" id="cfa-notes-btn" title="Notes">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="16" rx="2"/><path d="M8 9h8M8 12h8M8 15h5"/></svg>
@@ -1359,7 +1371,13 @@ function retryQuiz(){
   // ===========================================================
   function baseSize(stroke) {
     var preset = WIDTHS[stroke.widthIdx];
-    return preset[stroke.tool] !== undefined ? preset[stroke.tool] : preset.pen;
+    var size = preset[stroke.tool] !== undefined ? preset[stroke.tool] : preset.pen;
+    // Pencil shading: widen with tilt (max 1.6x at full tilt) — the side
+    // of a graphite pencil produces a wider, softer mark.
+    if (stroke.tool === 'pencil' && stroke.tiltMag > 0) {
+      size *= 1 + 0.6 * stroke.tiltMag;
+    }
+    return size;
   }
 
   // Convert perfect-freehand's outline polygon to an SVG path string.
@@ -1598,6 +1616,9 @@ function retryQuiz(){
     state.strokes = [];
     save();
   });
+  tap(document.getElementById('cfa-export'), function () {
+    exportAsImage();
+  });
   tap(document.getElementById('cfa-notes-btn'), function () {
     notes.classList.toggle('open');
     if (notes.classList.contains('open')) setTimeout(function () { notesArea.focus(); }, 280);
@@ -1629,12 +1650,16 @@ function retryQuiz(){
     if (e.pointerType === 'mouse') return true;
     return false;
   }
-  function makeStroke(x, y, pressure, isPen) {
+  function makeStroke(x, y, pressure, isPen, tiltMag) {
     return {
       tool: state.tool,
       color: state.tool === 'eraser' ? '#000' : state.color,
       widthIdx: state.widthIdx,
-      hasRealPressure: !!isPen,  // Pencil/stylus reports real pressure
+      hasRealPressure: !!isPen,
+      // tiltMag: 0 = vertical pencil, 1 = max tilt (~85°). Used for
+      // graphite-style shading on the pencil tool — the side of the
+      // pencil produces a wider, softer line when tilted.
+      tiltMag: tiltMag || 0,
       points: [[x, y, pressure || 0.5]]
     };
   }
@@ -1676,6 +1701,15 @@ function retryQuiz(){
     return [sx / n, sy / n];
   }
 
+  // Compute a 0..1 tilt magnitude from PointerEvent.tiltX/tiltY (degrees).
+  // 0 = pencil straight up; 1 = pencil flat to screen.
+  function tiltMagnitude(e) {
+    if (e.tiltX == null && e.tiltY == null) return 0;
+    var tx = (e.tiltX || 0), ty = (e.tiltY || 0);
+    var combined = Math.sqrt(tx * tx + ty * ty);
+    return Math.min(1, combined / 60);  // ~60° tilt = full effect
+  }
+
   function onDown(e) {
     if (!isDrawingInput(e)) return;
     e.preventDefault();
@@ -1692,7 +1726,7 @@ function retryQuiz(){
       svg.appendChild(lassoPreview);
       return;
     }
-    state.live = makeStroke(x, y, e.pressure, isPen);
+    state.live = makeStroke(x, y, e.pressure, isPen, tiltMagnitude(e));
     if (state.live.tool !== 'eraser') {
       attachPath(state.live, false);
     }
@@ -1707,6 +1741,18 @@ function retryQuiz(){
     if (state.live.pMin === undefined || p < state.live.pMin) state.live.pMin = p;
     if (state.live.pMax === undefined || p > state.live.pMax) state.live.pMax = p;
   }
+  // Track latest tilt mid-stroke so pencil-shading width follows the
+  // pencil as the user rolls it during the stroke (not just at touch-down).
+  function updateTilt(e) {
+    if (!state.live) return;
+    var t = tiltMagnitude(e);
+    if (t > state.live.tiltMag) state.live.tiltMag = t;
+    // Pencil Pro barrel-roll: e.twist is 0..359 degrees. Track for chisel
+    // tools (marker/highlighter) so we can angle the nib to match.
+    if (e.twist != null && state.live.twist !== e.twist) {
+      state.live.twist = e.twist;
+    }
+  }
   function onMove(e) {
     if (state.live) {
       e.preventDefault();
@@ -1719,6 +1765,8 @@ function retryQuiz(){
         }
         return;
       }
+      // Track tilt + twist as the user changes them mid-stroke
+      updateTilt(e);
       // Coalesced: high-resolution real samples (~120Hz from Pencil)
       var pts = (e.getCoalescedEvents && e.getCoalescedEvents()) || [e];
       for (var i = 0; i < pts.length; i++) {
@@ -1925,6 +1973,91 @@ function retryQuiz(){
     });
     return out;
   }
+  // -----------------------------------------------------------
+  //  Export current step's ink as a PNG (matches PencilKit's
+  //  "Save to Photos" affordance — the user gets a snapshot of
+  //  their handwriting layered over the page background).
+  // -----------------------------------------------------------
+  function exportAsImage() {
+    if (!state.strokes.length) {
+      showStatus('Nothing to export');
+      return;
+    }
+    showStatus('Exporting…');
+    // Compute tight bbox of the strokes so the PNG isn't a giant
+    // mostly-empty rectangle.
+    var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    state.strokes.forEach(function (s) {
+      s.points.forEach(function (p) {
+        if (p[0] < minX) minX = p[0];
+        if (p[1] < minY) minY = p[1];
+        if (p[0] > maxX) maxX = p[0];
+        if (p[1] > maxY) maxY = p[1];
+      });
+    });
+    var pad = 32;
+    minX = Math.max(0, Math.floor(minX - pad));
+    minY = Math.max(0, Math.floor(minY - pad));
+    maxX = Math.ceil(maxX + pad);
+    maxY = Math.ceil(maxY + pad);
+    var w = Math.max(1, maxX - minX);
+    var h = Math.max(1, maxY - minY);
+
+    // Clone the SVG ink layer into a self-contained SVG with explicit
+    // size + viewBox so it renders correctly outside the page.
+    var clone = document.createElementNS(SVG_NS, 'svg');
+    clone.setAttribute('xmlns', SVG_NS);
+    clone.setAttribute('width', w);
+    clone.setAttribute('height', h);
+    clone.setAttribute('viewBox', minX + ' ' + minY + ' ' + w + ' ' + h);
+    // White background so handwriting is legible when the user
+    // pastes into Notes/Mail/Photos.
+    var bg = document.createElementNS(SVG_NS, 'rect');
+    bg.setAttribute('x', minX);
+    bg.setAttribute('y', minY);
+    bg.setAttribute('width', w);
+    bg.setAttribute('height', h);
+    bg.setAttribute('fill', '#ffffff');
+    clone.appendChild(bg);
+    state.strokes.forEach(function (s) {
+      if (s.pathEl) clone.appendChild(s.pathEl.cloneNode(true));
+    });
+    var xml = new XMLSerializer().serializeToString(clone);
+    var svgBlob = new Blob([xml], { type: 'image/svg+xml;charset=utf-8' });
+    var url = URL.createObjectURL(svgBlob);
+
+    var img = new Image();
+    img.onload = function () {
+      var dpr = Math.max(2, window.devicePixelRatio || 1);  // crisp on retina
+      var canvas = document.createElement('canvas');
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      var ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      canvas.toBlob(function (blob) {
+        if (!blob) { showStatus('Export failed'); return; }
+        var pngUrl = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        var stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+        a.href = pngUrl;
+        a.download = 'ethics-lm01-' + stamp + '.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(function () { URL.revokeObjectURL(pngUrl); }, 1000);
+        showStatus('Saved PNG');
+      }, 'image/png');
+    };
+    img.onerror = function () {
+      URL.revokeObjectURL(url);
+      showStatus('Export failed');
+    };
+    img.src = url;
+  }
+
   function save() {
     clearTimeout(state.saveTimer);
     state.saveTimer = setTimeout(function () {
