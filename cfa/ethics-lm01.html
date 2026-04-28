@@ -1321,20 +1321,32 @@ function retryQuiz(){
 
   // ===========================================================
   //  State
+  //  - strokesByStep: dict of stepIdx -> strokes[]
+  //  - state.strokes (a getter) returns the current step's bucket
+  //  - all stored coords are PAGE coords (clientX + scrollX) so ink
+  //    stays anchored when the user scrolls
   // ===========================================================
   var state = {
     tool: 'pen',
     color: COLORS[0],
     widthIdx: 1,
-    strokes: [],   // committed
-    redo: [],      // undone, available for redo
+    strokesByStep: {},  // { 0: [...], 1: [...], ... }
+    currentStep: 0,
+    redo: [],
     live: null,
     inkVisible: true,
     drawingOn: true,
-    penOnlyMode: false,
     saveTimer: null,
     pinching: false
   };
+  Object.defineProperty(state, 'strokes', {
+    get: function () {
+      var b = state.strokesByStep[state.currentStep];
+      if (!b) { b = []; state.strokesByStep[state.currentStep] = b; }
+      return b;
+    },
+    set: function (v) { state.strokesByStep[state.currentStep] = v; }
+  });
 
   // ===========================================================
   //  DOM refs
@@ -1583,19 +1595,21 @@ function retryQuiz(){
 
   // ===========================================================
   //  Persistence (localStorage)
+  //  Saves the FULL strokesByStep map so each step keeps its own ink.
   // ===========================================================
   function save() {
     clearTimeout(state.saveTimer);
     state.saveTimer = setTimeout(function () {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify({
-          strokes: state.strokes,
+          v: 2,
+          strokesByStep: state.strokesByStep,
           notes: notesArea.value,
           tool: state.tool,
           color: state.color,
           widthIdx: state.widthIdx
         }));
-      } catch (_) { /* quota exceeded — silently ignore */ }
+      } catch (_) {}
     }, 600);
   }
   function load() {
@@ -1603,7 +1617,8 @@ function retryQuiz(){
       var raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return;
       var v = JSON.parse(raw);
-      state.strokes = v.strokes || [];
+      if (v.strokesByStep) state.strokesByStep = v.strokesByStep;
+      else if (Array.isArray(v.strokes)) state.strokesByStep = { 0: v.strokes }; // legacy
       notesArea.value = v.notes || '';
       if (v.tool && TOOLS[v.tool]) state.tool = v.tool;
       if (typeof v.color === 'string') state.color = v.color;
@@ -1613,6 +1628,54 @@ function retryQuiz(){
       updateDots();
     } catch (_) {}
   }
+
+  // ===========================================================
+  //  Step tracking — observe which .step.active is currently shown
+  //  and switch ink layers when the user clicks Previous/Next.
+  // ===========================================================
+  function detectCurrentStep() {
+    var steps = document.querySelectorAll('#steps > .step');
+    for (var i = 0; i < steps.length; i++) {
+      if (steps[i].classList.contains('active')) return i;
+    }
+    return 0;
+  }
+  function syncStepLayer() {
+    var idx = detectCurrentStep();
+    if (idx !== state.currentStep) {
+      state.currentStep = idx;
+      state.live = null;
+      state.redo = [];
+      redraw();
+    }
+  }
+  // Initial detection
+  state.currentStep = detectCurrentStep();
+  // Observe the steps container for class changes (.active toggling)
+  try {
+    var stepsContainer = document.getElementById('steps');
+    if (stepsContainer) {
+      var mo = new MutationObserver(syncStepLayer);
+      mo.observe(stepsContainer, {
+        attributes: true, attributeFilter: ['class'],
+        subtree: true
+      });
+    }
+  } catch (_) {}
+
+  // ===========================================================
+  //  Scroll: redraw so ink stays anchored to page content
+  //  (cheap because canvas is full-viewport and we just re-render)
+  // ===========================================================
+  var scrollPending = false;
+  window.addEventListener('scroll', function () {
+    if (scrollPending) return;
+    scrollPending = true;
+    requestAnimationFrame(function () {
+      scrollPending = false;
+      redraw();
+    });
+  }, { passive: true });
 
   // ===========================================================
   //  Canvas sizing (DPR-aware)
@@ -1677,11 +1740,14 @@ function retryQuiz(){
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.restore();
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    // Translate by scroll offset so PAGE-coord strokes render at the
+    // correct viewport position. Stroke storage is in page coords —
+    // they don't change as the user scrolls. The canvas itself is
+    // position:fixed, so we shift the drawing transform instead.
+    ctx.setTransform(dpr, 0, 0, dpr, -window.scrollX * dpr, -window.scrollY * dpr);
     state.strokes.forEach(drawStroke);
     if (state.live && state.live.tool !== 'eraser') drawStroke(state.live);
     if (state.live && state.live.tool === 'eraser') {
-      // draw a soft eraser path preview
       ctx.save();
       ctx.strokeStyle = 'rgba(255,80,120,0.35)';
       ctx.lineWidth = state.live.baseWidth;
@@ -1752,12 +1818,16 @@ function retryQuiz(){
   }
 
   // Draw one fresh segment incrementally (no full clear) — fast and smooth.
+  // Set transform to translate page coords -> viewport before drawing.
   function drawIncrement(s) {
     var pts = s.points;
     if (pts.length < 2) return;
     var i = pts.length - 2;
     var a = pts[i], b = pts[i + 1];
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
     ctx.save();
+    ctx.setTransform(dpr, 0, 0, dpr,
+      -window.scrollX * dpr, -window.scrollY * dpr);
     applyStyle(s);
     var pr = s.pressureRange || [1, 1];
     var pa = pr[0] + (pr[1] - pr[0]) * (a[2] || 0.5);
@@ -1774,18 +1844,19 @@ function retryQuiz(){
     if (!isDrawingInput(e)) return;
     if (state.pinching) return;
     e.preventDefault();
-    state.live = makeStroke(e, e.clientX, e.clientY);
+    var px = e.clientX + window.scrollX, py = e.clientY + window.scrollY;
+    state.live = makeStroke(e, px, py);
     drawIncrement(state.live);
   }
   function onMove(e) {
     if (state.live) {
       e.preventDefault();
-      // Skip points that are too close (1px-jitter filter)
+      var px = e.clientX + window.scrollX, py = e.clientY + window.scrollY;
       var last = state.live.points[state.live.points.length - 1];
-      var dx = e.clientX - last[0], dy = e.clientY - last[1];
+      var dx = px - last[0], dy = py - last[1];
       if (dx * dx + dy * dy < 1.2) return;
-      state.live.points.push([e.clientX, e.clientY, e.pressure || 0.5]);
-      drawIncrement(state.live);  // no full redraw
+      state.live.points.push([px, py, e.pressure || 0.5]);
+      drawIncrement(state.live);
       return;
     }
     // Hover preview for Pencil Pro
