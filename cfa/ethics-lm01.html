@@ -990,8 +990,10 @@ function retryQuiz(){
 }
 </script>
 
-<!-- ===== Direct drawing surface (no iframe nesting) ===== -->
+
+<!-- ===== Apple Notes-inspired drawing surface (Pencil Pro features) ===== -->
 <style id="cfa-draw-styles">
+  /* Canvas — full viewport, fixed, captures pointer when armed */
   #cfa-canvas {
     position: fixed; top: 0; left: 0;
     width: 100vw; height: 100vh;
@@ -1006,78 +1008,610 @@ function retryQuiz(){
     touch-action: none;
     cursor: crosshair;
   }
-  #cfa-tools {
-    position: fixed; top: 14px; right: 14px;
-    display: flex; flex-direction: column; gap: 6px;
-    padding: 8px; border-radius: 14px;
-    background: linear-gradient(180deg,#fafbfc,#eef0f3);
-    border: 1px solid rgba(0,0,0,0.08);
-    box-shadow: 0 4px 14px rgba(0,0,0,.10), 0 1px 2px rgba(0,0,0,.06);
+  /* Hover preview dot for Pencil Pro */
+  #cfa-hover {
+    position: fixed; pointer-events: none; z-index: 10001;
+    width: 14px; height: 14px; border-radius: 50%;
+    border: 1.5px solid currentColor;
+    transform: translate(-50%, -50%);
+    opacity: 0; transition: opacity .12s;
+    background: transparent;
+  }
+  #cfa-hover.show { opacity: 0.55; }
+
+  /* Bottom-center pill toolbar (Apple Notes style) */
+  #cfa-bar {
+    position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);
+    display: flex; align-items: center; gap: 4px;
+    padding: 6px;
+    background: rgba(245,245,247,0.92); backdrop-filter: blur(20px);
+    border-radius: 18px;
+    box-shadow: 0 8px 28px rgba(0,0,0,.18), 0 1px 3px rgba(0,0,0,.06);
     z-index: 10000;
     font: 600 12px -apple-system, sans-serif;
+    -webkit-user-select: none; user-select: none;
     pointer-events: auto;
+    max-width: calc(100vw - 24px);
+    overflow-x: auto;
   }
-  #cfa-tools button {
-    width: 40px; height: 40px;
-    border: none; border-radius: 9px;
+  @media (prefers-color-scheme: dark) {
+    #cfa-bar {
+      background: rgba(38,38,42,0.92);
+      box-shadow: 0 8px 28px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+  }
+  .cfa-btn {
+    flex: 0 0 auto;
+    width: 44px; height: 44px;
+    border: none; border-radius: 12px;
     background: transparent; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    font-size: 18px; padding: 0;
-    color: #2a2d33;
-    transition: background .12s, transform .08s, box-shadow .12s;
+    color: #1d1d1f; padding: 0;
+    transition: background .12s, transform .08s;
     touch-action: manipulation;
+    position: relative;
   }
-  #cfa-tools button:hover { background: rgba(0,0,0,0.06); }
-  #cfa-tools button:active {
-    transform: scale(0.92);
+  @media (prefers-color-scheme: dark) {
+    .cfa-btn { color: #f5f5f7; }
+  }
+  .cfa-btn:hover { background: rgba(0,0,0,0.06); }
+  .cfa-btn:active { transform: scale(0.92); background: rgba(29,78,216,0.18); }
+  @media (prefers-color-scheme: dark) {
+    .cfa-btn:hover { background: rgba(255,255,255,0.08); }
+  }
+  .cfa-btn.on {
     background: rgba(29,78,216,0.18);
-    box-shadow: 0 0 0 2px rgba(29,78,216,0.4) inset;
-  }
-  #cfa-tools button.on {
-    background: linear-gradient(180deg,#e9eefb,#d6dffb);
     color: #1d4ed8;
-    box-shadow: inset 0 0 0 1px #b8c5f5;
+    box-shadow: inset 0 0 0 1px rgba(29,78,216,0.3);
   }
+  @media (prefers-color-scheme: dark) {
+    .cfa-btn.on {
+      background: rgba(99,131,255,0.22);
+      color: #93b8ff;
+      box-shadow: inset 0 0 0 1px rgba(99,131,255,0.4);
+    }
+  }
+  .cfa-btn svg { width: 24px; height: 24px; pointer-events: none; }
+  .cfa-btn .dot {
+    position: absolute; bottom: 6px; right: 6px;
+    width: 8px; height: 8px; border-radius: 50%;
+    border: 1.5px solid #fff;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.18);
+  }
+  .cfa-sep {
+    width: 1px; height: 28px;
+    background: rgba(0,0,0,0.1);
+    margin: 0 4px; flex: 0 0 auto;
+  }
+  @media (prefers-color-scheme: dark) {
+    .cfa-sep { background: rgba(255,255,255,0.12); }
+  }
+
+  /* Tool sub-menu (color + width) — pops above the active tool */
+  #cfa-submenu {
+    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+    background: rgba(245,245,247,0.95); backdrop-filter: blur(20px);
+    border-radius: 16px; padding: 14px 16px;
+    box-shadow: 0 10px 32px rgba(0,0,0,.2);
+    z-index: 10000; display: none;
+    min-width: 280px;
+    pointer-events: auto;
+    -webkit-user-select: none; user-select: none;
+  }
+  @media (prefers-color-scheme: dark) {
+    #cfa-submenu { background: rgba(38,38,42,0.95); }
+  }
+  #cfa-submenu.show { display: block; }
+  #cfa-submenu h5 {
+    margin: 0 0 8px; font: 600 10px -apple-system, sans-serif;
+    text-transform: uppercase; letter-spacing: .06em;
+    color: rgba(0,0,0,0.5);
+  }
+  @media (prefers-color-scheme: dark) {
+    #cfa-submenu h5 { color: rgba(255,255,255,0.55); }
+  }
+  .cfa-colors {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+  .cfa-swatch {
+    width: 28px; height: 28px; border-radius: 50%;
+    cursor: pointer; transition: transform .1s, box-shadow .12s;
+    border: 2px solid transparent;
+    position: relative;
+  }
+  .cfa-swatch:hover { transform: scale(1.1); }
+  .cfa-swatch.on {
+    border-color: rgba(29,78,216,0.7);
+    box-shadow: 0 0 0 2px rgba(29,78,216,0.25);
+  }
+  .cfa-swatch.custom {
+    background: conic-gradient(from 0deg, red, yellow, lime, cyan, blue, magenta, red);
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700;
+  }
+  .cfa-widths {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 6px;
+  }
+  .cfa-width-btn {
+    flex: 1; min-height: 36px; cursor: pointer; padding: 0 8px;
+    background: transparent; border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .12s;
+  }
+  @media (prefers-color-scheme: dark) {
+    .cfa-width-btn { border-color: rgba(255,255,255,0.14); }
+  }
+  .cfa-width-btn:hover { background: rgba(0,0,0,0.04); }
+  .cfa-width-btn.on {
+    background: rgba(29,78,216,0.18);
+    border-color: rgba(29,78,216,0.5);
+  }
+  .cfa-width-bar {
+    background: currentColor; border-radius: 999px;
+    color: #1d1d1f;
+  }
+  @media (prefers-color-scheme: dark) {
+    .cfa-width-bar { color: #f5f5f7; }
+  }
+
+  /* Status / mode indicator */
   #cfa-status {
-    position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);
-    padding: 7px 14px; border-radius: 999px;
-    background: linear-gradient(135deg,#1d4ed8,#7c3aed); color: #fff;
-    font: 600 12px/1 -apple-system, sans-serif;
+    position: fixed; left: 16px; bottom: 26px;
+    padding: 6px 12px; border-radius: 999px;
+    background: rgba(15,15,20,0.86); color: #fff;
+    font: 600 11px -apple-system, sans-serif;
     letter-spacing: .04em; text-transform: uppercase;
-    box-shadow: 0 6px 18px rgba(29,78,216,.35);
     z-index: 10000; pointer-events: none;
     opacity: 0; transition: opacity .2s;
   }
   #cfa-status.show { opacity: 1; }
+
+  /* Notes drawer */
+  #cfa-notes {
+    position: fixed; top: 0; right: -640px; width: min(560px, 95vw);
+    height: 100vh; background: #fff; color: #14171c;
+    z-index: 10002; box-shadow: -10px 0 36px rgba(0,0,0,0.18);
+    display: flex; flex-direction: column;
+    transition: right .32s cubic-bezier(.3,.05,.2,1);
+    font: 14px/1.55 -apple-system, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    #cfa-notes { background: #1d1f24; color: #e8eaed; }
+  }
+  #cfa-notes.open { right: 0; }
+  #cfa-notes header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px; font-weight: 700;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    #cfa-notes header { border-bottom-color: rgba(255,255,255,0.08); }
+  }
+  #cfa-notes textarea {
+    flex: 1; padding: 16px 20px; border: 0; outline: 0; resize: none;
+    background: transparent; color: inherit;
+    font: 15px/1.65 -apple-system, sans-serif;
+  }
+  #cfa-notes-close {
+    background: none; border: 0; cursor: pointer; font-size: 22px;
+    padding: 4px 12px; border-radius: 8px; color: inherit;
+  }
+  #cfa-notes-close:hover { background: rgba(0,0,0,0.06); }
+  @media (prefers-color-scheme: dark) {
+    #cfa-notes-close:hover { background: rgba(255,255,255,0.08); }
+  }
+  #cfa-notes-status {
+    padding: 10px 18px; font-size: 11px; opacity: 0.55;
+    border-top: 1px solid rgba(0,0,0,0.06);
+  }
+
+  /* Smaller bar on phone */
+  @media (max-width: 540px) {
+    #cfa-bar { gap: 2px; padding: 4px; }
+    .cfa-btn { width: 38px; height: 38px; }
+    .cfa-btn svg { width: 20px; height: 20px; }
+  }
+
+  /* Hide print artifacts */
+  @media print {
+    #cfa-bar, #cfa-submenu, #cfa-status, #cfa-hover, #cfa-notes { display: none !important; }
+  }
 </style>
 
 <canvas id="cfa-canvas"></canvas>
-<div id="cfa-tools">
-  <button id="cfa-pen"   title="Pen — toggle drawing">✎</button>
-  <button id="cfa-color" title="Color">●</button>
-  <button id="cfa-undo"  title="Undo">↶</button>
-  <button id="cfa-clear" title="Clear">🗑</button>
+<div id="cfa-hover"></div>
+<div id="cfa-status">DRAWING</div>
+
+<div id="cfa-bar" role="toolbar" aria-label="Drawing tools">
+  <button class="cfa-btn" id="cfa-pen" title="Pen">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4l5 5L9 19H4v-5L14 4Z"/><path d="M13 5 18 10"/></svg>
+    <span class="dot" id="cfa-pen-dot"></span>
+  </button>
+  <button class="cfa-btn" id="cfa-pencil" title="Pencil (tilt-shading)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l3-3 11-11-3-3L3 15v6Z"/><path d="M14 4l3 3"/></svg>
+    <span class="dot" id="cfa-pencil-dot"></span>
+  </button>
+  <button class="cfa-btn" id="cfa-marker" title="Marker">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17l8-8 3 3-8 8H5v-3Z"/><rect x="13" y="5" width="6" height="4" rx="1" transform="rotate(45 16 7)" fill="currentColor"/></svg>
+    <span class="dot" id="cfa-marker-dot"></span>
+  </button>
+  <button class="cfa-btn" id="cfa-hi" title="Highlighter">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M6 18 14 10l3 3-8 8H6v-3Z"/><rect x="13" y="6" width="6" height="5" rx="1" transform="rotate(45 16 8.5)" fill="currentColor" opacity="0.5"/></svg>
+    <span class="dot" id="cfa-hi-dot"></span>
+  </button>
+  <button class="cfa-btn" id="cfa-er" title="Eraser (tap stroke to remove)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M16 5 5 16l3.5 3.5 5-5L20 8.5 16 5Z"/><path d="M11 11l4.5 4.5"/></svg>
+  </button>
+  <div class="cfa-sep"></div>
+  <button class="cfa-btn" id="cfa-undo" title="Undo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7 4 12l5 5"/><path d="M4 12h10a5 5 0 0 1 0 10h-2"/></svg>
+  </button>
+  <button class="cfa-btn" id="cfa-redo" title="Redo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7l5 5-5 5"/><path d="M20 12H10a5 5 0 0 0 0 10h2"/></svg>
+  </button>
+  <button class="cfa-btn" id="cfa-clear" title="Clear all">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M7 7l1 13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l1-13"/></svg>
+  </button>
+  <div class="cfa-sep"></div>
+  <button class="cfa-btn" id="cfa-notes-btn" title="Notes">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="16" rx="2"/><path d="M8 9h8M8 12h8M8 15h5"/></svg>
+  </button>
+  <button class="cfa-btn" id="cfa-toggle" title="Show/hide ink">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+  </button>
 </div>
-<div id="cfa-status">DRAWING ON</div>
+
+<!-- Sub-menu: tap-and-hold a tool to open color/width chooser -->
+<div id="cfa-submenu" role="menu">
+  <h5>Color</h5>
+  <div class="cfa-colors" id="cfa-color-list"></div>
+  <h5>Thickness</h5>
+  <div class="cfa-widths" id="cfa-width-list"></div>
+</div>
+
+<!-- Notes drawer -->
+<div id="cfa-notes">
+  <header>
+    <span>Notes — Ethics LM01</span>
+    <button id="cfa-notes-close">×</button>
+  </header>
+  <textarea id="cfa-notes-area" placeholder="Type notes that stick with this LM. Saved automatically."></textarea>
+  <div id="cfa-notes-status">Saved</div>
+</div>
 
 <script>
 (function () {
   'use strict';
-  var canvas = document.getElementById('cfa-canvas');
-  var ctx = canvas.getContext('2d');
-  var tools = document.getElementById('cfa-tools');
-  var btnPen = document.getElementById('cfa-pen');
-  var btnColor = document.getElementById('cfa-color');
-  var btnUndo = document.getElementById('cfa-undo');
-  var btnClear = document.getElementById('cfa-clear');
-  var statusPill = document.getElementById('cfa-status');
+  // ===========================================================
+  //  Constants
+  // ===========================================================
+  var STORAGE_KEY = 'cfa_lm01_ethics_v1';
+  var COLORS = [
+    '#1d1d1f', // black
+    '#e23b3b', // red
+    '#f29423', // orange
+    '#f5c518', // yellow
+    '#2da44e', // green
+    '#1f6feb', // blue
+    '#7c3aed', // purple
+    '#db2777'  // pink
+  ];
+  var TOOLS = {
+    pen:         { stroke: 1.6, alpha: 1.0,  composite: 'source-over', useTilt: false, pressureRange: [0.5, 2.4] },
+    pencil:      { stroke: 0.9, alpha: 0.9,  composite: 'source-over', useTilt: true,  pressureRange: [0.4, 1.6] },
+    marker:      { stroke: 3.5, alpha: 1.0,  composite: 'source-over', useTilt: false, pressureRange: [1.0, 1.6] },
+    highlighter: { stroke: 14,  alpha: 0.32, composite: 'source-over', useTilt: false, pressureRange: [1.0, 1.0] },
+    eraser:      { stroke: 22,  alpha: 1.0,  composite: 'source-over', useTilt: false, pressureRange: [1.0, 1.0] }
+  };
+  var WIDTHS = [
+    { id: 'thin',   pen: 0.9, pencil: 0.6, marker: 2.0, highlighter: 9 },
+    { id: 'medium', pen: 1.6, pencil: 0.9, marker: 3.5, highlighter: 14 },
+    { id: 'thick',  pen: 2.6, pencil: 1.4, marker: 5.5, highlighter: 22 },
+    { id: 'xthick', pen: 4.0, pencil: 2.0, marker: 8.0, highlighter: 30 }
+  ];
 
-  var COLORS = ['#1f2227', '#e23b3b', '#f29423', '#2da44e', '#1f6feb', '#7c3aed'];
-  var colorIdx = 0;
-  var drawingOn = false;
-  var strokes = [];   // [{color, width, points: [[x,y],...]}, ...]
-  var live = null;
+  // ===========================================================
+  //  State
+  // ===========================================================
+  var state = {
+    tool: 'pen',
+    color: COLORS[0],
+    widthIdx: 1,
+    strokes: [],   // committed
+    redo: [],      // undone, available for redo
+    live: null,
+    inkVisible: true,
+    drawingOn: true,
+    penOnlyMode: false,
+    saveTimer: null,
+    pinching: false
+  };
 
+  // ===========================================================
+  //  DOM refs
+  // ===========================================================
+  var canvas    = document.getElementById('cfa-canvas');
+  var ctx       = canvas.getContext('2d');
+  var hover     = document.getElementById('cfa-hover');
+  var bar       = document.getElementById('cfa-bar');
+  var submenu   = document.getElementById('cfa-submenu');
+  var statusPill= document.getElementById('cfa-status');
+  var notes     = document.getElementById('cfa-notes');
+  var notesArea = document.getElementById('cfa-notes-area');
+  var notesStatus= document.getElementById('cfa-notes-status');
+  var btnPen    = document.getElementById('cfa-pen');
+  var btnPencil = document.getElementById('cfa-pencil');
+  var btnMarker = document.getElementById('cfa-marker');
+  var btnHi     = document.getElementById('cfa-hi');
+  var btnEr     = document.getElementById('cfa-er');
+  var btnUndo   = document.getElementById('cfa-undo');
+  var btnRedo   = document.getElementById('cfa-redo');
+  var btnClear  = document.getElementById('cfa-clear');
+  var btnNotes  = document.getElementById('cfa-notes-btn');
+  var btnToggle = document.getElementById('cfa-toggle');
+  var btnClose  = document.getElementById('cfa-notes-close');
+
+  var TOOL_BUTTONS = {
+    pen: btnPen, pencil: btnPencil, marker: btnMarker,
+    highlighter: btnHi, eraser: btnEr
+  };
+  var TOOL_DOTS = {
+    pen: document.getElementById('cfa-pen-dot'),
+    pencil: document.getElementById('cfa-pencil-dot'),
+    marker: document.getElementById('cfa-marker-dot'),
+    highlighter: document.getElementById('cfa-hi-dot')
+  };
+
+  // ===========================================================
+  //  Sub-menu (color + width)
+  // ===========================================================
+  function renderColorList() {
+    var list = document.getElementById('cfa-color-list');
+    list.innerHTML = '';
+    COLORS.forEach(function (c) {
+      var sw = document.createElement('div');
+      sw.className = 'cfa-swatch' + (c === state.color ? ' on' : '');
+      sw.style.background = c;
+      sw.title = c;
+      sw.addEventListener('click', function () {
+        state.color = c;
+        renderColorList();
+        updateDots();
+        save();
+      });
+      list.appendChild(sw);
+    });
+    // Custom color picker
+    var custom = document.createElement('label');
+    custom.className = 'cfa-swatch custom';
+    custom.title = 'Custom color';
+    custom.textContent = '+';
+    custom.style.position = 'relative';
+    var input = document.createElement('input');
+    input.type = 'color';
+    input.value = state.color;
+    input.style.cssText = 'position:absolute;inset:0;opacity:0;cursor:pointer';
+    input.addEventListener('input', function () {
+      state.color = input.value;
+      custom.style.background = input.value;
+      custom.style.color = '';
+      custom.textContent = '';
+      renderColorList();
+      updateDots();
+      save();
+    });
+    custom.appendChild(input);
+    list.appendChild(custom);
+  }
+  function renderWidthList() {
+    var list = document.getElementById('cfa-width-list');
+    list.innerHTML = '';
+    WIDTHS.forEach(function (w, i) {
+      var b = document.createElement('div');
+      b.className = 'cfa-width-btn' + (i === state.widthIdx ? ' on' : '');
+      var bar = document.createElement('div');
+      bar.className = 'cfa-width-bar';
+      // Show width as a horizontal bar based on actual pen width for that preset
+      bar.style.height = (1 + i * 1.5) + 'px';
+      bar.style.width = (40 + i * 12) + 'px';
+      b.appendChild(bar);
+      b.addEventListener('click', function () {
+        state.widthIdx = i;
+        renderWidthList();
+        save();
+      });
+      list.appendChild(b);
+    });
+  }
+  function updateDots() {
+    Object.keys(TOOL_DOTS).forEach(function (t) {
+      var d = TOOL_DOTS[t];
+      if (d) d.style.background = state.color;
+    });
+  }
+  renderColorList();
+  renderWidthList();
+  updateDots();
+
+  // ===========================================================
+  //  Tap helper — fires on click OR pointerup OR touchend
+  //  with debounce to never double-fire
+  // ===========================================================
+  function tap(el, fn) {
+    var lastFire = 0;
+    var downX = 0, downY = 0, moved = false;
+    function tryFire(e) {
+      if (Date.now() - lastFire < 280) return;
+      lastFire = Date.now();
+      e.preventDefault(); e.stopPropagation();
+      try { fn(e); } catch (err) { console.error(err); }
+    }
+    el.addEventListener('pointerdown', function (e) {
+      downX = e.clientX; downY = e.clientY; moved = false;
+    });
+    el.addEventListener('pointermove', function (e) {
+      if (Math.abs(e.clientX - downX) > 8 || Math.abs(e.clientY - downY) > 8) moved = true;
+    });
+    el.addEventListener('pointerup', function (e) { if (!moved) tryFire(e); });
+    el.addEventListener('touchstart', function (e) {
+      var t = e.touches[0]; if (t) { downX = t.clientX; downY = t.clientY; moved = false; }
+    }, { passive: true });
+    el.addEventListener('touchmove', function (e) {
+      var t = e.touches[0]; if (!t) return;
+      if (Math.abs(t.clientX - downX) > 8 || Math.abs(t.clientY - downY) > 8) moved = true;
+    }, { passive: true });
+    el.addEventListener('touchend', function (e) { if (!moved) tryFire(e); });
+    el.addEventListener('click', function (e) { tryFire(e); });
+  }
+
+  // Long-press handler — open submenu after 450ms hold
+  function longPress(el, fn) {
+    var timer = null;
+    function start(e) {
+      timer = setTimeout(function () { timer = null; fn(e); }, 450);
+    }
+    function cancel() { if (timer) { clearTimeout(timer); timer = null; } }
+    el.addEventListener('pointerdown', start);
+    el.addEventListener('pointerup', cancel);
+    el.addEventListener('pointermove', cancel);
+    el.addEventListener('pointercancel', cancel);
+    el.addEventListener('pointerleave', cancel);
+    el.addEventListener('touchstart', start, { passive: true });
+    el.addEventListener('touchend', cancel);
+    el.addEventListener('touchmove', cancel);
+  }
+
+  // ===========================================================
+  //  Tool selection
+  // ===========================================================
+  function setTool(name) {
+    var same = state.tool === name;
+    state.tool = same ? null : name;
+    Object.keys(TOOL_BUTTONS).forEach(function (t) {
+      TOOL_BUTTONS[t].classList.toggle('on', t === state.tool);
+    });
+    state.drawingOn = !!state.tool;
+    canvas.classList.toggle('on', state.drawingOn);
+    showStatus(state.drawingOn
+      ? prettyTool(state.tool) + (state.penOnlyMode ? ' · Pencil only' : '')
+      : 'Drawing off');
+    submenu.classList.remove('show');
+  }
+  function prettyTool(t) {
+    return ({ pen: 'Pen', pencil: 'Pencil', marker: 'Marker',
+              highlighter: 'Highlighter', eraser: 'Eraser' })[t] || t;
+  }
+  function showStatus(msg) {
+    statusPill.textContent = msg;
+    statusPill.classList.add('show');
+    clearTimeout(showStatus._t);
+    showStatus._t = setTimeout(function () { statusPill.classList.remove('show'); }, 1500);
+  }
+
+  // Tool buttons — tap selects, long-press opens sub-menu
+  ['pen','pencil','marker','highlighter','eraser'].forEach(function (t) {
+    var btn = TOOL_BUTTONS[t];
+    tap(btn, function () { setTool(t); });
+    if (t !== 'eraser') {
+      longPress(btn, function () {
+        if (state.tool !== t) setTool(t);
+        renderColorList();
+        renderWidthList();
+        submenu.classList.add('show');
+      });
+    }
+  });
+
+  // Misc buttons
+  tap(btnUndo, function () {
+    if (!state.strokes.length) return showStatus('Nothing to undo');
+    state.redo.push(state.strokes.pop());
+    redraw(); save();
+  });
+  tap(btnRedo, function () {
+    if (!state.redo.length) return showStatus('Nothing to redo');
+    state.strokes.push(state.redo.pop());
+    redraw(); save();
+  });
+  tap(btnClear, function () {
+    if (!state.strokes.length) return showStatus('Already clean');
+    if (!confirm('Erase all ink on this LM?')) return;
+    state.redo = state.strokes.slice();
+    state.strokes = [];
+    redraw(); save();
+  });
+  tap(btnNotes, function () {
+    notes.classList.toggle('open');
+    if (notes.classList.contains('open')) setTimeout(function () { notesArea.focus(); }, 280);
+  });
+  tap(btnClose, function () { notes.classList.remove('open'); });
+  tap(btnToggle, function () {
+    state.inkVisible = !state.inkVisible;
+    canvas.style.opacity = state.inkVisible ? '1' : '0.18';
+    btnToggle.classList.toggle('on', !state.inkVisible);
+    showStatus(state.inkVisible ? 'Ink visible' : 'Ink dimmed');
+  });
+
+  // Tap outside submenu closes it
+  document.addEventListener('pointerdown', function (e) {
+    if (submenu.classList.contains('show') &&
+        !submenu.contains(e.target) &&
+        !bar.contains(e.target)) {
+      submenu.classList.remove('show');
+    }
+  });
+
+  // ===========================================================
+  //  Notes auto-save
+  // ===========================================================
+  notesArea.addEventListener('input', function () {
+    notesStatus.textContent = 'Saving…';
+    clearTimeout(notesArea._t);
+    notesArea._t = setTimeout(function () {
+      save();
+      notesStatus.textContent = 'Saved · ' + new Date().toLocaleTimeString();
+    }, 800);
+  });
+
+  // ===========================================================
+  //  Persistence (localStorage)
+  // ===========================================================
+  function save() {
+    clearTimeout(state.saveTimer);
+    state.saveTimer = setTimeout(function () {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          strokes: state.strokes,
+          notes: notesArea.value,
+          tool: state.tool,
+          color: state.color,
+          widthIdx: state.widthIdx
+        }));
+      } catch (_) { /* quota exceeded — silently ignore */ }
+    }, 600);
+  }
+  function load() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      var v = JSON.parse(raw);
+      state.strokes = v.strokes || [];
+      notesArea.value = v.notes || '';
+      if (v.tool && TOOLS[v.tool]) state.tool = v.tool;
+      if (typeof v.color === 'string') state.color = v.color;
+      if (typeof v.widthIdx === 'number') state.widthIdx = v.widthIdx;
+      renderColorList();
+      renderWidthList();
+      updateDots();
+    } catch (_) {}
+  }
+
+  // ===========================================================
+  //  Canvas sizing (DPR-aware)
+  // ===========================================================
   function size() {
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
     var w = window.innerWidth, h = window.innerHeight;
@@ -1088,8 +1622,74 @@ function retryQuiz(){
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     redraw();
   }
-  size();
   window.addEventListener('resize', size);
+
+  // ===========================================================
+  //  Rendering
+  // ===========================================================
+  function applyStyle(s) {
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.globalCompositeOperation = s.composite || 'source-over';
+    ctx.globalAlpha = s.alpha != null ? s.alpha : 1;
+    ctx.strokeStyle = s.color;
+    ctx.fillStyle = s.color;
+  }
+
+  // Smooth bezier-ish path with variable width based on stroke point pressures
+  function drawStroke(s) {
+    if (!s || !s.points || s.points.length === 0) return;
+    var pts = s.points;
+    if (pts.length === 1) {
+      // dot
+      ctx.save();
+      applyStyle(s);
+      ctx.beginPath();
+      ctx.arc(pts[0][0], pts[0][1], (s.baseWidth * (pts[0][2] || 0.5)) / 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      return;
+    }
+    ctx.save();
+    applyStyle(s);
+    // Variable-width path drawn as a sequence of short segments,
+    // each with the width from the segment's starting pressure.
+    for (var i = 0; i < pts.length - 1; i++) {
+      var a = pts[i], b = pts[i + 1];
+      // Apply pressure curve based on tool's pressureRange
+      var pr = s.pressureRange || [1, 1];
+      var pa = pr[0] + (pr[1] - pr[0]) * (a[2] || 0.5);
+      var pb = pr[0] + (pr[1] - pr[0]) * (b[2] || 0.5);
+      var w  = s.baseWidth * (pa + pb) / 2;
+      // For pencil (tilt), draw multiple slightly-offset strokes for grainy texture
+      if (s.tool === 'pencil') {
+        ctx.lineWidth = Math.max(0.3, w * 0.7);
+        ctx.globalAlpha = (s.alpha || 1) * 0.55;
+        for (var j = 0; j < 3; j++) {
+          var ox = (Math.sin(i * 7 + j * 11) * 0.4);
+          var oy = (Math.cos(i * 9 + j * 13) * 0.4);
+          ctx.beginPath();
+          ctx.moveTo(a[0] + ox, a[1] + oy);
+          ctx.lineTo(b[0] + ox, b[1] + oy);
+          ctx.stroke();
+        }
+      } else {
+        ctx.lineWidth = w;
+        ctx.beginPath();
+        ctx.moveTo(a[0], a[1]);
+        // quad through b for smoothing
+        if (i + 2 < pts.length) {
+          var c = pts[i + 2];
+          var mx = (b[0] + c[0]) / 2, my = (b[1] + c[1]) / 2;
+          ctx.quadraticCurveTo(b[0], b[1], mx, my);
+        } else {
+          ctx.lineTo(b[0], b[1]);
+        }
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
 
   function redraw() {
     ctx.save();
@@ -1098,104 +1698,182 @@ function retryQuiz(){
     ctx.restore();
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    function drawOne(s) {
-      if (!s || !s.points || !s.points.length) return;
-      ctx.strokeStyle = s.color;
-      ctx.lineWidth = s.width;
+    state.strokes.forEach(drawStroke);
+    if (state.live && state.live.tool !== 'eraser') drawStroke(state.live);
+    if (state.live && state.live.tool === 'eraser') {
+      // draw a soft eraser path preview
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,80,120,0.35)';
+      ctx.lineWidth = state.live.baseWidth;
+      ctx.lineCap = 'round';
       ctx.beginPath();
-      ctx.moveTo(s.points[0][0], s.points[0][1]);
-      for (var i = 1; i < s.points.length; i++) ctx.lineTo(s.points[i][0], s.points[i][1]);
-      ctx.stroke();
+      var pts = state.live.points;
+      if (pts.length) {
+        ctx.moveTo(pts[0][0], pts[0][1]);
+        for (var i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+        ctx.stroke();
+      }
+      ctx.restore();
     }
-    strokes.forEach(drawOne);
-    if (live) drawOne(live);
   }
 
-  function setOn(on) {
-    drawingOn = on;
-    canvas.classList.toggle('on', on);
-    btnPen.classList.toggle('on', on);
-    statusPill.classList.toggle('show', on);
-    statusPill.textContent = on ? '✎ DRAWING' : 'OFF';
-  }
-
-  // Click-tap helpers
-  function tap(el, fn) {
-    var lastFire = 0;
-    function go(e) {
-      if (Date.now() - lastFire < 300) return;
-      lastFire = Date.now();
-      e.preventDefault(); e.stopPropagation();
-      try { fn(e); } catch (err) { console.error(err); }
+  // ===========================================================
+  //  Pointer / touch handling
+  // ===========================================================
+  function shouldAccept(e) {
+    if (state.pinching) return false;
+    if (e.pointerType === 'pen') {
+      state.penOnlyMode = true;
+      return true;
     }
-    el.addEventListener('pointerup', go);
-    el.addEventListener('click', go);
-    el.addEventListener('touchend', go);
+    if (state.penOnlyMode) return false;  // finger goes to scrolling on iPad once pen used
+    return true;
   }
-  tap(btnPen,   function () { setOn(!drawingOn); });
-  tap(btnColor, function () {
-    colorIdx = (colorIdx + 1) % COLORS.length;
-    btnColor.style.color = COLORS[colorIdx];
-  });
-  tap(btnUndo,  function () { strokes.pop(); redraw(); });
-  tap(btnClear, function () { if (confirm('Erase all ink?')) { strokes = []; redraw(); } });
-  btnColor.style.color = COLORS[colorIdx];
 
-  // Drawing — simple and reliable
-  function px(e) {
-    return [e.clientX, e.clientY];
+  function makeStroke(e, x, y) {
+    var def = TOOLS[state.tool];
+    var preset = WIDTHS[state.widthIdx];
+    var base = preset[state.tool] !== undefined ? preset[state.tool] : def.stroke;
+    return {
+      tool: state.tool,
+      color: state.color,
+      composite: def.composite,
+      alpha: def.alpha,
+      baseWidth: base,
+      pressureRange: def.pressureRange,
+      points: [[x, y, e.pressure || 0.5]]
+    };
   }
-  canvas.addEventListener('pointerdown', function (e) {
-    if (!drawingOn) return;
-    e.preventDefault();
+
+  function strokeHits(stroke, eraserPts, R) {
+    var R2 = R * R;
+    for (var i = 0; i < stroke.points.length; i++) {
+      for (var j = 0; j < eraserPts.length; j++) {
+        var dx = stroke.points[i][0] - eraserPts[j][0];
+        var dy = stroke.points[i][1] - eraserPts[j][1];
+        if (dx * dx + dy * dy < R2) return true;
+      }
+    }
+    return false;
+  }
+
+  function onDown(e, x, y) {
+    if (!state.tool) return;
+    if (!shouldAccept(e)) return;
+    if (e.preventDefault) e.preventDefault();
     try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
-    live = { color: COLORS[colorIdx], width: 2.4, points: [px(e)] };
+    state.live = makeStroke(e, x, y);
     redraw();
+  }
+  function onMove(e, x, y) {
+    if (!state.live) return;
+    if (!shouldAccept(e)) return;
+    if (e.preventDefault) e.preventDefault();
+    state.live.points.push([x, y, e.pressure || 0.5]);
+    redraw();
+  }
+  function onUp() {
+    if (!state.live) return;
+    if (state.live.tool === 'eraser') {
+      var R = state.live.baseWidth / 2 + 8;
+      var keep = [];
+      for (var i = 0; i < state.strokes.length; i++) {
+        if (strokeHits(state.strokes[i], state.live.points, R)) {
+          state.redo.push(state.strokes[i]);
+        } else keep.push(state.strokes[i]);
+      }
+      if (keep.length !== state.strokes.length) {
+        state.strokes = keep; save();
+      }
+    } else {
+      state.strokes.push(state.live);
+      state.redo = [];
+      save();
+    }
+    state.live = null;
+    redraw();
+  }
+
+  // Pointer events (mouse, pen, also touch on modern browsers)
+  canvas.addEventListener('pointerdown', function (e) {
+    if (e.pointerType === 'touch' && e.isPrimary === false) return;
+    onDown(e, e.clientX, e.clientY);
   });
   canvas.addEventListener('pointermove', function (e) {
-    if (!live) return;
-    e.preventDefault();
-    live.points.push(px(e));
-    redraw();
+    onMove(e, e.clientX, e.clientY);
+    // Hover preview for Pencil Pro
+    if (e.pointerType === 'pen' && !state.live && state.drawingOn) {
+      hover.style.left = e.clientX + 'px';
+      hover.style.top = e.clientY + 'px';
+      hover.style.color = state.color;
+      hover.classList.add('show');
+    } else {
+      hover.classList.remove('show');
+    }
   });
-  function end() {
-    if (!live) return;
-    if (live.points.length > 1) strokes.push(live);
-    live = null;
-    redraw();
-  }
-  canvas.addEventListener('pointerup', end);
-  canvas.addEventListener('pointercancel', end);
-  canvas.addEventListener('pointerleave', end);
+  canvas.addEventListener('pointerup', onUp);
+  canvas.addEventListener('pointercancel', onUp);
+  canvas.addEventListener('pointerleave', function () {
+    hover.classList.remove('show');
+    onUp();
+  });
 
-  // Touch fallback for iOS Safari (sometimes pen doesn't fire pointer events)
+  // Touch fallback: detect pinch (2 fingers) and disable drawing during it
   canvas.addEventListener('touchstart', function (e) {
-    if (!drawingOn) return;
-    if (live) return; // pointer event already handled it
-    e.preventDefault();
+    if (e.touches.length >= 2) {
+      state.pinching = true;
+      onUp(); // cancel any in-progress stroke
+      return;
+    }
+    if (state.live) return; // pointer event already in progress
     var t = e.changedTouches[0]; if (!t) return;
-    live = { color: COLORS[colorIdx], width: 2.4, points: [[t.clientX, t.clientY]] };
-    redraw();
+    e.preventDefault();
+    onDown({ pointerType: t.touchType === 'stylus' ? 'pen' : 'touch',
+             pointerId: t.identifier,
+             pressure: t.force || 0.5,
+             preventDefault: function () {} },
+           t.clientX, t.clientY);
   }, { passive: false });
   canvas.addEventListener('touchmove', function (e) {
-    if (!live) return;
+    if (e.touches.length >= 2) { onUp(); return; }
+    if (!state.live) return;
     e.preventDefault();
     var t = e.changedTouches[0]; if (!t) return;
-    live.points.push([t.clientX, t.clientY]);
-    redraw();
+    onMove({ pointerType: t.touchType === 'stylus' ? 'pen' : 'touch',
+             pressure: t.force || 0.5,
+             preventDefault: function () {} },
+           t.clientX, t.clientY);
   }, { passive: false });
   canvas.addEventListener('touchend', function (e) {
-    e.preventDefault();
-    end();
-  }, { passive: false });
-  canvas.addEventListener('touchcancel', function (e) {
-    e.preventDefault();
-    end();
-  }, { passive: false });
+    if (e.touches.length === 0) state.pinching = false;
+    onUp();
+  });
+  canvas.addEventListener('touchcancel', function () {
+    state.pinching = false;
+    onUp();
+  });
 
-  // Auto-enable on load — user opens the page already in draw mode
-  setOn(true);
+  // ===========================================================
+  //  Save before unload
+  // ===========================================================
+  window.addEventListener('beforeunload', function () {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        strokes: state.strokes,
+        notes: notesArea.value,
+        tool: state.tool,
+        color: state.color,
+        widthIdx: state.widthIdx
+      }));
+    } catch (_) {}
+  });
+
+  // ===========================================================
+  //  Boot
+  // ===========================================================
+  load();
+  size();
+  setTool(state.tool || 'pen');
 })();
 </script>
 
