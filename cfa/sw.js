@@ -1,6 +1,6 @@
 
 // cfa-sw.js — very small cache-first service worker
-const CACHE = 'cfa-l1-guide-v18-zoom-crisp';
+const CACHE = 'cfa-l1-guide-v19-low-lag';
 const ASSETS = [
   './',
   './index.html',

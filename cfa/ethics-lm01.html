@@ -1521,31 +1521,63 @@ function retryQuiz(){
     return outlineToSvgPath(outline);
   }
 
-  function makePathEl(stroke, isLast) {
-    var p = document.createElementNS(SVG_NS, 'path');
-    p.setAttribute('d', buildPathD(stroke, isLast));
-    // Render as filled outline (perfect-freehand produces a closed polygon)
-    p.setAttribute('fill', stroke.color);
-    p.setAttribute('stroke', 'none');
-    p.setAttribute('opacity', TOOLS[stroke.tool].alpha);
-    // Pencil + highlighter use multiply blend so they darken the page
-    // like real graphite or marker rather than laying flat ink on top.
-    // (Earlier feTurbulence "graphite grain" filter removed — it
-    // rasterizes per-stroke, which makes ink visibly pixelate on
-    // iPad pinch-zoom. The blend mode alone reads as graphite enough.)
-    if (stroke.tool === 'pencil' || stroke.tool === 'highlighter') {
-      p.style.mixBlendMode = 'multiply';
+  // Cheap quadratic-Bezier-through-midpoints path string. Used during
+  // active drawing — perfect-freehand's outline polygon is gorgeous but
+  // costs O(n) per recompute and we do that on every pointermove. With
+  // coalesced events firing 5–10× per frame, that compounds into real
+  // input lag. The cheap renderer is single-pass O(n) string concat
+  // and renders as a stroked path the GPU draws fast. We swap to the
+  // pretty perfect-freehand polygon on commit (onUp).
+  function buildLivePathD(stroke) {
+    var pts = stroke.points;
+    if (!pts.length) return '';
+    if (pts.length === 1) return 'M ' + pts[0][0].toFixed(1) + ' ' + pts[0][1].toFixed(1);
+    var d = 'M ' + pts[0][0].toFixed(1) + ' ' + pts[0][1].toFixed(1);
+    if (pts.length === 2) {
+      return d + ' L ' + pts[1][0].toFixed(1) + ' ' + pts[1][1].toFixed(1);
     }
-    return p;
+    for (var i = 1; i < pts.length - 1; i++) {
+      var mx = ((pts[i][0] + pts[i + 1][0]) / 2).toFixed(1);
+      var my = ((pts[i][1] + pts[i + 1][1]) / 2).toFixed(1);
+      d += ' Q ' + pts[i][0].toFixed(1) + ' ' + pts[i][1].toFixed(1) + ' ' + mx + ' ' + my;
+    }
+    var last = pts[pts.length - 1];
+    d += ' L ' + last[0].toFixed(1) + ' ' + last[1].toFixed(1);
+    return d;
+  }
+  function applyPathAttrs(el, stroke, isLast) {
+    el.setAttribute('opacity', TOOLS[stroke.tool].alpha);
+    if (isLast) {
+      // Final commit: full perfect-freehand outline polygon for
+      // tapered, pressure-sensitive look.
+      el.setAttribute('d', buildPathD(stroke, true));
+      el.setAttribute('fill', stroke.color);
+      el.setAttribute('stroke', 'none');
+      el.removeAttribute('stroke-width');
+      el.removeAttribute('stroke-linecap');
+      el.removeAttribute('stroke-linejoin');
+    } else {
+      // Live: simple stroked Bezier for minimum latency.
+      el.setAttribute('d', buildLivePathD(stroke));
+      el.setAttribute('fill', 'none');
+      el.setAttribute('stroke', stroke.color);
+      el.setAttribute('stroke-width', baseSize(stroke).toFixed(2));
+      el.setAttribute('stroke-linecap', 'round');
+      el.setAttribute('stroke-linejoin', 'round');
+    }
+    if (stroke.tool === 'pencil' || stroke.tool === 'highlighter') {
+      el.style.mixBlendMode = 'multiply';
+    }
   }
   function attachPath(stroke, isLast) {
-    var p = makePathEl(stroke, isLast);
+    var p = document.createElementNS(SVG_NS, 'path');
+    applyPathAttrs(p, stroke, isLast);
     stroke.pathEl = p;
     svg.appendChild(p);
   }
   function updatePath(stroke, isLast) {
     if (!stroke.pathEl) return;
-    stroke.pathEl.setAttribute('d', buildPathD(stroke, isLast));
+    applyPathAttrs(stroke.pathEl, stroke, isLast);
   }
   // Re-render every stroke once the perfect-freehand module finishes
   // loading, so anything drawn during the brief startup gap upgrades
@@ -1554,8 +1586,10 @@ function retryQuiz(){
   function rebuildAll() {
     // Clear svg
     while (svg.firstChild) svg.removeChild(svg.firstChild);
-    state.strokes.forEach(attachPath);
-    if (state.live && state.live.tool !== 'eraser') attachPath(state.live);
+    // Committed strokes render with perfect-freehand polygon (isLast=true);
+    // the in-flight stroke renders cheap (isLast=false).
+    state.strokes.forEach(function (s) { attachPath(s, true); });
+    if (state.live && state.live.tool !== 'eraser') attachPath(state.live, false);
   }
 
   // ===========================================================
@@ -1694,7 +1728,7 @@ function retryQuiz(){
     if (!state.redo.length) return showStatus('Nothing to redo');
     var s = state.redo.pop();
     state.strokes.push(s);
-    attachPath(s);
+    attachPath(s, true);
     save();
   });
   tap(document.getElementById('cfa-clear'), function () {
@@ -2025,6 +2059,21 @@ function retryQuiz(){
     return samplePolyline(corners, perSide * 4 + 1);
   }
 
+  // requestAnimationFrame coalescer — at most one path update per frame.
+  // Coalesced PointerEvents can arrive 5–10× per frame; without this,
+  // each one would force a recompute of the live SVG path. With it,
+  // we render once per frame regardless of event volume.
+  var renderRafId = null;
+  function scheduleRender() {
+    if (renderRafId != null) return;
+    renderRafId = requestAnimationFrame(function () {
+      renderRafId = null;
+      if (state.live && state.live.tool !== 'lasso' && state.live.tool !== 'eraser') {
+        updatePath(state.live, false);
+      }
+    });
+  }
+
   // Compute a 0..1 tilt magnitude from PointerEvent.tiltX/tiltY (degrees).
   // 0 = pencil straight up; 1 = pencil flat to screen.
   function tiltMagnitude(e) {
@@ -2098,30 +2147,20 @@ function retryQuiz(){
       }
       // Track tilt + twist as the user changes them mid-stroke
       updateTilt(e);
-      // Coalesced: high-resolution real samples (~120Hz from Pencil)
+      // Coalesced: high-resolution real samples (~120Hz from Pencil).
+      // We collect every sample but defer rendering to rAF so a single
+      // pointermove with 8 coalesced events doesn't trigger 8 path
+      // updates in the same frame.
       var pts = (e.getCoalescedEvents && e.getCoalescedEvents()) || [e];
       for (var i = 0; i < pts.length; i++) {
         pushPoint(pts[i].clientX + window.scrollX,
                   pts[i].clientY + window.scrollY,
                   pts[i].pressure);
       }
-      // Predicted: where the pen is likely heading. Render but don't commit.
-      // This is Apple's main latency-hiding technique for Pencil — the
-      // visible line leads the hardware by ~16-32ms.
-      var pred = (e.getPredictedEvents && e.getPredictedEvents()) || [];
-      if (pred.length) {
-        state.live.predicted = [];
-        for (var p = 0; p < pred.length; p++) {
-          state.live.predicted.push([
-            pred[p].clientX + window.scrollX,
-            pred[p].clientY + window.scrollY,
-            pred[p].pressure != null ? pred[p].pressure : 0.5
-          ]);
-        }
-      } else {
-        state.live.predicted = null;
-      }
-      updatePath(state.live, false);
+      // (Predicted events removed. They were doubling the live-render
+      // cost and on slow strokes the extrapolation overshot, which read
+      // as visible jitter at the leading edge of the line.)
+      scheduleRender();
       return;
     }
     if (e.pointerType === 'pen' && state.tool) {
@@ -2194,11 +2233,11 @@ function retryQuiz(){
         changed++;
         if (pieces.length === 1 && pieces[0] === orig) {
           // No actual cut — eraser brushed against a corner. Re-attach.
-          attachPath(orig);
+          attachPath(orig, true);
           keep.push(orig);
         } else {
           for (var pp = 0; pp < pieces.length; pp++) {
-            attachPath(pieces[pp]);
+            attachPath(pieces[pp], true);
             keep.push(pieces[pp]);
           }
         }
@@ -2206,8 +2245,11 @@ function retryQuiz(){
       state.strokes = keep;
       if (changed) showStatus('Erased ' + changed + ' stroke' + (changed === 1 ? '' : 's'));
     } else {
-      // Drop predicted points before final commit + render
-      state.live.predicted = null;
+      // Cancel any pending rAF render — we're about to commit
+      if (renderRafId != null) {
+        cancelAnimationFrame(renderRafId);
+        renderRafId = null;
+      }
       // Apple-Notes-style shape snap. The previous threshold (500 ms +
       // size > 30 px) was too loose — handwritten letters with brief
       // end-pauses got snapped to perfect lines, which read as "glitchy
