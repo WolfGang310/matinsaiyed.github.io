@@ -1226,6 +1226,9 @@ function retryQuiz(){
   <button class="cfa-btn" id="cfa-er" title="Eraser">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M16 5 5 16l3.5 3.5 5-5L20 8.5 16 5Z"/><path d="M11 11l4.5 4.5"/></svg>
   </button>
+  <button class="cfa-btn" id="cfa-lasso" title="Lasso (circle ink to delete)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3 2"><ellipse cx="12" cy="11" rx="7" ry="5"/><path d="M9 16 7 21" stroke-dasharray="0"/></svg>
+  </button>
   <div class="cfa-sep"></div>
   <button class="cfa-btn" id="cfa-undo" title="Undo">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7 4 12l5 5"/><path d="M4 12h10a5 5 0 0 1 0 10h-2"/></svg>
@@ -1280,7 +1283,8 @@ function retryQuiz(){
     pencil:      { alpha: 0.85, thinning: 0.65, smoothing: 0.30, streamline: 0.45 },
     marker:      { alpha: 1.0,  thinning: 0.10, smoothing: 0.45, streamline: 0.55 },
     highlighter: { alpha: 0.30, thinning: 0.00, smoothing: 0.50, streamline: 0.55 },
-    eraser:      { alpha: 0,    thinning: 0,    smoothing: 0,    streamline: 0    }
+    eraser:      { alpha: 0,    thinning: 0,    smoothing: 0,    streamline: 0    },
+    lasso:       { alpha: 0,    thinning: 0,    smoothing: 0,    streamline: 0    }
   };
   var WIDTHS = [
     { id: 'thin',   pen: 2.5, pencil: 2.0, marker: 6.0,  highlighter: 14 },
@@ -1322,7 +1326,8 @@ function retryQuiz(){
     pencil: document.getElementById('cfa-pencil'),
     marker: document.getElementById('cfa-marker'),
     highlighter: document.getElementById('cfa-hi'),
-    eraser: document.getElementById('cfa-er')
+    eraser: document.getElementById('cfa-er'),
+    lasso: document.getElementById('cfa-lasso')
   };
   var TOOL_DOTS = {
     pen: document.getElementById('cfa-pen-dot'),
@@ -1374,18 +1379,24 @@ function retryQuiz(){
     return d.join(' ');
   }
 
-  function strokeOptions(stroke /* isLast unused — always render with last:true so
-                                    live and committed strokes look identical */) {
+  function strokeOptions(stroke) {
     var def = TOOLS[stroke.tool];
+    // Auto-detect: if every sampled pressure is the same value (typically
+    // 0.5 default for inputs that don't report pressure, or 0 for finger),
+    // simulate pressure from velocity instead — gives a calligraphic feel
+    // even when the device isn't reporting real Pencil pressure.
+    var realPressureWorks = stroke.hasRealPressure &&
+      stroke.pMin !== undefined && stroke.pMax !== undefined &&
+      Math.abs(stroke.pMax - stroke.pMin) > 0.02;
     return {
       size: baseSize(stroke),
       thinning: def.thinning,
       smoothing: def.smoothing,
       streamline: def.streamline,
-      simulatePressure: !stroke.hasRealPressure,
+      simulatePressure: !realPressureWorks,
       last: true,
-      start: { taper: 0,  cap: true },
-      end:   { taper: 0,  cap: true }
+      start: { taper: 0, cap: true },
+      end:   { taper: 0, cap: true }
     };
   }
 
@@ -1545,10 +1556,10 @@ function retryQuiz(){
     submenu.classList.remove('show');
   }
 
-  ['pen','pencil','marker','highlighter','eraser'].forEach(function (t) {
+  ['pen','pencil','marker','highlighter','eraser','lasso'].forEach(function (t) {
     var btn = TOOL_BTNS[t];
     tap(btn, function () { setTool(t); });
-    if (t !== 'eraser') {
+    if (t !== 'eraser' && t !== 'lasso') {
       longPress(btn, function () {
         if (state.tool !== t) setTool(t);
         renderColorList(); renderWidthList();
@@ -1633,11 +1644,48 @@ function retryQuiz(){
     return false;
   }
 
+  // Live preview path for lasso (dashed)
+  var lassoPreview = null;
+  function buildLassoPathD(points, closed) {
+    if (!points.length) return '';
+    var d = 'M ' + points[0][0] + ' ' + points[0][1];
+    for (var i = 1; i < points.length; i++) d += ' L ' + points[i][0] + ' ' + points[i][1];
+    if (closed) d += ' Z';
+    return d;
+  }
+  function pointInPolygon(pt, poly) {
+    var x = pt[0], y = pt[1], inside = false;
+    for (var i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      var xi = poly[i][0], yi = poly[i][1];
+      var xj = poly[j][0], yj = poly[j][1];
+      var intersect = ((yi > y) !== (yj > y)) &&
+                      (x < (xj - xi) * (y - yi) / ((yj - yi) || 1e-9) + xi);
+      if (intersect) inside = !inside;
+    }
+    return inside;
+  }
+  function strokeCentroid(s) {
+    var sx = 0, sy = 0, n = s.points.length;
+    for (var i = 0; i < n; i++) { sx += s.points[i][0]; sy += s.points[i][1]; }
+    return [sx / n, sy / n];
+  }
+
   function onDown(e) {
     if (!isDrawingInput(e)) return;
     e.preventDefault();
     var x = e.clientX + window.scrollX, y = e.clientY + window.scrollY;
     var isPen = e.pointerType === 'pen';
+    if (state.tool === 'lasso') {
+      // Start a lasso polygon
+      state.live = { tool: 'lasso', points: [[x, y]] };
+      lassoPreview = document.createElementNS(SVG_NS, 'path');
+      lassoPreview.setAttribute('fill', 'rgba(29,78,216,0.10)');
+      lassoPreview.setAttribute('stroke', '#1d4ed8');
+      lassoPreview.setAttribute('stroke-width', '1.5');
+      lassoPreview.setAttribute('stroke-dasharray', '6 4');
+      svg.appendChild(lassoPreview);
+      return;
+    }
     state.live = makeStroke(x, y, e.pressure, isPen);
     if (state.live.tool !== 'eraser') {
       attachPath(state.live, false);
@@ -1656,8 +1704,15 @@ function retryQuiz(){
   function onMove(e) {
     if (state.live) {
       e.preventDefault();
-      // Coalesced events give us the high-frequency Pencil samples that
-      // pointermove drops between vsyncs (Pencil = ~120Hz, vsync = ~60Hz).
+      if (state.live.tool === 'lasso') {
+        var x = e.clientX + window.scrollX, y = e.clientY + window.scrollY;
+        var lp = state.live.points[state.live.points.length - 1];
+        if (Math.abs(x - lp[0]) > 1 || Math.abs(y - lp[1]) > 1) {
+          state.live.points.push([x, y]);
+          if (lassoPreview) lassoPreview.setAttribute('d', buildLassoPathD(state.live.points, false));
+        }
+        return;
+      }
       var pts = (e.getCoalescedEvents && e.getCoalescedEvents()) || [e];
       for (var i = 0; i < pts.length; i++) {
         pushPoint(pts[i].clientX + window.scrollX,
@@ -1678,6 +1733,40 @@ function retryQuiz(){
   }
   function onUp() {
     if (!state.live) return;
+    if (state.live.tool === 'lasso') {
+      // Close the polygon and find strokes whose centroid is inside.
+      var poly = state.live.points;
+      if (poly.length >= 3) {
+        var hit = [], keep = [];
+        for (var i = 0; i < state.strokes.length; i++) {
+          var s = state.strokes[i];
+          if (pointInPolygon(strokeCentroid(s), poly)) hit.push(s);
+          else keep.push(s);
+        }
+        if (hit.length) {
+          // Briefly highlight then remove
+          hit.forEach(function (s) {
+            if (s.pathEl) s.pathEl.setAttribute('opacity', '0.3');
+          });
+          setTimeout(function () {
+            hit.forEach(function (s) {
+              if (s.pathEl && s.pathEl.parentNode) s.pathEl.parentNode.removeChild(s.pathEl);
+              state.redo.push(s);
+            });
+            state.strokes = keep;
+            save();
+          }, 180);
+          showStatus('Removed ' + hit.length + ' stroke' + (hit.length === 1 ? '' : 's'));
+        } else {
+          showStatus('Nothing inside');
+        }
+      }
+      // Remove the dashed preview
+      if (lassoPreview && lassoPreview.parentNode) lassoPreview.parentNode.removeChild(lassoPreview);
+      lassoPreview = null;
+      state.live = null;
+      return;
+    }
     if (state.live.tool === 'eraser') {
       var R = WIDTHS[state.widthIdx].px * TOOLS.eraser.widthMul / 2 + 8;
       var keep = [];
@@ -1738,6 +1827,42 @@ function retryQuiz(){
     }
   }, { passive: false });
   document.addEventListener('touchend', function () { if (state.live) onUp(); });
+
+  // ===========================================================
+  //  PencilKit-style 3-finger swipe gestures: undo / redo
+  // ===========================================================
+  var threeFinger = null;
+  document.addEventListener('touchstart', function (e) {
+    if (e.touches.length === 3) {
+      threeFinger = {
+        startX: avg(e.touches, 'clientX'),
+        startY: avg(e.touches, 'clientY'),
+        time: Date.now()
+      };
+    } else if (e.touches.length > 3) {
+      threeFinger = null;
+    }
+  }, { passive: true });
+  document.addEventListener('touchend', function (e) {
+    if (!threeFinger) return;
+    if (e.touches.length === 0) {
+      var ct = e.changedTouches;
+      if (ct && ct.length >= 1) {
+        var dx = ct[0].clientX - threeFinger.startX;
+        var dt = Date.now() - threeFinger.time;
+        if (dt < 700 && Math.abs(dx) > 80) {
+          if (dx < 0) document.getElementById('cfa-undo').click();
+          else        document.getElementById('cfa-redo').click();
+        }
+      }
+      threeFinger = null;
+    }
+  }, { passive: true });
+  function avg(touches, prop) {
+    var sum = 0;
+    for (var i = 0; i < touches.length; i++) sum += touches[i][prop];
+    return sum / touches.length;
+  }
 
   // ===========================================================
   //  Step layer tracking (per-step ink)
