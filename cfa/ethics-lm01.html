@@ -1268,23 +1268,23 @@ function retryQuiz(){
     '#1d1d1f', '#e23b3b', '#f29423', '#f5c518',
     '#2da44e', '#1f6feb', '#7c3aed', '#db2777'
   ];
-  // perfect-freehand options per tool. The library renders an outline
-  // polygon (rendered as filled SVG path) so strokes have thick-thin
-  // variation based on pressure, just like Apple Notes / Procreate.
-  // size = base width, thinning = how much pressure thins the line,
-  // smoothing = path smoothing (0-1), streamline = input lerp (0-1).
+  // perfect-freehand options per tool — tuned for Apple Notes feel:
+  //   thinning: small (0-0.4) so pressure changes are subtle (no wobble)
+  //   smoothing: small (0.2-0.4) — clean noise without adding latency
+  //   streamline: small (0.2-0.35) — tracks pen tip closely (no lag)
+  //   no start/end taper — cleaner stroke ends
   var TOOLS = {
-    pen:         { alpha: 1.0,  thinning: 0.55, smoothing: 0.45, streamline: 0.42, taperEnd: 8 },
-    pencil:      { alpha: 0.92, thinning: 0.70, smoothing: 0.30, streamline: 0.30, taperEnd: 4 },
-    marker:      { alpha: 1.0,  thinning: 0.10, smoothing: 0.55, streamline: 0.55, taperEnd: 0 },
-    highlighter: { alpha: 0.32, thinning: 0.00, smoothing: 0.60, streamline: 0.55, taperEnd: 0 },
-    eraser:      { alpha: 0,    thinning: 0,    smoothing: 0,    streamline: 0,    taperEnd: 0 }
+    pen:         { alpha: 1.0,  thinning: 0.30, smoothing: 0.30, streamline: 0.28 },
+    pencil:      { alpha: 0.85, thinning: 0.40, smoothing: 0.20, streamline: 0.25 },
+    marker:      { alpha: 1.0,  thinning: 0.05, smoothing: 0.35, streamline: 0.35 },
+    highlighter: { alpha: 0.30, thinning: 0.00, smoothing: 0.40, streamline: 0.35 },
+    eraser:      { alpha: 0,    thinning: 0,    smoothing: 0,    streamline: 0    }
   };
   var WIDTHS = [
-    { id: 'thin',   pen: 2.0, pencil: 1.6, marker: 6.0,  highlighter: 12 },
-    { id: 'medium', pen: 3.2, pencil: 2.4, marker: 9.0,  highlighter: 18 },
-    { id: 'thick',  pen: 5.0, pencil: 3.6, marker: 14.0, highlighter: 26 },
-    { id: 'xthick', pen: 8.0, pencil: 5.4, marker: 20.0, highlighter: 36 }
+    { id: 'thin',   pen: 2.5, pencil: 2.0, marker: 6.0,  highlighter: 14 },
+    { id: 'medium', pen: 4.0, pencil: 3.0, marker: 10.0, highlighter: 22 },
+    { id: 'thick',  pen: 6.0, pencil: 4.5, marker: 16.0, highlighter: 32 },
+    { id: 'xthick', pen: 9.0, pencil: 6.5, marker: 22.0, highlighter: 42 }
   ];
 
   // strokes: { tool, color, width, alpha, points: [[x,y],...], pathEl }
@@ -1372,7 +1372,8 @@ function retryQuiz(){
     return d.join(' ');
   }
 
-  function strokeOptions(stroke, isLast) {
+  function strokeOptions(stroke /* isLast unused — always render with last:true so
+                                    live and committed strokes look identical */) {
     var def = TOOLS[stroke.tool];
     return {
       size: baseSize(stroke),
@@ -1380,9 +1381,9 @@ function retryQuiz(){
       smoothing: def.smoothing,
       streamline: def.streamline,
       simulatePressure: !stroke.hasRealPressure,
-      last: !!isLast,
-      start: { taper: 0, cap: true },
-      end:   { taper: def.taperEnd, cap: true }
+      last: true,
+      start: { taper: 0,  cap: true },
+      end:   { taper: 0,  cap: true }
     };
   }
 
@@ -1643,7 +1644,9 @@ function retryQuiz(){
   function pushPoint(x, y, pressure) {
     var last = state.live.points[state.live.points.length - 1];
     var dx = x - last[0], dy = y - last[1];
-    if (dx * dx + dy * dy < 0.4) return;  // sub-px dedupe
+    // Only drop true duplicates (< 0.04 px²) — keep all micro-detail so
+    // perfect-freehand's smoothing has rich input to work with.
+    if (dx * dx + dy * dy < 0.04) return;
     state.live.points.push([x, y, pressure != null ? pressure : 0.5]);
   }
   function onMove(e) {
