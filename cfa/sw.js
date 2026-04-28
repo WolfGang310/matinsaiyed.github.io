@@ -1,6 +1,6 @@
 
 // cfa-sw.js — very small cache-first service worker
-const CACHE = 'cfa-l1-guide-v17-fix-eraser-snap';
+const CACHE = 'cfa-l1-guide-v18-zoom-crisp';
 const ASSETS = [
   './',
   './index.html',

@@ -1223,23 +1223,7 @@ function retryQuiz(){
   }
 </style>
 
-<svg id="cfa-svg" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <!-- Graphite-grain texture for the pencil tool. Stable noise field +
-         displacement filter. Multiply blend mode lets the page color
-         show through, giving the grain an authentic graphite-on-paper feel
-         instead of a flat fill. -->
-    <filter id="cfa-graphite" x="-2%" y="-2%" width="104%" height="104%" filterUnits="userSpaceOnUse">
-      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" result="noise"/>
-      <feColorMatrix in="noise" type="matrix"
-        values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0   0 0 0 0.55 0" result="grain"/>
-      <feComposite in="SourceGraphic" in2="grain" operator="in" result="textured"/>
-      <feMerge>
-        <feMergeNode in="textured"/>
-      </feMerge>
-    </filter>
-  </defs>
-</svg>
+<svg id="cfa-svg" xmlns="http://www.w3.org/2000/svg"></svg>
 
 <!-- perfect-freehand: pressure-sensitive ink outlines (used by tldraw, Excalidraw) -->
 <script type="module">
@@ -1336,11 +1320,15 @@ function retryQuiz(){
     eraser:      { alpha: 0,    thinning: 0,    smoothing: 0,    streamline: 0    },
     lasso:       { alpha: 0,    thinning: 0,    smoothing: 0,    streamline: 0    }
   };
+  // Stroke widths in CSS pixels. The thinnest pen used to be 2.5 px,
+  // which felt chunky once zoomed in (looks ~5 px at 2x pinch). Dropped
+  // to 1.6 so it reads as a real fineliner, with the rest of the scale
+  // shifted accordingly.
   var WIDTHS = [
-    { id: 'thin',   pen: 2.5, pencil: 2.0, marker: 6.0,  highlighter: 14 },
-    { id: 'medium', pen: 4.0, pencil: 3.0, marker: 10.0, highlighter: 22 },
-    { id: 'thick',  pen: 6.0, pencil: 4.5, marker: 16.0, highlighter: 32 },
-    { id: 'xthick', pen: 9.0, pencil: 6.5, marker: 22.0, highlighter: 42 }
+    { id: 'thin',   pen: 1.6, pencil: 1.4, marker: 5.0,  highlighter: 12 },
+    { id: 'medium', pen: 2.6, pencil: 2.2, marker: 8.0,  highlighter: 18 },
+    { id: 'thick',  pen: 4.2, pencil: 3.4, marker: 13.0, highlighter: 26 },
+    { id: 'xthick', pen: 6.5, pencil: 5.0, marker: 19.0, highlighter: 36 }
   ];
 
   // strokes: { tool, color, width, alpha, points: [[x,y],...], pathEl }
@@ -1403,6 +1391,46 @@ function retryQuiz(){
   try {
     new ResizeObserver(sizeSvg).observe(document.body);
   } catch (_) {}
+
+  // ---------------------------------------------------------
+  //  iOS Safari pinch-zoom re-rasterize
+  //  Safari caches the SVG as a bitmap during pinch-zoom and only
+  //  re-rasterizes lazily after the gesture settles — sometimes never,
+  //  which makes vector ink look chunky and pixelated. We listen on
+  //  visualViewport for scale changes and, after the gesture stops,
+  //  bump the viewBox by a sub-pixel which forces an immediate
+  //  re-render at the new zoom level.
+  // ---------------------------------------------------------
+  (function () {
+    var vv = window.visualViewport;
+    if (!vv) return;
+    var lastScale = vv.scale;
+    var t = null;
+    function nudge() {
+      if (!svg.hasAttribute('viewBox')) return;
+      var w = svg.getAttribute('width');
+      var h = svg.getAttribute('height');
+      // Toggle viewBox between two effectively-identical values.
+      svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+      // The transform-toggle below doubles up: it promotes the SVG
+      // to its own GPU layer momentarily, which Safari rasterizes at
+      // the *current* device-pixel-ratio rather than the cached one.
+      svg.style.transform = 'translateZ(0)';
+      requestAnimationFrame(function () { svg.style.transform = ''; });
+    }
+    vv.addEventListener('resize', function () {
+      if (Math.abs(vv.scale - lastScale) < 0.02) return;
+      lastScale = vv.scale;
+      clearTimeout(t);
+      t = setTimeout(nudge, 80);
+    });
+    vv.addEventListener('scroll', function () {
+      // Pinch-zoom on iOS fires scroll events — debounce a re-rasterize
+      // so the moment the user lifts, the ink snaps back to crisp.
+      clearTimeout(t);
+      t = setTimeout(nudge, 80);
+    });
+  })();
 
   // ===========================================================
   //  Stroke -> SVG path
@@ -1500,14 +1528,12 @@ function retryQuiz(){
     p.setAttribute('fill', stroke.color);
     p.setAttribute('stroke', 'none');
     p.setAttribute('opacity', TOOLS[stroke.tool].alpha);
-    // Pencil gets a graphite-grain filter + multiply blend so it darkens
-    // the page like real lead instead of laying flat ink on top.
-    if (stroke.tool === 'pencil') {
-      p.setAttribute('filter', 'url(#cfa-graphite)');
-      p.style.mixBlendMode = 'multiply';
-    } else if (stroke.tool === 'highlighter') {
-      // Highlighters are translucent — multiply with the underlying text
-      // produces the authentic "marker over paper" look.
+    // Pencil + highlighter use multiply blend so they darken the page
+    // like real graphite or marker rather than laying flat ink on top.
+    // (Earlier feTurbulence "graphite grain" filter removed — it
+    // rasterizes per-stroke, which makes ink visibly pixelate on
+    // iPad pinch-zoom. The blend mode alone reads as graphite enough.)
+    if (stroke.tool === 'pencil' || stroke.tool === 'highlighter') {
       p.style.mixBlendMode = 'multiply';
     }
     return p;
