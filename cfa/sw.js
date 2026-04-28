@@ -1,6 +1,6 @@
 
 // cfa-sw.js — very small cache-first service worker
-const CACHE = 'cfa-l1-guide-v15-pencil-pro';
+const CACHE = 'cfa-l1-guide-v16-notability-feel';
 const ASSETS = [
   './',
   './index.html',
