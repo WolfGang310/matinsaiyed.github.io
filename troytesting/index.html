@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Troy Testing &amp; Learning Centers</title>
   <meta name="description" content="Accredited testing and learning center delivering CELPIP and CFA exams across Toronto and Mississauga. We host your seat — book directly with the official provider.">
 
@@ -115,8 +115,15 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=JetBrains+Mono:wght@400;500&display=swap">
 
-  <!-- Icon -->
-  <link rel="icon" href="logo.jpg" type="image/jpeg">
+  <!-- Icons + installable PWA -->
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="icon" href="logo.jpg" sizes="any" type="image/jpeg">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Troy Testing">
 
   <!-- Speed up the (hot-linked) photo CDN -->
   <link rel="preconnect" href="https://images.unsplash.com" crossorigin>
@@ -149,6 +156,15 @@
         else if (window.gtag) window.gtag('event', event, props || {});
       } catch (e) { /* analytics must never break the page */ }
     };
+  </script>
+
+  <!-- Register the service worker for offline support + installability (scoped to /troytesting/) -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('sw.js').catch(function () { /* offline is a progressive enhancement */ });
+      });
+    }
   </script>
 
   <!-- React runtime (production builds — behaviour-identical to the prototype's dev builds, without console warnings) -->

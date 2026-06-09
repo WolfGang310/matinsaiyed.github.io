@@ -59,7 +59,7 @@ button { font-family: inherit; cursor: pointer; }
 .site-header {
   position: sticky; top: 0; z-index: 50;
   background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: saturate(1.2) blur(12px);
+  -webkit-backdrop-filter: saturate(1.2) blur(12px); backdrop-filter: saturate(1.2) blur(12px);
   border-bottom: 1px solid var(--rule-soft);
   transition: box-shadow .3s, background .3s;
 }
@@ -737,7 +737,7 @@ section.block {
 .modal-bg {
   position: fixed; inset: 0; z-index: 100;
   background: rgba(26, 24, 20, 0.55);
-  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
   display: grid; place-items: center;
   padding: 24px;
   animation: fadeIn .2s;
@@ -750,6 +750,9 @@ section.block {
   max-width: 520px;
   width: 100%;
   padding: 40px;
+  max-height: calc(100vh - 48px);
+  max-height: calc(100dvh - 48px); /* never taller than the (real) viewport on phones */
+  overflow-y: auto; -webkit-overflow-scrolling: touch;
   animation: slideUp .3s cubic-bezier(.2,.8,.2,1);
 }
 @keyframes slideUp { from { transform: translateY(12px); opacity: 0; } }
@@ -1415,7 +1418,9 @@ section.block {
   background: #fff; border-bottom: 1px solid var(--rule-soft);
   box-shadow: 0 24px 48px -24px rgba(0,0,0,0.35);
   padding: 12px 0 24px;
-  max-height: calc(100vh - 72px); overflow-y: auto;
+  max-height: calc(100vh - 72px);
+  max-height: calc(100dvh - 72px); /* dvh excludes the iOS toolbar so the menu never overflows */
+  overflow-y: auto; -webkit-overflow-scrolling: touch;
   display: none;
 }
 .mobile-menu.open { display: block; animation: mmIn .26s cubic-bezier(.2,.7,.2,1); }
@@ -1448,7 +1453,7 @@ section.block {
 .section-nav {
   position: sticky; top: 62px; z-index: 40;
   background: rgba(255,255,255,0.95);
-  backdrop-filter: saturate(1.2) blur(10px);
+  -webkit-backdrop-filter: saturate(1.2) blur(10px); backdrop-filter: saturate(1.2) blur(10px);
   border-bottom: 1px solid var(--rule-soft);
   border-top: 1px solid var(--rule-soft);
 }
@@ -1591,7 +1596,7 @@ button.exam { width: 100%; text-align: left; font: inherit; color: inherit; -web
   .mobile-book-bar {
     display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 80; justify-content: center;
     padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
-    background: rgba(255, 255, 255, .94); backdrop-filter: saturate(1.2) blur(10px);
+    background: rgba(255, 255, 255, .94); -webkit-backdrop-filter: saturate(1.2) blur(10px); backdrop-filter: saturate(1.2) blur(10px);
     border-top: 1px solid var(--rule-soft);
   }
   .mobile-book-bar .btn { width: 100%; max-width: 520px; justify-content: center; }
@@ -1602,5 +1607,44 @@ button.exam { width: 100%; text-align: left; font: inherit; color: inherit; -web
 /* Stack the contact form's inline 2-col rows on phones (inline grids overridden) */
 @media (max-width: 560px) {
   .form > div[style*="1fr 1fr"] { grid-template-columns: 1fr !important; }
+}
+
+/* ════ Cross-platform & mobile hardening ════ */
+
+/* iOS: stop landscape font inflation; remove the grey tap flash on touch */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body { -webkit-tap-highlight-color: transparent; }
+/* Kill the 300ms tap delay + double-tap zoom on controls (keeps pinch-zoom) */
+a, button, .exam, [role="button"], input[type="submit"], label { touch-action: manipulation; }
+/* Media never forces horizontal overflow */
+img, svg, video, figure { max-width: 100%; }
+
+/* Phone: shrink the departures board so all four columns fit (was clipped at ~408px) */
+@media (max-width: 560px) {
+  .exam-board { padding: 16px 14px 12px; border-radius: 14px; }
+  .board-cols, .board-row { gap: 6px; grid-template-columns: 1.5fr 1fr 1.15fr 0.95fr; }
+  .board-row { padding: 9px 2px; }
+  .bc { font-size: 11px; }
+  .board-clock { font-size: 11px; }
+  .board-title { font-size: 10px; gap: 8px; }
+  .bc.bexam .flap-cell { min-width: 0.66em; margin: 0 0.25px; }
+  .flap-cell { min-width: 0.54em; }
+  .pill { font-size: 8.5px; padding: 4px 7px; gap: 4px; }
+  .pill-dot { width: 5px; height: 5px; }
+  .board-foot { font-size: 8.5px; gap: 10px; }
+  /* roomier tap targets for footer + inline links (WCAG 2.5.8) */
+  .site-footer ul a { display: inline-block; padding: 7px 0; }
+  /* tighter modal padding so dialogs use the small screen well */
+  .modal { padding: 28px 22px; }
+  .modal.wizard { padding: 24px 18px; }
+  /* keep CTA/section headings from getting oversized on the narrowest phones */
+  .section-head { grid-template-columns: 1fr; gap: 16px; }
+  .section-head p { justify-self: start; }
+}
+
+/* Very small phones (≤360px): one more notch down on the board */
+@media (max-width: 360px) {
+  .bc { font-size: 10px; }
+  .board-cols, .board-row { gap: 4px; }
 }
 
