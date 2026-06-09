@@ -60,14 +60,14 @@ function HomePage({ go, openReserve, openWizard, openQuiz, lang }) {
               </div>
             </div>
             <div className="reveal" style={{ transitionDelay: '140ms' }}>
-              <ExamBoard />
+              <ExamBoard lang={lang} />
               <button className="board-cta" onClick={() => go('availability')}>
                 {t(lang, 'cta.seeAvail')} <span className="arrow" />
               </button>
             </div>
           </div>
           <div className="hero-partner reveal" style={{ transitionDelay: '300ms' }}>
-            <PartnerBar />
+            <PartnerBar lang={lang} />
           </div>
         </div>
       </section>

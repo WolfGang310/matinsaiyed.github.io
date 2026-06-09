@@ -167,10 +167,11 @@ function useDialogA11y(open) {
 }
 
 // ─── Provider redirect modal ────────────────────
-function ReserveModal({ exam, close, go }) {
+function ReserveModal({ exam, close, go, lang = 'en' }) {
   const dref = useDialogA11y(!!exam);
   const [sent, setSent] = useState(false);
   if (!exam) return null;
+  const fr = lang === 'fr';
   const isCfa = exam.flow === 'cfa';
   const centre = exam.preferredCenter || 'Toronto or Mississauga';
   const goProvider = () => {
@@ -179,35 +180,41 @@ function ReserveModal({ exam, close, go }) {
   };
   return (
     <div className="modal-bg" onClick={close}>
-      <div className="modal" ref={dref} role="dialog" aria-modal="true" aria-label={`Book ${exam.name}`} tabIndex={-1} onClick={e => e.stopPropagation()}>
+      <div className="modal" ref={dref} role="dialog" aria-modal="true" aria-label={`${fr ? 'Réserver' : 'Book'} ${exam.name}`} tabIndex={-1} onClick={e => e.stopPropagation()}>
         {!sent ? (
           <>
-            <div className="eyebrow">{isCfa ? `Register with ${exam.org}` : `Book on ${exam.org}`} · {exam.code}</div>
+            <div className="eyebrow">{isCfa ? `${fr ? "S'inscrire auprès de" : 'Register with'} ${exam.org}` : `${fr ? 'Réserver sur' : 'Book on'} ${exam.org}`} · {exam.code}</div>
             <h3>{exam.name}</h3>
             <p>
               {isCfa
-                ? <>Registration is handled by <strong>{exam.org}</strong>. Register online, then schedule your seat at our <strong>{centre}</strong> centre — a {exam.scheduler} site. Bring valid photo ID on exam day.</>
-                : <>Booking is made directly with <strong>{exam.org}</strong>. Pick your date on their portal and choose Troy Testing — <strong>{centre}</strong> as your location. Bring valid photo ID on the day.</>}
+                ? (fr
+                    ? <>L'inscription est gérée par <strong>{exam.org}</strong>. Inscrivez-vous en ligne, puis planifiez votre place à notre centre de <strong>{centre}</strong> — un site {exam.scheduler}. Apportez une pièce d'identité avec photo valide le jour J.</>
+                    : <>Registration is handled by <strong>{exam.org}</strong>. Register online, then schedule your seat at our <strong>{centre}</strong> centre — a {exam.scheduler} site. Bring valid photo ID on exam day.</>)
+                : (fr
+                    ? <>La réservation se fait directement avec <strong>{exam.org}</strong>. Choisissez votre date sur leur portail et sélectionnez Troy Testing — <strong>{centre}</strong> comme lieu. Apportez une pièce d'identité avec photo valide le jour J.</>
+                    : <>Booking is made directly with <strong>{exam.org}</strong>. Pick your date on their portal and choose Troy Testing — <strong>{centre}</strong> as your location. Bring valid photo ID on the day.</>)}
             </p>
             <div className="modal-actions">
               <a className="btn" href={exam.url} target="_blank" rel="noopener" onClick={goProvider}>
-                {isCfa ? `Register with ${exam.org}` : `Go to ${exam.org}`} <span className="arrow" />
+                {isCfa ? `${fr ? "S'inscrire auprès de" : 'Register with'} ${exam.org}` : `${fr ? 'Aller sur' : 'Go to'} ${exam.org}`} <span className="arrow" />
               </a>
-              <button className="btn ghost" onClick={close}>Not now</button>
+              <button className="btn ghost" onClick={close}>{fr ? 'Plus tard' : 'Not now'}</button>
             </div>
           </>
         ) : (
           <>
-            <div className="eyebrow" style={{ color: 'var(--accent)' }}>One thing before you go</div>
-            <h3>Select Troy Testing — {centre}</h3>
-            <p>When you pick your {isCfa ? 'test centre' : 'location'}, choose <strong>Troy Testing — {centre}</strong>. That’s how your seat lands with us. The {exam.org} tab should have opened in a new window.</p>
+            <div className="eyebrow" style={{ color: 'var(--accent)' }}>{fr ? 'Une chose avant de partir' : 'One thing before you go'}</div>
+            <h3>{fr ? 'Sélectionnez Troy Testing' : 'Select Troy Testing'} — {centre}</h3>
+            <p>{fr
+              ? <>Au moment de choisir votre {isCfa ? "centre d'examen" : 'lieu'}, sélectionnez <strong>Troy Testing — {centre}</strong>. C'est ainsi que votre place nous parvient. L'onglet {exam.org} devrait s'être ouvert dans une nouvelle fenêtre.</>
+              : <>When you pick your {isCfa ? 'test centre' : 'location'}, choose <strong>Troy Testing — {centre}</strong>. That’s how your seat lands with us. The {exam.org} tab should have opened in a new window.</>}</p>
             <div className="modal-actions">
-              <a className="btn" href={exam.url} target="_blank" rel="noopener" onClick={goProvider}>Reopen {exam.org} <span className="arrow" /></a>
-              {go && <button className="btn ghost" onClick={() => { close(); go('contact'); }}>Questions? Message us</button>}
+              <a className="btn" href={exam.url} target="_blank" rel="noopener" onClick={goProvider}>{fr ? 'Rouvrir' : 'Reopen'} {exam.org} <span className="arrow" /></a>
+              {go && <button className="btn ghost" onClick={() => { close(); go('contact'); }}>{fr ? 'Des questions? Écrivez-nous' : 'Questions? Message us'}</button>}
             </div>
           </>
         )}
-        <button className="close" onClick={close}>Close (Esc)</button>
+        <button className="close" onClick={close}>{fr ? 'Fermer (Échap)' : 'Close (Esc)'}</button>
       </div>
     </div>
   );
@@ -287,8 +294,10 @@ const BOARD_BASE = [
   { exam: 'CELPIP GENERAL', centre: 'MISSISSAUGA', when: 'FRI 11:00', status: 'open' },
 ];
 const STATUS_LABEL = { open: 'SEATS OPEN', filling: 'FILLING FAST', waitlist: 'WAITLIST', full: 'FULL' };
+const STATUS_LABEL_FR = { open: 'PLACES LIBRES', filling: 'SE REMPLIT', waitlist: "LISTE D'ATTENTE", full: 'COMPLET' };
 
-function ExamBoard() {
+function ExamBoard({ lang = 'en' }) {
+  const fr = lang === 'fr';
   // A representative (illustrative) departures-style board — NOT live seat data.
   // Statuses are a static snapshot so the UI never invents availability that could
   // mislead a candidate. Real seats are always confirmed on the provider's portal.
@@ -306,16 +315,16 @@ function ExamBoard() {
     return () => clearInterval(c);
   }, []);
   return (
-    <div className="exam-board" role="img" aria-label="Illustrative board of typical CELPIP and CFA exam sessions across the North York and Mississauga centres. Seats are booked on the provider's portal.">
+    <div className="exam-board" role="img" aria-label={fr ? "Tableau illustratif de séances types d'examens CELPIP et CFA aux centres de North York et de Mississauga. Les places se réservent sur le portail du fournisseur." : "Illustrative board of typical CELPIP and CFA exam sessions across the North York and Mississauga centres. Seats are booked on the provider's portal."}>
       <div className="board-top" aria-hidden="true">
         <div className="board-title">
-          <span className="board-live"><span className="live-dot" />SAMPLE</span>
-          <span>Typical exam sessions</span>
+          <span className="board-live"><span className="live-dot" />{fr ? 'EXEMPLE' : 'SAMPLE'}</span>
+          <span>{fr ? "Séances types d'examen" : 'Typical exam sessions'}</span>
         </div>
         <div className="board-clock">{clock}</div>
       </div>
       <div className="board-cols" aria-hidden="true">
-        <span>Exam</span><span>Centre</span><span>Session</span><span className="ta-r">Status</span>
+        <span>{fr ? 'Examen' : 'Exam'}</span><span>{fr ? 'Centre' : 'Centre'}</span><span>{fr ? 'Séance' : 'Session'}</span><span className="ta-r">{fr ? 'Statut' : 'Status'}</span>
       </div>
       <div className="board-rows" aria-hidden="true">
         {rows.map((r, i) => (
@@ -324,14 +333,14 @@ function ExamBoard() {
             <span className="bc centre"><FlipText text={r.centre} /></span>
             <span className="bc when"><FlipText text={r.when} /></span>
             <span className="bc status ta-r">
-              <span className={`pill ${r.status}`}><span className="pill-dot" />{STATUS_LABEL[r.status]}</span>
+              <span className={`pill ${r.status}`}><span className="pill-dot" />{(fr ? STATUS_LABEL_FR : STATUS_LABEL)[r.status]}</span>
             </span>
           </div>
         ))}
       </div>
       <div className="board-foot" aria-hidden="true">
         <span>Toronto · Mississauga</span>
-        <span>Illustrative — book live seats on the provider portal</span>
+        <span>{fr ? 'Illustratif — réservez vos places sur le portail du fournisseur' : 'Illustrative — book live seats on the provider portal'}</span>
       </div>
     </div>
   );
@@ -416,10 +425,12 @@ const PARTNERS = [
   { name: 'Prometric', sub: 'CFA delivery', note: 'Authorized CFA test site' },
   { name: 'CFA Institute', sub: 'CFA Program', note: 'Recognized exam location' },
 ];
-function PartnerBar({ compact = false }) {
+const PARTNERS_FR = { 'CELPIP': 'CELPIP', 'CFA delivery': 'Livraison CFA', 'CFA Program': 'Programme CFA' };
+function PartnerBar({ compact = false, lang = 'en' }) {
+  const fr = lang === 'fr';
   return (
     <div className={`partner-bar ${compact ? 'compact' : ''}`}>
-      <div className="partner-label">Authorized delivery site for</div>
+      <div className="partner-label">{fr ? 'Site de livraison agréé pour' : 'Authorized delivery site for'}</div>
       <div className="partner-list">
         {PARTNERS.map((p) => (
           <div className="partner" key={p.name} title={p.note}>
@@ -428,7 +439,7 @@ function PartnerBar({ compact = false }) {
             </span>
             <span className="partner-text">
               <span className="partner-name">{p.name}</span>
-              <span className="partner-sub">{p.sub}</span>
+              <span className="partner-sub">{fr ? (PARTNERS_FR[p.sub] || p.sub) : p.sub}</span>
             </span>
           </div>
         ))}

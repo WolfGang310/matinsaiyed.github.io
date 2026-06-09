@@ -216,16 +216,18 @@ const SESSIONS = [
   { code: 'CFA-II', label: 'CFA Level II', centre: 'Mississauga', cadence: 'May · Aug · Nov' },
 ];
 
-function AvailabilitySection() {
+const CADENCE_FR = { 'Daily seats': 'Places quotidiennes', 'Weekly seats': 'Places hebdomadaires', 'Feb · May · Aug · Nov': 'Févr · Mai · Août · Nov', 'May · Aug · Nov': 'Mai · Août · Nov' };
+function AvailabilitySection({ lang = 'en' }) {
+  const fr = lang === 'fr';
   return (
     <section className="block" id="availability">
       <div className="container">
         <div className="section-head">
           <div>
-            <div className="eyebrow reveal">Upcoming sessions <span className="sample-chip">Sample</span></div>
-            <h2 className="serif reveal" style={{ transitionDelay: '60ms' }}>When each exam runs.</h2>
+            <div className="eyebrow reveal">{fr ? 'Prochaines séances' : 'Upcoming sessions'} <span className="sample-chip">{fr ? 'Exemple' : 'Sample'}</span></div>
+            <h2 className="serif reveal" style={{ transitionDelay: '60ms' }}>{fr ? 'Quand chaque examen a lieu.' : 'When each exam runs.'}</h2>
           </div>
-          <p className="reveal" style={{ transitionDelay: '120ms' }}>Representative session cadence at each centre — not live seat counts. Confirm and book live seats on the provider's portal.</p>
+          <p className="reveal" style={{ transitionDelay: '120ms' }}>{fr ? "Cadence représentative des séances à chaque centre — ce ne sont pas des places en temps réel. Confirmez et réservez sur le portail du fournisseur." : "Representative session cadence at each centre — not live seat counts. Confirm and book live seats on the provider's portal."}</p>
         </div>
         <div className="avail-list reveal">
           {SESSIONS.map((s, i) => {
@@ -235,8 +237,8 @@ function AvailabilitySection() {
               <a className="avail-row" key={i} href={ex.url || '#'} target="_blank" rel="noopener" onClick={track}>
                 <span className="av-exam">{s.label}</span>
                 <span className="av-centre">{s.centre}</span>
-                <span className="av-when">{s.cadence}</span>
-                <span className="av-go">{ex.flow === 'cfa' ? 'Register' : 'Book'} <span className="arrow" /></span>
+                <span className="av-when">{fr ? (CADENCE_FR[s.cadence] || s.cadence) : s.cadence}</span>
+                <span className="av-go">{ex.flow === 'cfa' ? (fr ? "S'inscrire" : 'Register') : (fr ? 'Réserver' : 'Book')} <span className="arrow" /></span>
               </a>
             );
           })}
@@ -341,7 +343,8 @@ function nextCfaDate() {
   for (const w of windows) { const d = new Date(w + 'T08:00:00'); if (d.getTime() > now) return d; }
   return new Date(windows[windows.length - 1] + 'T08:00:00');
 }
-function Countdown() {
+function Countdown({ lang = 'en' }) {
+  const fr = lang === 'fr';
   const [target] = useF(() => nextCfaDate());
   const [now, setNow] = useF(() => Date.now());
   useFE(() => { const iv = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(iv); }, []);
@@ -350,17 +353,18 @@ function Countdown() {
   const h = Math.floor(diff / 3600000); diff -= h * 3600000;
   const m = Math.floor(diff / 60000); diff -= m * 60000;
   const s = Math.floor(diff / 1000);
-  const fmt = target.toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' });
+  const fmt = target.toLocaleDateString(fr ? 'fr-CA' : 'en-CA', { month: 'long', day: 'numeric', year: 'numeric' });
   const pad = (n) => String(n).padStart(2, '0');
+  const units = fr ? ['Jours', 'H', 'Min', 'Sec'] : ['Days', 'Hrs', 'Min', 'Sec'];
   return (
     <div className="countdown reveal">
       <div className="cd-left">
-        <div className="eyebrow" style={{ color: 'var(--accent)' }}>Next CFA exam window</div>
+        <div className="eyebrow" style={{ color: 'var(--accent)' }}>{fr ? "Prochaine fenêtre d'examen du CFA" : 'Next CFA exam window'}</div>
         <div className="cd-date serif">{fmt}</div>
-        <div className="cd-note">Registration closes weeks before — plan your prep now.</div>
+        <div className="cd-note">{fr ? "Les inscriptions ferment des semaines à l'avance — planifiez votre préparation dès maintenant." : 'Registration closes weeks before — plan your prep now.'}</div>
       </div>
       <div className="cd-clock">
-        {[[d, 'Days'], [pad(h), 'Hrs'], [pad(m), 'Min'], [pad(s), 'Sec']].map(([v, l], i) => (
+        {[[d, units[0]], [pad(h), units[1]], [pad(m), units[2]], [pad(s), units[3]]].map(([v, l], i) => (
           <div className="cd-unit" key={i}><span className="cd-n">{v}</span><span className="cd-l">{l}</span></div>
         ))}
       </div>
@@ -371,7 +375,8 @@ function Countdown() {
 /* ─────────────────────────────────────────────
    Seat email alert
 ───────────────────────────────────────────── */
-function SeatAlert() {
+function SeatAlert({ lang = 'en' }) {
+  const fr = lang === 'fr';
   const [email, setEmail] = useF('');
   const [exam, setExam] = useF('CELPIP');
   const [done, setDone] = useF(false);
@@ -384,19 +389,19 @@ function SeatAlert() {
   return (
     <div className="seat-alert reveal">
       <div className="sa-text">
-        <div className="eyebrow" style={{ color: 'var(--accent)' }}>Seat alerts</div>
-        <h3 className="serif">Get notified when seats open.</h3>
-        <p>We'll email you the moment a new CELPIP or CFA session is posted at your preferred centre.</p>
+        <div className="eyebrow" style={{ color: 'var(--accent)' }}>{fr ? 'Alertes de places' : 'Seat alerts'}</div>
+        <h3 className="serif">{fr ? "Soyez averti dès qu'une place se libère." : 'Get notified when seats open.'}</h3>
+        <p>{fr ? "Nous vous écrirons dès qu'une nouvelle séance CELPIP ou CFA est affichée à votre centre préféré." : "We'll email you the moment a new CELPIP or CFA session is posted at your preferred centre."}</p>
       </div>
       {done ? (
-        <div className="sa-done">✓ You're on the list. We'll be in touch at <strong>{email}</strong>.</div>
+        <div className="sa-done">✓ {fr ? <>Vous êtes sur la liste. Nous vous joindrons à <strong>{email}</strong>.</> : <>You're on the list. We'll be in touch at <strong>{email}</strong>.</>}</div>
       ) : (
         <form className="sa-form" onSubmit={submit}>
-          <select value={exam} onChange={e => setExam(e.target.value)} aria-label="Which exam">
+          <select value={exam} onChange={e => setExam(e.target.value)} aria-label={fr ? 'Quel examen' : 'Which exam'}>
             <option>CELPIP</option><option>CFA</option>
           </select>
-          <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" aria-label="Email address for seat alerts" required />
-          <button className="btn" type="submit">Notify me <span className="arrow" /></button>
+          <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" aria-label={fr ? 'Adresse courriel pour les alertes' : 'Email address for seat alerts'} required />
+          <button className="btn" type="submit">{fr ? 'Avertissez-moi' : 'Notify me'} <span className="arrow" /></button>
         </form>
       )}
     </div>
@@ -414,72 +419,75 @@ function DiagnosticQuiz({ open, close, go, lang = 'en' }) {
   useFE(() => { if (open) { setStep(0); setFam(null); setLevel(null); setHours(8); } }, [open]);
   const dref = useDialogA11y(open);
   if (!open) return null;
+  const fr = lang === 'fr';
 
-  const celpipLevels = [['Starting out', 14], ['Some English', 9], ['Confident', 5]];
-  const cfaLevels = [['New to finance', 1.15], ['Some background', 1.0], ['Finance professional', 0.85]];
+  const celpipLevels = [{ label: 'Starting out', labelFr: 'Débutant', mult: 14 }, { label: 'Some English', labelFr: 'Quelques notions', mult: 9 }, { label: 'Confident', labelFr: "À l'aise", mult: 5 }];
+  const cfaLevels = [{ label: 'New to finance', labelFr: 'Nouveau en finance', mult: 1.15 }, { label: 'Some background', labelFr: 'Quelques bases', mult: 1.0 }, { label: 'Finance professional', labelFr: 'Professionnel de la finance', mult: 0.85 }];
 
   let weeks = 0, total = 0;
   if (fam === 'CELPIP' && level != null) {
-    const base = celpipLevels[level][1];
+    const base = celpipLevels[level].mult;
     weeks = Math.max(3, Math.round(base * (8 / hours)));
     total = weeks * hours;
   } else if (fam === 'CFA' && level != null) {
-    const mult = cfaLevels[level][1];
+    const mult = cfaLevels[level].mult;
     total = Math.round(300 * mult);
     weeks = Math.max(10, Math.round(total / hours));
   }
 
   return (
     <div className="modal-bg" onClick={close}>
-      <div className="modal wizard" ref={dref} role="dialog" aria-modal="true" aria-label="Study planner" tabIndex={-1} onClick={e => e.stopPropagation()}>
+      <div className="modal wizard" ref={dref} role="dialog" aria-modal="true" aria-label={fr ? "Planificateur d'étude" : 'Study planner'} tabIndex={-1} onClick={e => e.stopPropagation()}>
         <div className="wiz-top">
-          <div className="eyebrow" style={{ color: 'var(--accent)' }}>Study planner</div>
+          <div className="eyebrow" style={{ color: 'var(--accent)' }}>{fr ? "Planificateur d'étude" : 'Study planner'}</div>
           <div className="wiz-dots">{[0, 1, 2, 3].map(i => <span key={i} className={i <= step ? 'on' : ''} />)}</div>
         </div>
 
         {step === 0 && (<>
-          <h3>Which exam are you preparing for?</h3>
+          <h3>{fr ? 'Pour quel examen vous préparez-vous?' : 'Which exam are you preparing for?'}</h3>
           <div className="wiz-grid">
             {['CELPIP', 'CFA'].map(f => (
               <button className="wiz-card" key={f} onClick={() => { setFam(f); setStep(1); }}>
                 <span className="wiz-card-t">{f}</span>
-                <span className="wiz-card-d">{f === 'CELPIP' ? 'English proficiency' : 'Finance designation'}</span>
+                <span className="wiz-card-d">{f === 'CELPIP' ? (fr ? 'Compétence en anglais' : 'English proficiency') : (fr ? 'Titre en finance' : 'Finance designation')}</span>
               </button>
             ))}
           </div>
         </>)}
 
         {step === 1 && (<>
-          <h3>Where are you starting from?</h3>
+          <h3>{fr ? "D'où partez-vous?" : 'Where are you starting from?'}</h3>
           <div className="wiz-list">
             {(fam === 'CELPIP' ? celpipLevels : cfaLevels).map((l, i) => (
               <button className="wiz-opt" key={i} onClick={() => { setLevel(i); setStep(2); }}>
-                <span>{l[0]}</span><span className="arrow" />
+                <span>{fr ? l.labelFr : l.label}</span><span className="arrow" />
               </button>
             ))}
           </div>
         </>)}
 
         {step === 2 && (<>
-          <h3>How many hours can you study per week?</h3>
+          <h3>{fr ? 'Combien d’heures pouvez-vous étudier par semaine?' : 'How many hours can you study per week?'}</h3>
           <div className="hours-pick">
-            <input type="range" min="3" max="25" value={hours} onChange={e => setHours(+e.target.value)} />
-            <div className="hours-val"><strong>{hours}</strong> hrs / week</div>
+            <input type="range" min="3" max="25" value={hours} onChange={e => setHours(+e.target.value)} aria-label={fr ? 'Heures par semaine' : 'Hours per week'} />
+            <div className="hours-val"><strong>{hours}</strong> {fr ? 'h / semaine' : 'hrs / week'}</div>
           </div>
           <div className="modal-actions">
-            <button className="btn" onClick={() => setStep(3)}>See my plan <span className="arrow" /></button>
+            <button className="btn" onClick={() => setStep(3)}>{fr ? 'Voir mon plan' : 'See my plan'} <span className="arrow" /></button>
           </div>
         </>)}
 
         {step === 3 && (<>
-          <h3>Your estimated plan</h3>
+          <h3>{fr ? 'Votre plan estimé' : 'Your estimated plan'}</h3>
           <div className="quiz-result">
-            <div className="qr-big"><span className="qr-n">{weeks}</span><span className="qr-u">weeks</span></div>
-            <p>At <strong>{hours} hrs/week</strong> (~{total} hours total), most candidates at your starting point reach exam-ready in about <strong>{weeks} weeks</strong>. Our {fam} prep block is built around exactly this.</p>
+            <div className="qr-big"><span className="qr-n">{weeks}</span><span className="qr-u">{fr ? 'semaines' : 'weeks'}</span></div>
+            <p>{fr
+              ? <>À <strong>{hours} h/semaine</strong> (~{total} heures au total), la plupart des candidats à votre niveau de départ sont prêts en environ <strong>{weeks} semaines</strong>. Notre bloc de préparation {fam} est conçu exactement pour cela.</>
+              : <>At <strong>{hours} hrs/week</strong> (~{total} hours total), most candidates at your starting point reach exam-ready in about <strong>{weeks} weeks</strong>. Our {fam} prep block is built around exactly this.</>}</p>
           </div>
           <div className="modal-actions">
-            <button className="btn" onClick={() => { close(); go('contact'); }}>Plan with a tutor <span className="arrow" /></button>
-            <button className="btn ghost" onClick={() => setStep(0)}>Start over</button>
+            <button className="btn" onClick={() => { close(); go('contact'); }}>{fr ? 'Planifier avec un tuteur' : 'Plan with a tutor'} <span className="arrow" /></button>
+            <button className="btn ghost" onClick={() => setStep(0)}>{t(lang, 'wiz.startover')}</button>
           </div>
         </>)}
 
@@ -495,27 +503,39 @@ function DiagnosticQuiz({ open, close, go, lang = 'en' }) {
 /* ─────────────────────────────────────────────
    Exam-day checklist
 ───────────────────────────────────────────── */
-const CHECKLIST = [
-  { t: 'Valid photo ID', d: 'An unexpired, government-issued passport. Name must match your booking exactly.' },
-  { t: 'Arrive 30 minutes early', d: 'Check-in, locker assignment, and ID verification take time. Late arrivals may be turned away.' },
-  { t: 'Leave devices in the locker', d: 'Phones, smartwatches, and bags go in a provided locker. The room is device-free.' },
-  { t: 'No notes or materials', d: 'Scratch paper and (for CFA) an approved calculator are provided or specified by the provider.' },
-  { t: 'Know your centre', d: 'CELPIP runs at North York & Mississauga; CFA at Mississauga. Double-check before you travel.' },
-  { t: 'Confirmation email', d: 'Bring your provider confirmation — printed or on a device you check in before entering.' },
-];
-function ExamDayChecklist() {
+const CHECKLIST = {
+  en: [
+    { t: 'Valid photo ID', d: 'An unexpired, government-issued passport. Name must match your booking exactly.' },
+    { t: 'Arrive 30 minutes early', d: 'Check-in, locker assignment, and ID verification take time. Late arrivals may be turned away.' },
+    { t: 'Leave devices in the locker', d: 'Phones, smartwatches, and bags go in a provided locker. The room is device-free.' },
+    { t: 'No notes or materials', d: 'Scratch paper and (for CFA) an approved calculator are provided or specified by the provider.' },
+    { t: 'Know your centre', d: 'CELPIP runs at North York & Mississauga; CFA at Mississauga. Double-check before you travel.' },
+    { t: 'Confirmation email', d: 'Bring your provider confirmation — printed or on a device you check in before entering.' },
+  ],
+  fr: [
+    { t: "Pièce d'identité avec photo valide", d: 'Un passeport non expiré émis par le gouvernement. Le nom doit correspondre exactement à votre réservation.' },
+    { t: 'Arrivez 30 minutes à l’avance', d: "L'enregistrement, l'attribution des casiers et la vérification d'identité prennent du temps. Les retardataires peuvent être refusés." },
+    { t: 'Laissez vos appareils au casier', d: 'Téléphones, montres connectées et sacs vont dans un casier fourni. La salle est sans appareils.' },
+    { t: 'Aucune note ni matériel', d: 'Le papier brouillon et (pour le CFA) une calculatrice approuvée sont fournis ou précisés par le fournisseur.' },
+    { t: 'Connaissez votre centre', d: 'Le CELPIP a lieu à North York et Mississauga; le CFA à Mississauga. Vérifiez avant de vous déplacer.' },
+    { t: 'Courriel de confirmation', d: "Apportez votre confirmation du fournisseur — imprimée ou sur un appareil que vous présentez avant d'entrer." },
+  ],
+};
+function ExamDayChecklist({ lang = 'en' }) {
+  const fr = lang === 'fr';
+  const items = CHECKLIST[lang] || CHECKLIST.en;
   return (
     <section className="block" id="checklist" style={{ background: 'var(--surface)' }}>
       <div className="container">
         <div className="section-head">
           <div>
-            <div className="eyebrow reveal">Exam day</div>
-            <h2 className="serif reveal" style={{ transitionDelay: '60ms' }}>What to bring, what to leave.</h2>
+            <div className="eyebrow reveal">{fr ? 'Jour J' : 'Exam day'}</div>
+            <h2 className="serif reveal" style={{ transitionDelay: '60ms' }}>{fr ? 'Quoi apporter, quoi laisser.' : 'What to bring, what to leave.'}</h2>
           </div>
-          <p className="reveal" style={{ transitionDelay: '120ms' }}>A quick checklist so nothing on test day is a surprise. Provider rules always take precedence.</p>
+          <p className="reveal" style={{ transitionDelay: '120ms' }}>{fr ? "Une liste rapide pour qu'aucune surprise ne vous attende le jour J. Les règles du fournisseur priment toujours." : 'A quick checklist so nothing on test day is a surprise. Provider rules always take precedence.'}</p>
         </div>
         <div className="check-grid">
-          {CHECKLIST.map((c, i) => (
+          {items.map((c, i) => (
             <div className="check-item reveal" key={i} style={{ transitionDelay: (i % 3) * 80 + 'ms' }}>
               <span className="check-mark">✓</span>
               <div>
@@ -537,25 +557,26 @@ function ExamDayChecklist() {
 // rooms. TODO: replace with real self-hosted photos of the North York & Mississauga centres,
 // then caption them specifically.
 const GALLERY = [
-  { cls: 'g1', cap: 'Calm, purpose-built testing rooms' },
-  { cls: 'g2', cap: 'Staffed check-in & lockers' },
-  { cls: 'g3', cap: 'Individual workstations' },
-  { cls: 'g4', cap: 'Quiet, sound-separated floor' },
+  { cls: 'g1', cap: 'Calm, purpose-built testing rooms', capFr: "Salles d'examen calmes et dédiées" },
+  { cls: 'g2', cap: 'Staffed check-in & lockers', capFr: 'Accueil et casiers avec personnel' },
+  { cls: 'g3', cap: 'Individual workstations', capFr: 'Postes de travail individuels' },
+  { cls: 'g4', cap: 'Quiet, sound-separated floor', capFr: 'Étage calme, isolé du bruit' },
 ];
-function CentreGallery() {
+function CentreGallery({ lang = 'en' }) {
+  const fr = lang === 'fr';
   return (
     <section className="block" id="gallery">
       <div className="container">
         <div className="section-head">
           <div>
-            <div className="eyebrow reveal">Inside the centres</div>
-            <h2 className="serif reveal" style={{ transitionDelay: '60ms' }}>Built to be forgettable — in the best way.</h2>
+            <div className="eyebrow reveal">{fr ? "À l'intérieur des centres" : 'Inside the centres'}</div>
+            <h2 className="serif reveal" style={{ transitionDelay: '60ms' }}>{fr ? 'Conçus pour se faire oublier — dans le bon sens.' : 'Built to be forgettable — in the best way.'}</h2>
           </div>
-          <p className="reveal" style={{ transitionDelay: '120ms' }}>Calm, well-lit rooms and reliable equipment. The kind of space you stop noticing five minutes in.</p>
+          <p className="reveal" style={{ transitionDelay: '120ms' }}>{fr ? "Des salles calmes et bien éclairées, un équipement fiable. Le genre d'endroit qu'on oublie au bout de cinq minutes." : 'Calm, well-lit rooms and reliable equipment. The kind of space you stop noticing five minutes in.'}</p>
         </div>
         <div className="gallery-grid reveal">
           {GALLERY.map((g, i) => (
-            <figure className={`gphoto ${g.cls}`} key={i}><figcaption>{g.cap}</figcaption></figure>
+            <figure className={`gphoto ${g.cls}`} key={i}><figcaption>{fr ? g.capFr : g.cap}</figcaption></figure>
           ))}
         </div>
       </div>
@@ -566,7 +587,8 @@ function CentreGallery() {
 /* ─────────────────────────────────────────────
    Floating call / WhatsApp
 ───────────────────────────────────────────── */
-function CallFab() {
+function CallFab({ lang = 'en' }) {
+  const fr = lang === 'fr';
   const [open, setOpen] = useF(false);
   return (
     <div className={`fab ${open ? 'open' : ''}`}>
@@ -575,10 +597,10 @@ function CallFab() {
           <span className="fab-ico" aria-hidden="true">✆</span> WhatsApp
         </a>
         <a className="fab-item call" href="tel:+14372640311" tabIndex={open ? 0 : -1}>
-          <span className="fab-ico" aria-hidden="true">☎</span> Call centre
+          <span className="fab-ico" aria-hidden="true">☎</span> {fr ? 'Appeler le centre' : 'Call centre'}
         </a>
       </div>
-      <button className="fab-btn" onClick={() => setOpen(o => !o)} aria-expanded={open} aria-label={open ? 'Close contact options' : 'Contact us'}>
+      <button className="fab-btn" onClick={() => setOpen(o => !o)} aria-expanded={open} aria-label={open ? (fr ? 'Fermer les options de contact' : 'Close contact options') : (fr ? 'Nous contacter' : 'Contact us')}>
         <span aria-hidden="true">{open ? '✕' : '✆'}</span>
       </button>
     </div>
@@ -592,7 +614,9 @@ const GUIDES = [
   {
     id: 'celpip-vs-ielts', tag: 'CELPIP', read: '5 min',
     title: 'CELPIP vs IELTS: which should you take?',
+    titleFr: 'CELPIP ou IELTS : lequel passer?',
     excerpt: 'Both prove English for Canadian immigration. The right pick comes down to format, scoring, and where you test.',
+    excerptFr: "Les deux prouvent votre anglais pour l'immigration canadienne. Le bon choix dépend du format, de la notation et du lieu d'examen.",
     body: [
       'CELPIP and IELTS are both accepted by IRCC for most Canadian immigration streams, so the decision is rarely about acceptance — it\'s about which test plays to your strengths.',
       'CELPIP is fully computer-delivered and entirely Canadian English, including the speaking section, which is recorded rather than conducted with a live examiner. Many candidates prefer this consistency and the single-sitting, same-day computer format.',
@@ -600,11 +624,20 @@ const GUIDES = [
       'Scoring differs too: CELPIP reports bands 1–12 per skill; IELTS uses 0–9. Map your target CRS points back to the band you actually need before you book.',
       'Our take: if you are testing in the GTA and want a predictable, all-computer experience in Canadian English, CELPIP is usually the smoother path — and you can sit it with us at North York or Mississauga.',
     ],
+    bodyFr: [
+      "Le CELPIP et l'IELTS sont tous deux acceptés par IRCC pour la plupart des volets d'immigration canadiens; la décision porte donc rarement sur l'acceptation — mais sur le test qui met en valeur vos forces.",
+      "Le CELPIP est entièrement informatisé et en anglais canadien, y compris l'expression orale, qui est enregistrée plutôt que menée avec un examinateur en personne. Beaucoup de candidats préfèrent cette constance et le format informatique en une seule séance, le même jour.",
+      "L'IELTS offre une option papier ou informatique et utilise une entrevue orale en direct. Si vous êtes plus à l'aise de parler à une personne qu'à un micro, cela peut compter.",
+      "La notation diffère aussi : le CELPIP indique des niveaux de 1 à 12 par compétence; l'IELTS utilise 0 à 9. Reliez vos points CRS visés au niveau dont vous avez réellement besoin avant de réserver.",
+      "Notre avis : si vous passez l'examen dans le Grand Toronto et voulez une expérience prévisible, tout informatique et en anglais canadien, le CELPIP est généralement la voie la plus simple — et vous pouvez le passer chez nous à North York ou Mississauga.",
+    ],
   },
   {
     id: 'cfa-level-1-plan', tag: 'CFA', read: '6 min',
     title: 'A realistic CFA Level I study plan',
+    titleFr: "Un plan d'étude réaliste pour le CFA niveau I",
     excerpt: 'The CFA Institute suggests ~300 hours. Here is how to spread them without burning out.',
+    excerptFr: 'Le CFA Institute suggère environ 300 heures. Voici comment les répartir sans vous épuiser.',
     body: [
       'The often-quoted figure is roughly 300 hours of study for CFA Level I. Treat it as a floor, not a guarantee, and work backward from your exam date.',
       'At 15 hours per week, 300 hours is about 20 weeks — five months. At 10 hours per week you are closer to seven months. Pick a cadence you can actually sustain through work and life.',
@@ -612,11 +645,20 @@ const GUIDES = [
       'Sit at least three full-length, timed mocks under real conditions. Scoring above the mid-60s consistently is a reasonable readiness signal.',
       'Book your seat early. CFA windows are fixed and Prometric seats at popular centres go quickly — we host Level I, II and III at our Mississauga centre.',
     ],
+    bodyFr: [
+      "Le chiffre souvent cité est d'environ 300 heures d'étude pour le CFA niveau I. Considérez-le comme un plancher, pas une garantie, et travaillez à rebours à partir de votre date d'examen.",
+      "À 15 heures par semaine, 300 heures représentent environ 20 semaines — cinq mois. À 10 heures par semaine, vous approchez les sept mois. Choisissez un rythme tenable malgré le travail et la vie.",
+      "Commencez par l'Éthique et les Méthodes quantitatives; elles sous-tendent tout et profitent d'une répétition précoce. Gardez un mois complet à la fin uniquement pour les examens blancs et la révision.",
+      "Faites au moins trois examens blancs complets et chronométrés en conditions réelles. Dépasser régulièrement le milieu de la soixantaine est un signal de préparation raisonnable.",
+      "Réservez votre place tôt. Les fenêtres du CFA sont fixes et les places Prometric dans les centres populaires partent vite — nous accueillons les niveaux I, II et III à notre centre de Mississauga.",
+    ],
   },
   {
     id: 'celpip-speaking', tag: 'CELPIP', read: '4 min',
     title: 'Five ways to lift your CELPIP speaking band',
+    titleFr: "Cinq façons d'améliorer votre niveau à l'oral du CELPIP",
     excerpt: 'Speaking is where prepared candidates gain the most. Small habits, big band movement.',
+    excerptFr: "L'expression orale est là où les candidats préparés gagnent le plus. De petites habitudes, de grands gains de niveau.",
     body: [
       'CELPIP speaking is recorded against the clock, so structure beats spontaneity. Have a simple template for each task type and practise filling it fast.',
       'Speak for the full time. Trailing off early leaves easy points on the table; a complete, organised answer scores better than a perfect half-answer.',
@@ -624,11 +666,20 @@ const GUIDES = [
       'Record yourself and listen back. Most band gains come from hearing your own filler words and flat intonation, then fixing them.',
       'Practise on a real keyboard-and-mic setup. The interface should be muscle memory before exam day — which is exactly what our timed practice sessions simulate.',
     ],
+    bodyFr: [
+      "L'oral du CELPIP est enregistré contre la montre; la structure l'emporte donc sur la spontanéité. Ayez un modèle simple pour chaque type de tâche et entraînez-vous à le remplir rapidement.",
+      "Parlez pendant tout le temps imparti. S'arrêter trop tôt laisse des points faciles de côté; une réponse complète et organisée vaut mieux qu'une demi-réponse parfaite.",
+      "Utilisez des détails concrets. « Mon cousin Daniel, qui a déménagé à Calgary en 2019 » est plus fort que « quelqu'un que je connais ». La précision se lit comme de l'aisance.",
+      "Enregistrez-vous et réécoutez-vous. La plupart des gains viennent du fait d'entendre ses propres mots de remplissage et son intonation plate, puis de les corriger.",
+      "Entraînez-vous sur un vrai poste clavier-micro. L'interface devrait être un automatisme avant le jour J — c'est exactement ce que simulent nos séances d'entraînement chronométrées.",
+    ],
   },
   {
     id: 'exam-day', tag: 'Both', read: '3 min',
     title: 'Your test-day morning, minute by minute',
+    titleFr: 'Votre matinée du jour J, minute par minute',
     excerpt: 'Remove every avoidable variable so the only challenge is the exam itself.',
+    excerptFr: "Éliminez chaque variable évitable pour que le seul défi soit l'examen lui-même.",
     body: [
       'Lay out your passport and confirmation the night before. ID issues are the single most common reason candidates are turned away.',
       'Eat a real breakfast and arrive 30 minutes early. Check-in, lockers and verification take time, and rushing spikes your stress before you even sit down.',
@@ -636,27 +687,39 @@ const GUIDES = [
       'Build in buffer for transit and parking. Know which centre you are booked at — CELPIP at North York or Mississauga, CFA at Mississauga.',
       'Once you are checked in, the room does the rest. That is the whole point of testing with us.',
     ],
+    bodyFr: [
+      "Préparez votre passeport et votre confirmation la veille. Les problèmes de pièce d'identité sont la raison la plus courante de refus des candidats.",
+      "Prenez un vrai déjeuner et arrivez 30 minutes à l'avance. L'enregistrement, les casiers et la vérification prennent du temps, et la précipitation fait grimper le stress avant même de vous asseoir.",
+      "Laissez votre téléphone et votre montre connectée à la maison, ou attendez-vous à les ranger sous clé. La salle est sans appareils, sans exception.",
+      "Prévoyez une marge pour le transport et le stationnement. Sachez à quel centre vous êtes inscrit — CELPIP à North York ou Mississauga, CFA à Mississauga.",
+      "Une fois enregistré, la salle fait le reste. C'est tout l'intérêt de passer son examen chez nous.",
+    ],
   },
 ];
+const TAG_FR = { Both: 'Les deux' };
 
-function GuidesPage({ go, openQuiz }) {
+function GuidesPage({ go, openQuiz, lang = 'en' }) {
+  const fr = lang === 'fr';
+  const tagLabel = (tg) => (fr && TAG_FR[tg]) ? TAG_FR[tg] : tg;
   const [active, setActive] = useF(null);
   const guide = GUIDES.find(g => g.id === active);
 
   if (guide) {
+    const title = fr ? (guide.titleFr || guide.title) : guide.title;
+    const body = fr ? (guide.bodyFr || guide.body) : guide.body;
     return (
       <main className="page">
         <article className="guide-article">
           <div className="container" style={{ maxWidth: 760 }}>
-            <button className="wiz-back" onClick={() => setActive(null)} style={{ marginBottom: 28 }}>← All guides</button>
-            <div className="guide-tag">{guide.tag} · {guide.read} read</div>
-            <h1 className="serif">{guide.title}</h1>
-            {guide.body.map((p, i) => <p key={i} className="guide-p">{p}</p>)}
+            <button className="wiz-back" onClick={() => setActive(null)} style={{ marginBottom: 28 }}>← {fr ? 'Tous les guides' : 'All guides'}</button>
+            <div className="guide-tag">{tagLabel(guide.tag)} · {guide.read} {fr ? 'de lecture' : 'read'}</div>
+            <h1 className="serif">{title}</h1>
+            {body.map((p, i) => <p key={i} className="guide-p">{p}</p>)}
             <div className="guide-cta">
-              <h3 className="serif">Ready to put a plan behind it?</h3>
+              <h3 className="serif">{fr ? 'Prêt à mettre un plan derrière tout ça?' : 'Ready to put a plan behind it?'}</h3>
               <div className="actions">
-                <button className="btn" onClick={openQuiz}>Estimate my study time <span className="arrow" /></button>
-                <a className="btn ghost" href="#contact" onClick={e => { e.preventDefault(); go('contact'); }}>Talk to a tutor</a>
+                <button className="btn" onClick={openQuiz}>{t(lang, 'cta.estimate')} <span className="arrow" /></button>
+                <a className="btn ghost" href="#contact" onClick={e => { e.preventDefault(); go('contact'); }}>{fr ? 'Parler à un tuteur' : 'Talk to a tutor'}</a>
               </div>
             </div>
           </div>
@@ -669,12 +732,12 @@ function GuidesPage({ go, openQuiz }) {
     <main className="page">
       <section className="hero" style={{ paddingBottom: 40 }}>
         <div className="container">
-          <div className="eyebrow reveal">Guides</div>
+          <div className="eyebrow reveal">{fr ? 'Guides' : 'Guides'}</div>
           <h1 className="serif reveal" style={{ fontSize: 'clamp(46px, 6vw, 84px)', margin: '16px 0 18px', fontWeight: 420, lineHeight: 1.0, letterSpacing: '-0.03em', transitionDelay: '60ms' }}>
-            Plain-English answers to the questions candidates actually ask.
+            {fr ? 'Des réponses claires aux questions que les candidats posent vraiment.' : 'Plain-English answers to the questions candidates actually ask.'}
           </h1>
           <p className="lead reveal" style={{ maxWidth: 680, transitionDelay: '120ms' }}>
-            Short, practical reads on choosing, preparing for, and sitting CELPIP and CFA — written by the people who run the room.
+            {fr ? "De courtes lectures pratiques sur le choix, la préparation et le passage du CELPIP et du CFA — écrites par les gens qui gèrent la salle." : 'Short, practical reads on choosing, preparing for, and sitting CELPIP and CFA — written by the people who run the room.'}
           </p>
         </div>
       </section>
@@ -683,10 +746,10 @@ function GuidesPage({ go, openQuiz }) {
           <div className="guides-grid">
             {GUIDES.map((g, i) => (
               <button className="guide-card reveal" key={g.id} style={{ transitionDelay: (i % 2) * 80 + 'ms' }} onClick={() => { setActive(g.id); window.scrollTo({ top: 0 }); }}>
-                <div className="guide-card-tag">{g.tag} · {g.read}</div>
-                <h3 className="serif">{g.title}</h3>
-                <p>{g.excerpt}</p>
-                <span className="link">Read guide <span className="arrow" /></span>
+                <div className="guide-card-tag">{tagLabel(g.tag)} · {g.read}</div>
+                <h3 className="serif">{fr ? (g.titleFr || g.title) : g.title}</h3>
+                <p>{fr ? (g.excerptFr || g.excerpt) : g.excerpt}</p>
+                <span className="link">{fr ? 'Lire le guide' : 'Read guide'} <span className="arrow" /></span>
               </button>
             ))}
           </div>

@@ -98,7 +98,7 @@ function App() {
       {reserve && <ReserveModal exam={reserve} close={() => setReserve(null)} go={go} lang={lang} />}
       <ExamWizard open={wizardOpen} close={() => setWizardOpen(false)} lang={lang} />
       <DiagnosticQuiz open={quizOpen} close={() => setQuizOpen(false)} go={go} lang={lang} />
-      <CallFab />
+      <CallFab lang={lang} />
       {!(reserve || wizardOpen || quizOpen) && (
         <div className="mobile-book-bar">
           <button className="btn" onClick={openWizard}>{t(lang, 'cta.find')} <span className="arrow" /></button>
