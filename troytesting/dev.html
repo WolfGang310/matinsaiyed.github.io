@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Troy Testing &amp; Learning Centers</title>
+  <title>[DEV] Troy Testing &amp; Learning Centers</title>
   <meta name="description" content="Accredited testing and learning center delivering CELPIP and CFA exams across Toronto and Mississauga. We host your seat — book directly with the official provider.">
 
   <!-- Canonical + crawl. NOTE: update the URL if you deploy under a different path/domain. -->
   <link rel="canonical" href="https://matinsaiyed.com/troytesting/">
-  <meta name="robots" content="index,follow">
+  <meta name="robots" content="noindex">
   <meta name="theme-color" content="#E02020">
 
   <!-- Open Graph -->
@@ -162,7 +162,7 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function () {
-        navigator.serviceWorker.register('sw.js').catch(function () { /* offline is a progressive enhancement */ });
+        Promise.resolve() // no SW in dev.catch(function () { /* offline is a progressive enhancement */ });
       });
     }
   </script>
@@ -170,19 +170,20 @@
   <!-- React runtime (production builds — behaviour-identical to the prototype's dev builds, without console warnings) -->
   <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin></script>
 
   <!-- Precompiled, minified application JS (built from the .jsx sources — see README / build.sh).
        No in-browser Babel: ~1.5MB less transfer and no main-thread compile before first paint.
        Load order is significant: shared components & feature widgets first, then page
        components, then the app shell (mounts). To edit: change the .jsx sources, rebuild,
        and bump ?v= here AND the CACHE constant in sw.js. For quick iteration use dev.html. -->
-  <script src="components.js?v=4"></script>
-  <script src="features.js?v=4"></script>
-  <script src="pages.js?v=4"></script>
-  <script src="home.js?v=4"></script>
-  <script src="programs.js?v=4"></script>
-  <script src="test-center.js?v=4"></script>
-  <script src="contact.js?v=4"></script>
-  <script src="app.js?v=4"></script>
+  <script type="text/babel" src="components.jsx"></script>
+  <script type="text/babel" src="features.jsx"></script>
+  <script type="text/babel" src="pages.jsx"></script>
+  <script type="text/babel" src="home.jsx"></script>
+  <script type="text/babel" src="programs.jsx"></script>
+  <script type="text/babel" src="test-center.jsx"></script>
+  <script type="text/babel" src="contact.jsx"></script>
+  <script type="text/babel" src="app.jsx"></script>
 </body>
 </html>

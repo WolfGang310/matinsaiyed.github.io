@@ -1,17 +1,17 @@
 /* Troy Testing — service worker (offline shell + installable PWA).
    Bump CACHE whenever the ?v= asset version changes so clients refresh. */
-const CACHE = 'troy-v3';
+const CACHE = 'troy-v4';
 
 // Same-origin shell + the cross-origin runtime, so the app mounts with no network.
+// v4: precompiled minified .js — no Babel needed (faster install, smaller cache).
 const SHELL = [
-  './', './index.html', './styles.css?v=3',
-  './components.jsx?v=3', './features.jsx?v=3', './pages.jsx?v=3', './home.jsx?v=3',
-  './programs.jsx?v=3', './test-center.jsx?v=3', './contact.jsx?v=3', './app.jsx?v=3',
+  './', './index.html', './styles.css?v=4',
+  './components.js?v=4', './features.js?v=4', './pages.js?v=4', './home.js?v=4',
+  './programs.js?v=4', './test-center.js?v=4', './contact.js?v=4', './app.js?v=4',
   './manifest.webmanifest', './icon.svg', './logo.jpg',
   './apple-touch-icon.png', './icon-192.png', './icon-512.png',
   'https://unpkg.com/react@18.3.1/umd/react.production.min.js',
   'https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js',
-  'https://unpkg.com/@babel/standalone@7.29.0/babel.min.js',
 ];
 
 self.addEventListener('install', (e) => {

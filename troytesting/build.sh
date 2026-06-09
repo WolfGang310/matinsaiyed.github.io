@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 #
-# OPTIONAL production build for the Troy Testing site.
+# Build for the Troy Testing site.
 #
-# By default the site runs with no build step: index.html compiles the .jsx
-# sources in the browser via @babel/standalone. That's simple and deploys
-# straight to GitHub Pages, but it ships ~150KB of JSX + the Babel compiler
-# and compiles on every visit.
+# Production (index.html) loads precompiled, minified .js — committed to the repo.
+# The .jsx files are the SOURCE; the .js files are BUILD OUTPUT. Workflow:
 #
-# This script precompiles the JSX to plain JS so production visitors download
-# neither Babel nor raw JSX. Output goes to dist/ — deploy the CONTENTS of dist/.
+#   1. Edit the .jsx sources (preview live via dev.html, which uses in-browser Babel)
+#   2. Run:  bash build.sh          → regenerates the committed .js files
+#   3. Bump ?v= in index.html AND the CACHE constant in sw.js (cache busting)
+#   4. Commit both the .jsx and .js files
 #
-# Requires Node + npm. Run:  bash build.sh
+# Requires Node + npm. Tools install once into .babel-build/ (gitignored).
 #
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -18,31 +18,25 @@ cd "$(dirname "$0")"
 SRC=(components features pages home programs test-center contact app)
 TMP=".babel-build"
 
-echo "→ Installing Babel (one-time, into $TMP/) ..."
-mkdir -p "$TMP"
-cat > "$TMP/package.json" <<'JSON'
+if [ ! -x "$TMP/node_modules/.bin/babel" ] || [ ! -x "$TMP/node_modules/.bin/terser" ]; then
+  echo "→ Installing build tools (one-time, into $TMP/) ..."
+  mkdir -p "$TMP"
+  cat > "$TMP/package.json" <<'JSON'
 { "name": "troy-build", "private": true,
-  "devDependencies": { "@babel/core": "^7.24.0", "@babel/cli": "^7.24.0", "@babel/preset-react": "^7.24.0" } }
+  "devDependencies": { "@babel/core": "^7.24.0", "@babel/cli": "^7.24.0", "@babel/preset-react": "^7.24.0", "terser": "^5.31.0" } }
 JSON
-( cd "$TMP" && npm install --silent --no-audit --no-fund )
+  ( cd "$TMP" && npm install --silent --no-audit --no-fund )
+fi
 
-echo "→ Compiling JSX → dist/ ..."
-rm -rf dist && mkdir -p dist
 PRESET="$PWD/$TMP/node_modules/@babel/preset-react"
+echo "→ Compiling + minifying JSX → .js ..."
 for f in "${SRC[@]}"; do
-  "$TMP/node_modules/.bin/babel" --presets "$PRESET" "$f.jsx" -o "dist/$f.js"
+  "$TMP/node_modules/.bin/babel" --presets "$PRESET" "$f.jsx" -o "$f.tmp.js"
+  # NOTE: terser must NOT mangle top-level names — the files share one global
+  # scope (Header, t, EXAMS, ...). Default mangle leaves top-level intact.
+  "$TMP/node_modules/.bin/terser" "$f.tmp.js" --compress --mangle -o "$f.js"
+  rm "$f.tmp.js"
 done
-cp styles.css logo.jpg dist/
+wc -c "${SRC[@]/%/.js}" | tail -1
 
-echo "→ Writing dist/index.html (loads compiled JS, no in-browser Babel) ..."
-node - <<'NODE'
-const fs = require('fs');
-let html = fs.readFileSync('index.html', 'utf8');
-// Drop the Babel standalone CDN script
-html = html.replace(/\s*<script src="https:\/\/unpkg\.com\/@babel\/standalone[^"]*"[^>]*><\/script>/g, '');
-// Swap each text/babel .jsx tag (with optional ?v= cache-bust) for a plain compiled .js tag
-html = html.replace(/<script type="text\/babel" src="([a-z-]+)\.jsx(?:\?[^"]*)?"><\/script>/g, '<script src="$1.js"></script>');
-fs.writeFileSync('dist/index.html', html);
-NODE
-
-echo "✓ Done. Deploy the contents of dist/  (e.g. copy dist/* to your published path)."
+echo "✓ Done. Now bump ?v= in index.html and CACHE in sw.js, then commit .jsx + .js together."
