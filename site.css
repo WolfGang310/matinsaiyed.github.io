@@ -774,7 +774,7 @@ main { position: relative; z-index: 2; max-width: 1140px; margin: 0 auto; paddin
   transform: translateX(-101%);
   transition: transform 900ms cubic-bezier(0.2, 0.7, 0.2, 1);
 }
-.visible .skillbar .bar i { transform: translateX(0); }
+.skills-index.armed .skillbar .bar i { transform: translateX(0); }
 .skillbar b { font-size: 11.5px; font-weight: 500; color: var(--ink-soft); text-align: right; }
 
 /* initiatives */
@@ -929,4 +929,102 @@ main { position: relative; z-index: 2; max-width: 1140px; margin: 0 auto; paddin
   .atelier-grid { grid-template-columns: 1fr; gap: 30px; }
   .contact-grid { grid-template-columns: 1fr; }
   .portrait-chip { left: 10px; }
+}
+
+/* ── Interactive skills index ───────────────────────────────── */
+.skills-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.skills-reset {
+  background: none;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  color: var(--ink-soft);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: color 160ms ease, border-color 160ms ease;
+}
+.skills-reset:hover { color: var(--red); border-color: var(--red); }
+.skills-hint {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: var(--ink-faint);
+  margin: 14px 0 0;
+}
+@media (max-width: 920px) {
+  .skills-hint { display: none; } /* tap targets are obvious on touch; hint reads desktop-ish */
+}
+
+/* radar interactive states */
+#radar .radar-hit { cursor: pointer; }
+#radar .radar-dot { transition: r 160ms ease; }
+#radar .radar-hit:hover .radar-dot, #radar .radar-hit:focus-visible .radar-dot { r: 5; }
+#radar .radar-hit.sel .radar-dot { r: 5.5; }
+#radar .radar-hit.sel .radar-label, #radar .radar-hit:hover .radar-label { fill: var(--red); }
+#radar .radar-hit:focus-visible { outline: none; }
+#radar .radar-hit:focus-visible .radar-label { fill: var(--red); text-decoration: underline; }
+
+/* ── Reference exhibit ──────────────────────────────────────── */
+.exhibit {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(250px, 1fr);
+  gap: 40px;
+  align-items: start;
+}
+.exhibit-quote { min-height: 230px; display: flex; flex-direction: column; justify-content: space-between; }
+.exhibit-quote p { font-size: 21px; line-height: 1.6; }
+.exhibit-quote.fading p, .exhibit-quote.fading footer { opacity: 0; transform: translateY(6px); }
+.exhibit-quote p, .exhibit-quote footer {
+  transition: opacity 260ms ease, transform 260ms ease;
+}
+.exhibit-list { display: flex; flex-direction: column; border-top: 1px solid var(--rule-strong); }
+.exhibit-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  border-left: 3px solid transparent;
+  padding: 12px 12px 12px 14px;
+  cursor: pointer;
+  font: inherit;
+  color: var(--ink-soft);
+  transition: border-color 160ms ease, color 160ms ease, background-color 160ms ease;
+}
+.exhibit-item:hover { color: var(--ink); background: var(--paper-raised); }
+.exhibit-item[aria-selected="true"] {
+  border-left-color: var(--red);
+  color: var(--ink);
+  background: var(--paper-raised);
+}
+.exhibit-item .who {
+  font-family: "Archivo", sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+}
+.exhibit-item .what {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}
+.exhibit-controls { display: flex; gap: 8px; margin-top: 14px; }
+.exhibit-btn {
+  width: 38px;
+  height: 32px;
+  background: none;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  color: var(--ink-soft);
+  font-size: 14px;
+  cursor: pointer;
+  transition: color 160ms ease, border-color 160ms ease;
+}
+.exhibit-btn:hover { color: var(--red); border-color: var(--red); }
+
+@media (max-width: 920px) {
+  .exhibit { grid-template-columns: 1fr; gap: 24px; }
+  .exhibit-quote { min-height: 0; gap: 14px; }
 }

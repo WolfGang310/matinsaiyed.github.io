@@ -74,7 +74,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
 
   <link rel="preload" as="image" href="/images/portrait-768w.webp" />
-  <link rel="stylesheet" href="/site.css?v=2" />
+  <link rel="stylesheet" href="/site.css?v=3" />
 </head>
 
 <body>
@@ -238,18 +238,13 @@
           </svg>
           <figcaption class="mono">COMPETENCY RADAR · INDEXED TO 100</figcaption>
         </figure>
-        <div class="skills-index">
-          <p class="panel-label mono">SKILLS INDEX</p>
-          <div class="skillbar"><span>Target Achievement</span><span class="bar"><i style="--w:97%"></i></span><b class="mono">97</b></div>
-          <div class="skillbar"><span>Client Retention</span><span class="bar"><i style="--w:95%"></i></span><b class="mono">95</b></div>
-          <div class="skillbar"><span>Mutual Funds</span><span class="bar"><i style="--w:95%"></i></span><b class="mono">95</b></div>
-          <div class="skillbar"><span>Excel</span><span class="bar"><i style="--w:95%"></i></span><b class="mono">95</b></div>
-          <div class="skillbar"><span>Needs Assessment</span><span class="bar"><i style="--w:93%"></i></span><b class="mono">93</b></div>
-          <div class="skillbar"><span>Active Listening</span><span class="bar"><i style="--w:92%"></i></span><b class="mono">92</b></div>
-          <div class="skillbar"><span>RRSP / TFSA</span><span class="bar"><i style="--w:90%"></i></span><b class="mono">90</b></div>
-          <div class="skillbar"><span>Salesforce CRM</span><span class="bar"><i style="--w:88%"></i></span><b class="mono">88</b></div>
-          <div class="skillbar"><span>Regulatory Compliance</span><span class="bar"><i style="--w:88%"></i></span><b class="mono">88</b></div>
-          <div class="skillbar"><span>Power BI</span><span class="bar"><i style="--w:85%"></i></span><b class="mono">85</b></div>
+        <div class="skills-index" id="skills-index" aria-live="polite">
+          <div class="skills-head">
+            <p class="panel-label mono" id="skills-title">SKILLS INDEX — ALL COMPETENCIES</p>
+            <button class="skills-reset mono" id="skills-reset" type="button" hidden>RESET ✕</button>
+          </div>
+          <div id="skills-rows"></div>
+          <p class="skills-hint mono">CLICK A NODE ON THE RADAR TO DRILL INTO ONE COMPETENCY</p>
         </div>
       </div>
 
@@ -445,23 +440,19 @@
         <span class="item-no mono">ITEM 05</span>
         <h2>References &amp; Remarks</h2>
       </header>
-      <div class="quotes">
-        <blockquote class="quote">
-          <p>“Matin has a rare combination of analytical thinking and genuine empathy for clients. He doesn't just meet targets — he builds relationships that make those targets sustainable. His capacity growth work was nothing short of transformative.”</p>
-          <footer><cite>Regional Operations Director</cite> — Direct Supervisor, Prometric Center</footer>
+      <div class="exhibit">
+        <blockquote class="quote exhibit-quote" id="exhibit-quote">
+          <p id="exhibit-text"></p>
+          <footer><cite id="exhibit-cite"></cite> — <span id="exhibit-role"></span></footer>
         </blockquote>
-        <blockquote class="quote">
-          <p>“What sets Matin apart is his ability to truly listen. He took the time to understand my financial goals before recommending any products. I felt like a person, not a transaction. That level of care is rare in financial services.”</p>
-          <footer><cite>Investment Client</cite> — Golden Quasar Inc.</footer>
-        </blockquote>
-        <blockquote class="quote">
-          <p>“During our collaboration at Collision Conference, Matin led a team of 20 volunteers with remarkable composure. He balanced operational demands with team morale in a way that felt effortless, though I know it wasn't.”</p>
-          <footer><cite>Event Coordinator</cite> — Program Manager, Web Summit / Collision</footer>
-        </blockquote>
-        <blockquote class="quote">
-          <p>“Matin brought a fresh perspective to our research division. His financial models were thorough, his client presentations were polished, and he consistently went beyond what was asked. A natural self-starter with a strong work ethic.”</p>
-          <footer><cite>Research Team Lead</cite> — Senior Analyst, Investor Quotient IQ</footer>
-        </blockquote>
+        <div class="exhibit-side">
+          <p class="panel-label mono">ON FILE · <span id="exhibit-counter">1 / 4</span></p>
+          <div class="exhibit-list" id="exhibit-list" role="tablist" aria-label="Select a reference"></div>
+          <div class="exhibit-controls">
+            <button class="exhibit-btn mono" id="exhibit-prev" type="button" aria-label="Previous reference">←</button>
+            <button class="exhibit-btn mono" id="exhibit-next" type="button" aria-label="Next reference">→</button>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -576,7 +567,7 @@
     </div>
   </footer>
 
-  <script src="/site.js?v=2" defer></script>
+  <script src="/site.js?v=3" defer></script>
 </body>
 
 </html>

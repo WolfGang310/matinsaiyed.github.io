@@ -145,17 +145,69 @@
     setTimeout(function () { requestAnimationFrame(step); }, 320);
   });
 
-  /* ── Competency radar (inline SVG) ────────────────────────── */
+  /* ── Competency radar (inline SVG, interactive) ───────────── */
   var radar = document.getElementById('radar');
+  var AXES = [
+    { label: 'CLIENT RELATIONS', v: 91, skills: [
+      ['Client Retention', 95], ['Active Listening', 92], ['Communication', 90], ['Empathy', 88]] },
+    { label: 'SALES', v: 88, skills: [
+      ['Target Achievement', 97], ['Negotiation', 88], ['Upselling', 85], ['Cross-selling', 82]] },
+    { label: 'OPERATIONS', v: 86, skills: [
+      ['Service Quality', 98], ['Knowledge Base', 97], ['Follow-up', 95], ['Response Time', 94], ['Process Automation', 85]] },
+    { label: 'FIN. PRODUCTS', v: 90, skills: [
+      ['Mutual Funds', 95], ['RRSP / TFSA', 90], ['Regulatory Compliance', 88], ['GICs', 85]] },
+    { label: 'DISCOVERY', v: 87, skills: [
+      ['Needs Assessment', 93], ['Solution Design', 88], ['Strategic Planning', 85], ['Consulting', 80]] },
+    { label: 'TECHNICAL', v: 83, skills: [
+      ['Excel', 95], ['Salesforce CRM', 88], ['Power BI', 85], ['SQL', 82], ['Python', 78]] }
+  ];
+  var TOP_SKILLS = [
+    ['Target Achievement', 97], ['Client Retention', 95], ['Mutual Funds', 95], ['Excel', 95],
+    ['Needs Assessment', 93], ['Active Listening', 92], ['RRSP / TFSA', 90], ['Salesforce CRM', 88],
+    ['Regulatory Compliance', 88], ['Power BI', 85]
+  ];
+
+  /* skills panel renderer — rows rebuilt per selection, bars re-animate */
+  var skillsRows = document.getElementById('skills-rows');
+  var skillsTitle = document.getElementById('skills-title');
+  var skillsReset = document.getElementById('skills-reset');
+  var skillsIndexEl = document.getElementById('skills-index');
+  var selectedAxis = -1;
+
+  function renderSkills(list, title) {
+    if (!skillsRows) return;
+    skillsTitle.textContent = title;
+    skillsRows.innerHTML = list.map(function (s) {
+      return '<div class="skillbar"><span>' + s[0] + '</span><span class="bar"><i style="--w:' + s[1] +
+        '%"></i></span><b class="mono">' + s[1] + '</b></div>';
+    }).join('');
+    if (skillsIndexEl) {
+      skillsIndexEl.classList.remove('armed');
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () { skillsIndexEl.classList.add('armed'); });
+      });
+    }
+  }
+
+  function selectAxis(i) {
+    selectedAxis = i;
+    if (radar) radar.querySelectorAll('.radar-hit').forEach(function (g, gi) {
+      g.classList.toggle('sel', gi === i);
+      g.setAttribute('aria-pressed', gi === i ? 'true' : 'false');
+    });
+    if (i < 0) {
+      renderSkills(TOP_SKILLS, 'SKILLS INDEX — ALL COMPETENCIES');
+      if (skillsReset) skillsReset.hidden = true;
+    } else {
+      renderSkills(AXES[i].skills, 'SKILLS INDEX — ' + AXES[i].label + ' · ' + AXES[i].v + '/100');
+      if (skillsReset) skillsReset.hidden = false;
+    }
+  }
+
+  if (skillsReset) skillsReset.addEventListener('click', function () { selectAxis(-1); });
+  renderSkills(TOP_SKILLS, 'SKILLS INDEX — ALL COMPETENCIES');
+
   if (radar) {
-    var AXES = [
-      { label: 'CLIENT RELATIONS', v: 91 },
-      { label: 'SALES', v: 88 },
-      { label: 'OPERATIONS', v: 86 },
-      { label: 'FIN. PRODUCTS', v: 90 },
-      { label: 'DISCOVERY', v: 87 },
-      { label: 'TECHNICAL', v: 83 }
-    ];
     var CX = 180, CY = 162, R = 112;
     var NS = 'http://www.w3.org/2000/svg';
 
@@ -184,23 +236,36 @@
     radar.querySelector('.radar-shape').setAttribute('points', shapePts);
 
     var dots = radar.querySelector('.radar-dots');
-    var labels = radar.querySelector('.radar-labels');
     AXES.forEach(function (a, i) {
+      var g = el('g', { 'class': 'radar-hit', role: 'button', tabindex: 0,
+        'aria-pressed': 'false',
+        'aria-label': a.label + ' — ' + a.v + ' out of 100. Activate to drill into these skills.' }, dots);
       var p = pt(i, R * a.v / 100);
-      el('circle', { cx: p[0], cy: p[1], r: 3, 'class': 'radar-dot' }, dots);
+      // generous invisible hit area around the node
+      el('circle', { cx: p[0], cy: p[1], r: 16, fill: 'transparent' }, g);
+      el('circle', { cx: p[0], cy: p[1], r: 3, 'class': 'radar-dot' }, g);
       var lp = pt(i, R + 24);
       var anchor = Math.abs(lp[0] - CX) < 8 ? 'middle' : (lp[0] > CX ? 'start' : 'end');
-      var t = el('text', { x: lp[0], y: lp[1] + 3, 'text-anchor': anchor, 'class': 'radar-label' }, labels);
+      var t = el('text', { x: lp[0], y: lp[1] + 3, 'text-anchor': anchor, 'class': 'radar-label' }, g);
       t.textContent = a.label + ' ';
       var v = document.createElementNS(NS, 'tspan');
       v.setAttribute('class', 'radar-val');
       v.textContent = a.v;
       t.appendChild(v);
+
+      function activate() { selectAxis(selectedAxis === i ? -1 : i); }
+      g.addEventListener('click', activate);
+      g.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); }
+      });
     });
   }
 
   /* ── Scroll reveals (+ arm rings when visible) ────────────── */
   function armRings(scope) {
+    if (scope.querySelector && scope.querySelector('#skills-index')) {
+      scope.querySelector('#skills-index').classList.add('armed');
+    }
     scope.querySelectorAll('.ring').forEach(function (svg) {
       var pct = parseFloat(svg.dataset.pct) || 0;
       var C = 2 * Math.PI * 32; // r=32 → ≈201
@@ -289,6 +354,72 @@
     topBtn.addEventListener('click', function () {
       scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' });
     });
+  }
+
+  /* ── Reference exhibit (testimonial carousel) ─────────────── */
+  var QUOTES = [
+    { text: '\u201cMatin has a rare combination of analytical thinking and genuine empathy for clients. He doesn\u2019t just meet targets \u2014 he builds relationships that make those targets sustainable. His capacity growth work was nothing short of transformative.\u201d',
+      who: 'Regional Operations Director', what: 'DIRECT SUPERVISOR · PROMETRIC CENTER' },
+    { text: '\u201cWhat sets Matin apart is his ability to truly listen. He took the time to understand my financial goals before recommending any products. I felt like a person, not a transaction. That level of care is rare in financial services.\u201d',
+      who: 'Investment Client', what: 'CLIENT · GOLDEN QUASAR INC' },
+    { text: '\u201cDuring our collaboration at Collision Conference, Matin led a team of 20 volunteers with remarkable composure. He balanced operational demands with team morale in a way that felt effortless, though I know it wasn\u2019t.\u201d',
+      who: 'Event Coordinator', what: 'PROGRAM MANAGER · WEB SUMMIT / COLLISION' },
+    { text: '\u201cMatin brought a fresh perspective to our research division. His financial models were thorough, his client presentations were polished, and he consistently went beyond what was asked. A natural self-starter with a strong work ethic.\u201d',
+      who: 'Research Team Lead', what: 'SENIOR ANALYST · INVESTOR QUOTIENT IQ' }
+  ];
+
+  var exQuote = document.getElementById('exhibit-quote');
+  if (exQuote) {
+    var exText = document.getElementById('exhibit-text');
+    var exCite = document.getElementById('exhibit-cite');
+    var exRole = document.getElementById('exhibit-role');
+    var exList = document.getElementById('exhibit-list');
+    var exCounter = document.getElementById('exhibit-counter');
+    var exIdx = 0;
+    var exTimer = null;
+
+    QUOTES.forEach(function (q, i) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'exhibit-item';
+      b.setAttribute('role', 'tab');
+      b.setAttribute('aria-selected', i === 0 ? 'true' : 'false');
+      b.innerHTML = '<span class="who">' + q.who + '</span><span class="what">' + q.what + '</span>';
+      b.addEventListener('click', function () { showQuote(i, true); });
+      exList.appendChild(b);
+    });
+    var exItems = exList.querySelectorAll('.exhibit-item');
+
+    function setQuote(i) {
+      exText.textContent = QUOTES[i].text;
+      exCite.textContent = QUOTES[i].who;
+      exRole.textContent = QUOTES[i].what.toLowerCase();
+      exCounter.textContent = (i + 1) + ' / ' + QUOTES.length;
+      exItems.forEach(function (b, bi) { b.setAttribute('aria-selected', bi === i ? 'true' : 'false'); });
+    }
+
+    function showQuote(i, manual) {
+      exIdx = (i + QUOTES.length) % QUOTES.length;
+      if (manual) stopAuto();
+      if (reduced) { setQuote(exIdx); return; }
+      exQuote.classList.add('fading');
+      setTimeout(function () {
+        setQuote(exIdx);
+        exQuote.classList.remove('fading');
+      }, 270);
+    }
+
+    function stopAuto() {
+      if (exTimer) { clearInterval(exTimer); exTimer = null; }
+    }
+
+    document.getElementById('exhibit-prev').addEventListener('click', function () { showQuote(exIdx - 1, true); });
+    document.getElementById('exhibit-next').addEventListener('click', function () { showQuote(exIdx + 1, true); });
+    exQuote.addEventListener('mouseenter', stopAuto);
+
+    setQuote(0);
+    // auto-advance until the reader interacts
+    if (!reduced) exTimer = setInterval(function () { showQuote(exIdx + 1, false); }, 8000);
   }
 
   /* ── Contact form → composes an email locally ─────────────── */
