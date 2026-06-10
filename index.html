@@ -73,8 +73,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
 
-  <link rel="preload" as="image" href="/images/portrait-768w.webp" />
-  <link rel="stylesheet" href="/site.css?v=3" />
+  <link rel="preload" as="image"
+    imagesrcset="/images/portrait-480w.webp 480w, /images/portrait-768w.webp 768w, /images/portrait-1074w.webp 1074w"
+    imagesizes="(max-width: 720px) 76vw, 360px" />
+  <link rel="stylesheet" href="/site.css?v=4" />
 </head>
 
 <body>
@@ -152,7 +154,7 @@
     <!-- ════════ Item 01 · Profile ════════ -->
     <section id="profile" class="item reveal">
       <header class="item-head">
-        <span class="item-no mono">ITEM 01</span>
+        <span class="item-no mono" data-scramble-hover>ITEM 01</span>
         <h2>Profile</h2>
       </header>
       <div class="item-body two-col">
@@ -224,7 +226,7 @@
     <!-- ════════ Item 02 · Core Competencies ════════ -->
     <section id="competencies" class="item reveal">
       <header class="item-head">
-        <span class="item-no mono">ITEM 02</span>
+        <span class="item-no mono" data-scramble-hover>ITEM 02</span>
         <h2>Core Competencies</h2>
       </header>
 
@@ -279,7 +281,7 @@
     <!-- ════════ Item 03 · Selected Initiatives ════════ -->
     <section id="initiatives" class="item reveal">
       <header class="item-head">
-        <span class="item-no mono">ITEM 03</span>
+        <span class="item-no mono" data-scramble-hover>ITEM 03</span>
         <h2>Selected Initiatives</h2>
       </header>
       <div class="initiatives-grid">
@@ -313,7 +315,7 @@
     <!-- ════════ Item 04 · Experience ════════ -->
     <section id="experience" class="item reveal">
       <header class="item-head">
-        <span class="item-no mono">ITEM 04</span>
+        <span class="item-no mono" data-scramble-hover>ITEM 04</span>
         <h2>Professional Experience</h2>
       </header>
 
@@ -437,7 +439,7 @@
     <!-- ════════ Item 04 · References ════════ -->
     <section id="references" class="item reveal">
       <header class="item-head">
-        <span class="item-no mono">ITEM 05</span>
+        <span class="item-no mono" data-scramble-hover>ITEM 05</span>
         <h2>References &amp; Remarks</h2>
       </header>
       <div class="exhibit">
@@ -459,7 +461,7 @@
     <!-- ════════ Item 05 · Education & Certifications ════════ -->
     <section id="education" class="item reveal">
       <header class="item-head">
-        <span class="item-no mono">ITEM 06</span>
+        <span class="item-no mono" data-scramble-hover>ITEM 06</span>
         <h2>Education &amp; Certifications</h2>
       </header>
       <div class="edu-table" role="list">
@@ -493,7 +495,7 @@
     <!-- ════════ Item 07 · CFA Study Atelier ════════ -->
     <section id="atelier" class="item reveal">
       <header class="item-head">
-        <span class="item-no mono">ITEM 07</span>
+        <span class="item-no mono" data-scramble-hover>ITEM 07</span>
         <h2>CFA Level I · Study Atelier</h2>
       </header>
       <div class="atelier-grid">
@@ -519,7 +521,7 @@
     <!-- ════════ Item 08 · Contact ════════ -->
     <section id="contact" class="item reveal">
       <header class="item-head">
-        <span class="item-no mono">ITEM 08</span>
+        <span class="item-no mono" data-scramble-hover>ITEM 08</span>
         <h2>Contact</h2>
       </header>
       <div class="contact-grid">
@@ -545,17 +547,20 @@
 
   </main>
 
+  <!-- Cursor spotlight — the after-hours desk lamp (hover devices only) -->
+  <div id="cursor-glow" aria-hidden="true"></div>
+
   <!-- Section rail — desktop filing index -->
   <nav class="rail" aria-label="Filing index">
-    <a href="#top" data-rail="top"><span class="mono">CV</span></a>
-    <a href="#profile" data-rail="profile"><span class="mono">01</span></a>
-    <a href="#competencies" data-rail="competencies"><span class="mono">02</span></a>
-    <a href="#initiatives" data-rail="initiatives"><span class="mono">03</span></a>
-    <a href="#experience" data-rail="experience"><span class="mono">04</span></a>
-    <a href="#references" data-rail="references"><span class="mono">05</span></a>
-    <a href="#education" data-rail="education"><span class="mono">06</span></a>
-    <a href="#atelier" data-rail="atelier"><span class="mono">07</span></a>
-    <a href="#contact" data-rail="contact"><span class="mono">08</span></a>
+    <a href="#top" data-rail="top" data-label="Cover"><span class="mono">CV</span></a>
+    <a href="#profile" data-rail="profile" data-label="Profile"><span class="mono">01</span></a>
+    <a href="#competencies" data-rail="competencies" data-label="Competencies"><span class="mono">02</span></a>
+    <a href="#initiatives" data-rail="initiatives" data-label="Initiatives"><span class="mono">03</span></a>
+    <a href="#experience" data-rail="experience" data-label="Experience"><span class="mono">04</span></a>
+    <a href="#references" data-rail="references" data-label="References"><span class="mono">05</span></a>
+    <a href="#education" data-rail="education" data-label="Education"><span class="mono">06</span></a>
+    <a href="#atelier" data-rail="atelier" data-label="Study Atelier"><span class="mono">07</span></a>
+    <a href="#contact" data-rail="contact" data-label="Contact"><span class="mono">08</span></a>
   </nav>
 
   <button id="back-to-top" class="mono" type="button" aria-label="Back to top">↑ TOP</button>
@@ -567,7 +572,7 @@
     </div>
   </footer>
 
-  <script src="/site.js?v=3" defer></script>
+  <script src="/site.js?v=4" defer></script>
 </body>
 
 </html>

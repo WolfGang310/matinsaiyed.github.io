@@ -60,6 +60,8 @@
     );
   }
 
+  var pointer = { x: -1, y: -1 }; // hero-local pointer for the crosshair
+
   function drawChart() {
     if (!ctx) return;
     var dpr = Math.min(devicePixelRatio || 1, 2);
@@ -72,9 +74,10 @@
     var ink = cssVar('--ink-faint') || '#8d8474';
     var red = cssVar('--red') || '#9e1b1b';
     var base = h * 0.62, amp = h * 0.2;
+    var accent = { seed: 4.1, dy: h * 0.06 };
 
     [{ color: ink, alpha: 0.16, seed: 1.3, dy: 0 },
-     { color: red, alpha: 0.22, seed: 4.1, dy: h * 0.06 }].forEach(function (s) {
+     { color: red, alpha: 0.22, seed: accent.seed, dy: accent.dy }].forEach(function (s) {
       ctx.beginPath();
       for (var x = 0; x <= w; x += 4) {
         var y = base + s.dy + series(chartT, x, s.seed) * amp;
@@ -93,6 +96,31 @@
       }
       ctx.globalAlpha = 1;
     });
+
+    /* trading-terminal crosshair: hairline + node + index readout */
+    if (pointer.x >= 0 && pointer.x <= w && pointer.y >= 0 && pointer.y <= h) {
+      var px = pointer.x;
+      var py = base + accent.dy + series(chartT, px, accent.seed) * amp;
+      ctx.strokeStyle = ink;
+      ctx.globalAlpha = 0.35;
+      ctx.setLineDash([3, 4]);
+      ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, h); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = red;
+      ctx.beginPath(); ctx.arc(px, py, 3.5, 0, Math.PI * 2); ctx.fill();
+      var idx = (1180 + series(chartT, px, accent.seed) * 240);
+      var lblText = 'MS-IDX ' + idx.toFixed(2);
+      ctx.font = '11px "IBM Plex Mono", monospace';
+      var tw = ctx.measureText(lblText).width + 12;
+      var lx = Math.min(px + 10, w - tw - 4);
+      ctx.globalAlpha = 0.92;
+      ctx.fillStyle = cssVar('--ink') || '#211d17';
+      ctx.fillRect(lx, py - 22, tw, 17);
+      ctx.fillStyle = cssVar('--paper') || '#f5f1e8';
+      ctx.fillText(lblText, lx + 6, py - 10);
+      ctx.globalAlpha = 1;
+    }
   }
 
   function tickChart() {
@@ -121,15 +149,74 @@
     addEventListener('resize', drawChart, { passive: true });
   }
 
+  /* pointer tracking for the hero crosshair (hover devices) */
+  var hoverable = matchMedia('(hover: hover)').matches;
+  var hero = document.querySelector('.hero');
+  if (hero && canvas && hoverable) {
+    hero.addEventListener('pointermove', function (e) {
+      var r = canvas.getBoundingClientRect();
+      pointer.x = e.clientX - r.left;
+      pointer.y = e.clientY - r.top;
+      if (reduced) drawChart(); // static chart still gets a live crosshair
+    });
+    hero.addEventListener('pointerleave', function () {
+      pointer.x = -1; pointer.y = -1;
+      if (reduced) drawChart();
+    });
+  }
+
+  /* cursor spotlight — eased follow */
+  var glow = document.getElementById('cursor-glow');
+  if (glow && hoverable) {
+    var gx = innerWidth / 2, gy = innerHeight / 3, tx2 = gx, ty2 = gy, glowRaf = null;
+    function glowTick() {
+      gx += (tx2 - gx) * 0.16;
+      gy += (ty2 - gy) * 0.16;
+      glow.style.setProperty('--mx', gx + 'px');
+      glow.style.setProperty('--my', gy + 'px');
+      if (Math.abs(tx2 - gx) + Math.abs(ty2 - gy) > 0.4) glowRaf = requestAnimationFrame(glowTick);
+      else glowRaf = null;
+    }
+    addEventListener('pointermove', function (e) {
+      tx2 = e.clientX; ty2 = e.clientY;
+      glow.classList.add('on');
+      if (reduced) {
+        glow.style.setProperty('--mx', tx2 + 'px');
+        glow.style.setProperty('--my', ty2 + 'px');
+      } else if (glowRaf === null) glowRaf = requestAnimationFrame(glowTick);
+    }, { passive: true });
+    document.documentElement.addEventListener('pointerleave', function () { glow.classList.remove('on'); });
+  }
+
+  /* portrait tilt — a nod to the old 3D scene */
+  var portrait = document.querySelector('.hero-portrait');
+  if (portrait && hoverable && !reduced) {
+    var pic = portrait.querySelector('picture');
+    portrait.addEventListener('pointermove', function (e) {
+      var r = portrait.getBoundingClientRect();
+      var dx = (e.clientX - r.left) / r.width - 0.5;
+      var dy = (e.clientY - r.top) / r.height - 0.5;
+      pic.style.setProperty('--ty', (dx * 7) + 'deg');
+      pic.style.setProperty('--tx', (-dy * 7) + 'deg');
+    });
+    portrait.addEventListener('pointerleave', function () {
+      pic.style.setProperty('--tx', '0deg');
+      pic.style.setProperty('--ty', '0deg');
+    });
+  }
+
   /* ── Ticker-board scramble (hero role) ────────────────────── */
   var GLYPHS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789·—';
-  document.querySelectorAll('[data-scramble]').forEach(function (el) {
-    if (reduced) return;
-    var final = el.textContent;
-    var frame = 0, settle = 0;
-    var total = Math.max(26, final.length + 14);
+
+  function scramble(el) {
+    if (reduced || el.dataset.scrambling) return;
+    el.dataset.scrambling = '1';
+    var final = el.dataset.final || el.textContent;
+    el.dataset.final = final;
+    var frame = 0;
+    var total = Math.max(22, final.length + 12);
     function step() {
-      settle = Math.floor((frame / total) * final.length);
+      var settle = Math.floor((frame / total) * final.length);
       var out = '';
       for (var i = 0; i < final.length; i++) {
         var ch = final[i];
@@ -139,10 +226,20 @@
       }
       el.textContent = out;
       if (++frame <= total) requestAnimationFrame(step);
-      else el.textContent = final;
+      else { el.textContent = final; delete el.dataset.scrambling; }
     }
-    // start once the load-reveal delay has played
-    setTimeout(function () { requestAnimationFrame(step); }, 320);
+    requestAnimationFrame(step);
+  }
+
+  document.querySelectorAll('[data-scramble]').forEach(function (el) {
+    setTimeout(function () { scramble(el); }, 320);        // settle on load…
+    el.addEventListener('pointerenter', function () { scramble(el); }); // …re-flip on hover
+  });
+
+  // section ITEM labels flicker like a departures board on hover
+  document.querySelectorAll('[data-scramble-hover]').forEach(function (el) {
+    var head = el.closest('.item-head') || el;
+    head.addEventListener('pointerenter', function () { scramble(el); });
   });
 
   /* ── Competency radar (inline SVG, interactive) ───────────── */
