@@ -1,11 +1,10 @@
 // Contact page — working form with validation
 const { useState: useStateC } = React;
 
-/* To receive submissions silently in-page, create a free form at https://formspree.io
-   (or any endpoint that accepts a POST + returns JSON) and paste its URL below.
-   Left blank, the form composes an email in the visitor's mail client instead —
-   so the contact form actually delivers a message out of the box. */
-const FORM_ENDPOINT = ""; // e.g. "https://formspree.io/f/abcdwxyz"
+/* The form endpoint lives in config.js (owner-editable, no rebuild needed).
+   Left blank there, the form composes an email in the visitor's mail client
+   instead — so the contact form delivers a message out of the box. */
+const FORM_ENDPOINT = (window.TROY_CONFIG || {}).FORM_ENDPOINT || "";
 
 function buildMailto(form) {
   const subject = `Website enquiry — ${form.interest || 'General'}`;

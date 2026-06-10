@@ -1,6 +1,57 @@
 // Troy Testing — shared components
 const { useState, useEffect, useRef } = React;
 
+// ─── Owner-editable data (sessions.json / announcements.json) ──────────
+// Fetched once per page load, cached for all subscribers. Fails soft to
+// null so every consumer falls back to its built-in defaults.
+const __siteJsonCache = {};
+function useSiteJson(file) {
+  const [data, setData] = useState(__siteJsonCache[file]);
+  useEffect(() => {
+    let on = true;
+    if (__siteJsonCache[file] !== undefined) { setData(__siteJsonCache[file]); return; }
+    // no-cache: always revalidate these tiny owner-edited files so edits show
+    // up on the next visit (a 304 costs almost nothing).
+    fetch(file, { cache: 'no-cache' }).then(r => (r.ok ? r.json() : null)).catch(() => null)
+      .then(d => { __siteJsonCache[file] = d; if (on) setData(d); });
+    return () => { on = false; };
+  }, [file]);
+  return data;
+}
+
+// ─── Announcement banner (owner-edited via announcements.json) ──────────
+function AnnouncementBanner({ lang = 'en', go }) {
+  const data = useSiteJson('announcements.json');
+  const [dismissed, setDismissed] = useState(() => {
+    try { return localStorage.getItem('troy.annDismissed') || ''; } catch (_) { return ''; }
+  });
+  if (!data) return null;
+  const fr = lang === 'fr';
+  const msg = ((fr && data.messageFr) || data.message || '').trim();
+  if (!msg) return null;
+  if (data.until) { try { if (new Date(data.until + 'T23:59:59') < new Date()) return null; } catch (_) {} }
+  if (dismissed === data.message) return null; // re-shows automatically when the owner changes the message
+  const linkText = (fr && data.linkTextFr) || data.linkText || (data.link ? (fr ? 'En savoir plus' : 'Learn more') : '');
+  const internal = !!data.link && data.link.charAt(0) === '#';
+  const dismiss = () => {
+    setDismissed(data.message);
+    try { localStorage.setItem('troy.annDismissed', data.message); } catch (_) {}
+  };
+  return (
+    <div className="announce" role="status">
+      <div className="container announce-inner">
+        <span className="announce-msg">
+          {msg}{' '}
+          {data.link && (internal
+            ? <a href={data.link} onClick={e => { e.preventDefault(); go && go(data.link.slice(1)); }}>{linkText}</a>
+            : <a href={data.link} target="_blank" rel="noopener">{linkText}</a>)}
+        </span>
+        <button className="announce-x" onClick={dismiss} aria-label={fr ? "Fermer l'annonce" : 'Dismiss announcement'}>✕</button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Layout chrome ────────────────────
 function Header({ route, go, lang, setLang, openWizard }) {
   const [scrolled, setScrolled] = useState(false);
@@ -237,7 +288,7 @@ const EXAMS = [
     fee: 'from US$ 990 (by window)', duration: '4h 30m', seats: 'Feb / Aug', preferredCenter: 'Mississauga' },
 ];
 
-Object.assign(window, { Header, Footer, ReserveModal, EXAMS, useReveal, Reveal, Counter, PartnerBar, Swap, ExamBoard, useDialogA11y });
+Object.assign(window, { Header, Footer, ReserveModal, EXAMS, useReveal, Reveal, Counter, PartnerBar, Swap, ExamBoard, useDialogA11y, useSiteJson, AnnouncementBanner });
 
 // ─── Kinetic word-swap ────────────────────
 function Swap({ words, interval = 2600, className = '' }) {
@@ -298,10 +349,20 @@ const STATUS_LABEL_FR = { open: 'PLACES LIBRES', filling: 'SE REMPLIT', waitlist
 
 function ExamBoard({ lang = 'en' }) {
   const fr = lang === 'fr';
-  // A representative (illustrative) departures-style board — NOT live seat data.
-  // Statuses are a static snapshot so the UI never invents availability that could
-  // mislead a candidate. Real seats are always confirmed on the provider's portal.
-  const [rows] = useState(BOARD_BASE);
+  // Rows come from owner-edited sessions.json when present. Until the owner sets
+  // live:true there, everything stays clearly labelled as a SAMPLE so the UI
+  // never invents availability. Real seats are confirmed on the provider portal.
+  const data = useSiteJson('sessions.json');
+  const live = !!(data && data.live);
+  const updated = (data && data.updated) || '';
+  const rows = (data && Array.isArray(data.sessions) && data.sessions.length)
+    ? data.sessions.slice(0, 6).map(s => ({
+        exam: String(s.label || s.code || '').toUpperCase(),
+        centre: String(s.centre || '').toUpperCase(),
+        when: String((fr && s.whenFr) || s.when || '').toUpperCase(),
+        status: s.status || '',
+      }))
+    : BOARD_BASE;
   const [clock, setClock] = useState('');
   useEffect(() => {
     // Decorative wall-clock (current local time).
@@ -314,12 +375,15 @@ function ExamBoard({ lang = 'en' }) {
     const c = setInterval(fmt, 1000);
     return () => clearInterval(c);
   }, []);
+  const ariaLabel = live
+    ? (fr ? `Tableau des séances d'examen CELPIP et CFA à venir, mis à jour le ${updated}. Les places se réservent sur le portail du fournisseur.` : `Board of upcoming CELPIP and CFA exam sessions, updated ${updated}. Seats are booked on the provider's portal.`)
+    : (fr ? "Tableau illustratif de séances types d'examens CELPIP et CFA aux centres de North York et de Mississauga. Les places se réservent sur le portail du fournisseur." : "Illustrative board of typical CELPIP and CFA exam sessions across the North York and Mississauga centres. Seats are booked on the provider's portal.");
   return (
-    <div className="exam-board" role="img" aria-label={fr ? "Tableau illustratif de séances types d'examens CELPIP et CFA aux centres de North York et de Mississauga. Les places se réservent sur le portail du fournisseur." : "Illustrative board of typical CELPIP and CFA exam sessions across the North York and Mississauga centres. Seats are booked on the provider's portal."}>
+    <div className="exam-board" role="img" aria-label={ariaLabel}>
       <div className="board-top" aria-hidden="true">
         <div className="board-title">
-          <span className="board-live"><span className="live-dot" />{fr ? 'EXEMPLE' : 'SAMPLE'}</span>
-          <span>{fr ? "Séances types d'examen" : 'Typical exam sessions'}</span>
+          <span className="board-live"><span className="live-dot" />{live ? (fr ? 'MIS À JOUR' : 'UPDATED') : (fr ? 'EXEMPLE' : 'SAMPLE')}</span>
+          <span>{live ? (fr ? 'Prochaines séances' : 'Upcoming sessions') : (fr ? "Séances types d'examen" : 'Typical exam sessions')}</span>
         </div>
         <div className="board-clock">{clock}</div>
       </div>
@@ -333,14 +397,18 @@ function ExamBoard({ lang = 'en' }) {
             <span className="bc centre"><FlipText text={r.centre} /></span>
             <span className="bc when"><FlipText text={r.when} /></span>
             <span className="bc status ta-r">
-              <span className={`pill ${r.status}`}><span className="pill-dot" />{(fr ? STATUS_LABEL_FR : STATUS_LABEL)[r.status]}</span>
+              {r.status
+                ? <span className={`pill ${r.status}`}><span className="pill-dot" />{(fr ? STATUS_LABEL_FR : STATUS_LABEL)[r.status] || r.status.toUpperCase()}</span>
+                : <span style={{ color: 'rgba(255,255,255,0.35)' }}>—</span>}
             </span>
           </div>
         ))}
       </div>
       <div className="board-foot" aria-hidden="true">
         <span>Toronto · Mississauga</span>
-        <span>{fr ? 'Illustratif — réservez vos places sur le portail du fournisseur' : 'Illustrative — book live seats on the provider portal'}</span>
+        <span>{live
+          ? (fr ? `Mis à jour le ${updated} — réservez sur le portail du fournisseur` : `Updated ${updated} — book on the provider portal`)
+          : (fr ? 'Illustratif — réservez vos places sur le portail du fournisseur' : 'Illustrative — book live seats on the provider portal')}</span>
       </div>
     </div>
   );

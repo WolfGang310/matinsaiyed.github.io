@@ -217,27 +217,43 @@ const SESSIONS = [
 ];
 
 const CADENCE_FR = { 'Daily seats': 'Places quotidiennes', 'Weekly seats': 'Places hebdomadaires', 'Feb · May · Aug · Nov': 'Févr · Mai · Août · Nov', 'May · Aug · Nov': 'Mai · Août · Nov' };
+const AV_STATUS = {
+  en: { open: 'Seats open', filling: 'Filling fast', waitlist: 'Waitlist', full: 'Full' },
+  fr: { open: 'Places libres', filling: 'Se remplit', waitlist: "Liste d'attente", full: 'Complet' },
+};
 function AvailabilitySection({ lang = 'en' }) {
   const fr = lang === 'fr';
+  // Owner-edited sessions.json drives the list when present; live:true switches
+  // the "Sample" framing to an honest "Updated <date>" one (see OWNER-GUIDE.md).
+  const data = useSiteJson('sessions.json');
+  const live = !!(data && data.live);
+  const updated = (data && data.updated) || '';
+  const rows = (data && Array.isArray(data.sessions) && data.sessions.length)
+    ? data.sessions.map(s => ({ code: s.code, label: s.label, centre: s.centre, when: (fr && s.whenFr) || s.when || '', status: s.status || '' }))
+    : SESSIONS.map(s => ({ code: s.code, label: s.label, centre: s.centre, when: fr ? (CADENCE_FR[s.cadence] || s.cadence) : s.cadence, status: '' }));
   return (
     <section className="block" id="availability">
       <div className="container">
         <div className="section-head">
           <div>
-            <div className="eyebrow reveal">{fr ? 'Prochaines séances' : 'Upcoming sessions'} <span className="sample-chip">{fr ? 'Exemple' : 'Sample'}</span></div>
+            <div className="eyebrow reveal">{fr ? 'Prochaines séances' : 'Upcoming sessions'} <span className="sample-chip">{live ? (fr ? `Mis à jour le ${updated}` : `Updated ${updated}`) : (fr ? 'Exemple' : 'Sample')}</span></div>
             <h2 className="serif reveal" style={{ transitionDelay: '60ms' }}>{fr ? 'Quand chaque examen a lieu.' : 'When each exam runs.'}</h2>
           </div>
-          <p className="reveal" style={{ transitionDelay: '120ms' }}>{fr ? "Cadence représentative des séances à chaque centre — ce ne sont pas des places en temps réel. Confirmez et réservez sur le portail du fournisseur." : "Representative session cadence at each centre — not live seat counts. Confirm and book live seats on the provider's portal."}</p>
+          <p className="reveal" style={{ transitionDelay: '120ms' }}>{live
+            ? (fr ? "Séances à venir à chaque centre, tenues à jour par notre équipe. Confirmez et réservez sur le portail du fournisseur." : "Upcoming sessions at each centre, kept current by our team. Confirm and book on the provider's portal.")
+            : (fr ? "Cadence représentative des séances à chaque centre — ce ne sont pas des places en temps réel. Confirmez et réservez sur le portail du fournisseur." : "Representative session cadence at each centre — not live seat counts. Confirm and book live seats on the provider's portal.")}</p>
         </div>
         <div className="avail-list reveal">
-          {SESSIONS.map((s, i) => {
+          {rows.map((s, i) => {
             const ex = EXAMS.find(e => e.code === s.code) || {};
             const track = () => { try { window.troyTrack && window.troyTrack('provider_click', { exam: s.code, org: ex.org, source: 'availability' }); } catch (_) {} };
             return (
               <a className="avail-row" key={i} href={ex.url || '#'} target="_blank" rel="noopener" onClick={track}>
                 <span className="av-exam">{s.label}</span>
                 <span className="av-centre">{s.centre}</span>
-                <span className="av-when">{fr ? (CADENCE_FR[s.cadence] || s.cadence) : s.cadence}</span>
+                <span className="av-when">{s.when}</span>
+                {live && s.status && AV_STATUS.en[s.status] &&
+                  <span className={`av-pill ${s.status}`}><span className="pill-dot" />{(fr ? AV_STATUS.fr : AV_STATUS.en)[s.status]}</span>}
                 <span className="av-go">{ex.flow === 'cfa' ? (fr ? "S'inscrire" : 'Register') : (fr ? 'Réserver' : 'Book')} <span className="arrow" /></span>
               </a>
             );
@@ -380,10 +396,25 @@ function SeatAlert({ lang = 'en' }) {
   const [email, setEmail] = useF('');
   const [exam, setExam] = useF('CELPIP');
   const [done, setDone] = useF(false);
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
     if (!email.match(/^[^@\s]+@[^@\s]+\.[^@\s]+$/)) return;
     try { localStorage.setItem('troy.alert', JSON.stringify({ email, exam })); } catch (_) {}
+    try { window.troyTrack && window.troyTrack('seat_alert_signup', { exam }); } catch (_) {}
+    // Deliver the signup to the centre: POST to the configured form endpoint,
+    // or fall back to the visitor's email app so the request still arrives.
+    const ep = (window.TROY_CONFIG || {}).FORM_ENDPOINT || '';
+    if (ep) {
+      try {
+        const fd = new FormData();
+        fd.append('form', 'seat-alert'); fd.append('email', email); fd.append('exam', exam);
+        await fetch(ep, { method: 'POST', headers: { Accept: 'application/json' }, body: fd });
+      } catch (_) { /* recorded locally; owner still sees most signups */ }
+    } else {
+      window.location.href = 'mailto:hello@troytesting.com?subject=' +
+        encodeURIComponent('Seat alert signup — ' + exam) + '&body=' +
+        encodeURIComponent('Please notify me when new ' + exam + ' sessions are posted.\nEmail: ' + email);
+    }
     setDone(true);
   };
   return (

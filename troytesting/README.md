@@ -43,18 +43,21 @@ components → features → pages → home → programs → test-center → cont
 | `sw.js` | Service worker — offline shell + installability, scoped to this folder |
 | `manifest.webmanifest` + icons | PWA install metadata (home-screen icons) |
 
-## Configure the contact form
+## Owner-editable files (no rebuild needed)
 
-Out of the box the contact form composes an email in the visitor's mail client
-(so it always delivers something). To receive submissions silently in-page,
-create a free form at <https://formspree.io> and paste its endpoint into
-`FORM_ENDPOINT` at the top of `contact.jsx` (then rebuild):
+Three plain files control live behaviour — full walkthrough in
+**[OWNER-GUIDE.md](OWNER-GUIDE.md)**:
 
-```js
-const FORM_ENDPOINT = "https://formspree.io/f/your-id";
-```
+- `config.js` — Formspree endpoint (contact form **and** seat alerts) and
+  Plausible analytics domain. Until set, forms fall back to the visitor's
+  email app and analytics is a no-op.
+- `sessions.json` — exam sessions shown on the homepage board + Availability
+  page. `live: true` flips the honest "Sample" labels to "Updated {date}".
+- `announcements.json` — dismissible red banner above the header (EN/FR,
+  auto-expiry).
 
-A honeypot field (`company`) filters basic bots.
+A honeypot field (`company`) filters basic contact-form bots. Analytics events:
+`provider_click`, `seat_alert_signup`, `faq_no_match`.
 
 ## Before you rely on it for SEO
 

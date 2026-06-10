@@ -90,6 +90,7 @@ function App() {
 
   return (
     <>
+      <AnnouncementBanner lang={lang} go={go} />
       <Header route={route} go={go} lang={lang} setLang={setLangP} openWizard={openWizard} />
       <div id="main" tabIndex={-1} data-screen-label={route}>
         <Page go={go} openReserve={setReserve} openWizard={openWizard} openQuiz={openQuiz} lang={lang} />

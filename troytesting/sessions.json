@@ -1,0 +1,12 @@
+{
+  "_help": "Owner-editable exam sessions. Shown on the homepage board and the Availability page. Set live=true ONLY when you are keeping these rows accurate — that switches the site's 'Sample' label to 'Updated <date>'. Allowed status values: open | filling | waitlist | full (or omit status). 'when' is free text (a time, a date, or a cadence like 'Daily seats'). Keep 5-6 rows max for the board. See OWNER-GUIDE.md.",
+  "live": false,
+  "updated": "2026-06-09",
+  "sessions": [
+    { "code": "CELPIP-G",  "label": "CELPIP General",    "centre": "North York",  "when": "Daily seats",           "whenFr": "Places quotidiennes",   "status": "" },
+    { "code": "CELPIP-LS", "label": "CELPIP General LS", "centre": "North York",  "when": "Weekly seats",          "whenFr": "Places hebdomadaires",  "status": "" },
+    { "code": "CELPIP-G",  "label": "CELPIP General",    "centre": "Mississauga", "when": "Weekly seats",          "whenFr": "Places hebdomadaires",  "status": "" },
+    { "code": "CFA-I",     "label": "CFA Level I",       "centre": "Mississauga", "when": "Feb · May · Aug · Nov", "whenFr": "Févr · Mai · Août · Nov", "status": "" },
+    { "code": "CFA-II",    "label": "CFA Level II",      "centre": "Mississauga", "when": "May · Aug · Nov",       "whenFr": "Mai · Août · Nov",      "status": "" }
+  ]
+}

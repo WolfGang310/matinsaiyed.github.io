@@ -1,5 +1,5 @@
 // Troy Testing — section pages (split out from the old long home)
-const { useState: useP } = React;
+const { useState: useP, useEffect: usePE } = React;
 
 function PageHero({ eyebrow, title, sub }) {
   return (
@@ -170,6 +170,14 @@ function FAQPage({ go, lang = 'en' }) {
   const [query, setQuery] = useP('');
   const faqs = [1, 2, 3, 4, 5, 6].map(i => ({ q: t(lang, 'faq.q' + i), a: t(lang, 'faq.a' + i) }));
   const match = faqs.filter(f => (f.q + ' ' + f.a).toLowerCase().includes(query.toLowerCase()));
+  // Report searches with no answer (debounced) so the owner learns what content is missing.
+  usePE(() => {
+    if (!query.trim() || match.length) return;
+    const tmr = setTimeout(() => {
+      try { window.troyTrack && window.troyTrack('faq_no_match', { query: query.trim().slice(0, 80), lang }); } catch (_) {}
+    }, 1000);
+    return () => clearTimeout(tmr);
+  }, [query, match.length]);
   return (
     <main className="page">
       <PageHero

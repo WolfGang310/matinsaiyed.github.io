@@ -1,18 +1,22 @@
 /* Troy Testing — service worker (offline shell + installable PWA).
    Bump CACHE whenever the ?v= asset version changes so clients refresh. */
-const CACHE = 'troy-v4';
+const CACHE = 'troy-v5';
 
 // Same-origin shell + the cross-origin runtime, so the app mounts with no network.
-// v4: precompiled minified .js — no Babel needed (faster install, smaller cache).
 const SHELL = [
-  './', './index.html', './styles.css?v=4',
-  './components.js?v=4', './features.js?v=4', './pages.js?v=4', './home.js?v=4',
-  './programs.js?v=4', './test-center.js?v=4', './contact.js?v=4', './app.js?v=4',
+  './', './index.html', './styles.css?v=5',
+  './components.js?v=5', './features.js?v=5', './pages.js?v=5', './home.js?v=5',
+  './programs.js?v=5', './test-center.js?v=5', './contact.js?v=5', './app.js?v=5',
+  './config.js', './sessions.json', './announcements.json',
   './manifest.webmanifest', './icon.svg', './logo.jpg',
   './apple-touch-icon.png', './icon-192.png', './icon-512.png',
   'https://unpkg.com/react@18.3.1/umd/react.production.min.js',
   'https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js',
 ];
+
+// Owner-editable files: always try the network first so edits show up on the
+// next visit without a cache-version bump; fall back to cache when offline.
+const NETWORK_FIRST = /\/(sessions\.json|announcements\.json|config\.js)$/;
 
 self.addEventListener('install', (e) => {
   e.waitUntil(
@@ -34,6 +38,18 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
+  const url = new URL(req.url);
+
+  if (url.origin === location.origin && NETWORK_FIRST.test(url.pathname)) {
+    e.respondWith(
+      fetch(req).then((res) => {
+        if (res && res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); }
+        return res;
+      }).catch(() => caches.match(req))
+    );
+    return;
+  }
+
   // Cache-first for anything we have; otherwise network, runtime-caching successful GETs.
   e.respondWith(
     caches.match(req).then((cached) => cached || fetch(req).then((res) => {

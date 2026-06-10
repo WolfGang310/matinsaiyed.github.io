@@ -129,7 +129,7 @@
   <link rel="preconnect" href="https://images.unsplash.com" crossorigin>
 
   <!-- Styles (bump ?v= on each deploy to bust returning visitors' cache) -->
-  <link rel="stylesheet" href="styles.css?v=4">
+  <link rel="stylesheet" href="styles.css?v=5">
 </head>
 <body>
   <div id="root"></div>
@@ -146,9 +146,9 @@
     </div>
   </noscript>
 
-  <!-- Privacy-friendly analytics hook. troyTrack() is called on every provider hand-off.
-       To collect events, uncomment a Plausible/GA4 snippet below; otherwise this is a safe no-op.
-       <script defer data-domain="YOUR_DOMAIN" src="https://plausible.io/js/script.js"></script> -->
+  <!-- Privacy-friendly analytics hook. troyTrack() fires on provider hand-offs, seat-alert
+       signups, and unanswered FAQ searches. To collect these, set PLAUSIBLE_DOMAIN in
+       config.js (loaded below) — until then this is a safe no-op. -->
   <script>
     window.troyTrack = function (event, props) {
       try {
@@ -168,6 +168,8 @@
   </script>
 
   <!-- React runtime (production builds — behaviour-identical to the prototype's dev builds, without console warnings) -->
+  <!-- Owner-editable site config (form endpoint, analytics) — see OWNER-GUIDE.md -->
+  <script src="config.js"></script>
   <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
 
@@ -176,13 +178,13 @@
        Load order is significant: shared components & feature widgets first, then page
        components, then the app shell (mounts). To edit: change the .jsx sources, rebuild,
        and bump ?v= here AND the CACHE constant in sw.js. For quick iteration use dev.html. -->
-  <script src="components.js?v=4"></script>
-  <script src="features.js?v=4"></script>
-  <script src="pages.js?v=4"></script>
-  <script src="home.js?v=4"></script>
-  <script src="programs.js?v=4"></script>
-  <script src="test-center.js?v=4"></script>
-  <script src="contact.js?v=4"></script>
-  <script src="app.js?v=4"></script>
+  <script src="components.js?v=5"></script>
+  <script src="features.js?v=5"></script>
+  <script src="pages.js?v=5"></script>
+  <script src="home.js?v=5"></script>
+  <script src="programs.js?v=5"></script>
+  <script src="test-center.js?v=5"></script>
+  <script src="contact.js?v=5"></script>
+  <script src="app.js?v=5"></script>
 </body>
 </html>

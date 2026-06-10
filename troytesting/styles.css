@@ -1648,3 +1648,11 @@ img, svg, video, figure { max-width: 100%; }
   .board-cols, .board-row { gap: 4px; }
 }
 
+
+/* ── Announcement banner (owner-edited via announcements.json) ── */
+.announce { background: var(--accent); color: #fff; }
+.announce-inner { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-top: 9px; padding-bottom: 9px; }
+.announce-msg { font-family: var(--font-mono); font-size: 12px; letter-spacing: .04em; line-height: 1.5; }
+.announce-msg a { color: #fff; text-decoration: underline; text-underline-offset: 2px; }
+.announce-x { background: transparent; border: none; color: rgba(255,255,255,.85); font-size: 13px; padding: 6px 8px; cursor: pointer; border-radius: 6px; flex-shrink: 0; }
+.announce-x:hover { color: #fff; background: rgba(255,255,255,.12); }
