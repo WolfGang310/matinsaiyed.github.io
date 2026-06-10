@@ -10,14 +10,19 @@
     <!-- Canonical -->
     <link rel="canonical" href="https://matinsaiyed.com/" />
 
-    <!-- Favicon -->
+    <!-- Favicon + icons -->
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="theme-color" content="#000000" />
 
-    <!-- Open Graph -->
+    <!-- Open Graph (image URLs must be absolute for scrapers) -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Matin Saiyed — Finance Professional" />
     <meta property="og:description" content="CIFC-licensed Mutual Funds Representative and CFA Level I Candidate specializing in client success, financial planning, and investment advisory." />
-    <meta property="og:image" content="/images/portrait.jpg" />
+    <meta property="og:image" content="https://matinsaiyed.com/images/portrait.jpg" />
+    <meta property="og:image:width" content="1074" />
+    <meta property="og:image:height" content="1232" />
+    <meta property="og:image:alt" content="Portrait of Matin Saiyed" />
     <meta property="og:url" content="https://matinsaiyed.com/" />
     <meta property="og:locale" content="en_CA" />
     <meta property="og:site_name" content="Matin Saiyed" />
@@ -26,7 +31,7 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Matin Saiyed — Finance Professional" />
     <meta name="twitter:description" content="CIFC-licensed Mutual Funds Representative and CFA Level I Candidate specializing in client success and financial planning." />
-    <meta name="twitter:image" content="/images/portrait.jpg" />
+    <meta name="twitter:image" content="https://matinsaiyed.com/images/portrait.jpg" />
     <meta name="twitter:creator" content="@matinsaiyed" />
 
     <!-- Structured Data -->
@@ -63,6 +68,16 @@
     }
     </script>
 
+    <!-- LCP: start fetching the hero portrait before the JS bundle parses.
+         srcset/sizes mirror the app's <picture> exactly so the preload is the
+         same resource the renderer picks (no double download). -->
+    <link
+      rel="preload"
+      as="image"
+      imagesrcset="/images/portrait-480w.webp 480w, /images/portrait-768w.webp 768w, /images/portrait-1074w.webp 1074w"
+      imagesizes="(max-width: 640px) 288px, (max-width: 1024px) 320px, 384px"
+    />
+
     <!-- Fonts (optimized weights) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -83,19 +98,6 @@
 
   <body>
     <div id="root"></div>
-    <script>
-      (function () {
-        var endpoint = "%VITE_ANALYTICS_ENDPOINT%";
-        var websiteId = "%VITE_ANALYTICS_WEBSITE_ID%";
-        if (endpoint && websiteId && !endpoint.startsWith("%")) {
-          var s = document.createElement("script");
-          s.defer = true;
-          s.src = endpoint + "/umami";
-          s.setAttribute("data-website-id", websiteId);
-          document.body.appendChild(s);
-        }
-      })();
-    </script>
   </body>
 
 </html>
