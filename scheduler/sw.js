@@ -1,4 +1,4 @@
-const CACHE_NAME = 'test-center-scheduler-v5-fresh';
+const CACHE_NAME = 'test-center-scheduler-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',

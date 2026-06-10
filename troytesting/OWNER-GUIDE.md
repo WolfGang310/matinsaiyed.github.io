@@ -1,10 +1,24 @@
 # Owner's Guide — running the Troy Testing site
 
-Three plain-text files control the live site. You can edit them right in the
-GitHub web interface (open the file → pencil icon → commit) — **no rebuild
-needed**, changes appear within a minute or two of committing.
+## ⭐ Easiest way: the scheduler's "Website" page
+
+Managers can edit the public site **directly from the scheduler app**
+(matinsaiyed.com/scheduler → log in as a manager → **Website** in the sidebar):
+
+- **Exam sessions** — the homepage departures board + Availability page,
+  including the Live toggle and status pills.
+- **Announcement banner** — publish or take down the red banner in one click.
+
+Changes publish to the site within a minute. No files, no commits.
+
+The site reads that database first and **falls back automatically** to the
+files below if the database is paused or unreachable — so the file route keeps
+working as a backup, and nothing the scheduler does can break the site.
 
 ---
+
+The fallback files below can be edited right in the GitHub web interface
+(open the file → pencil icon → commit) — no rebuild needed.
 
 ## 1. `sessions.json` — the exam sessions shown on the site
 

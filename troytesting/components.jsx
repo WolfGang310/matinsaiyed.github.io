@@ -1,19 +1,34 @@
 // Troy Testing — shared components
 const { useState, useEffect, useRef } = React;
 
-// ─── Owner-editable data (sessions.json / announcements.json) ──────────
-// Fetched once per page load, cached for all subscribers. Fails soft to
-// null so every consumer falls back to its built-in defaults.
+// ─── Owner-editable data (scheduler database → static JSON → defaults) ──────
+// Managers publish from the scheduler app's "Website" page into Supabase; the
+// site reads those rows anonymously. Each tier fails soft to the next, so a
+// paused backend or missing file can never break the page.
 const __siteJsonCache = {};
+const __SUPA_KEYS = { 'sessions.json': 'sessions', 'announcements.json': 'announcement' };
+function __fetchSiteData(file) {
+  const cfg = window.TROY_CONFIG || {};
+  const key = __SUPA_KEYS[file];
+  const fromFile = () =>
+    // no-cache: always revalidate these tiny owner-edited files so edits show
+    // up on the next visit (a 304 costs almost nothing).
+    fetch(file, { cache: 'no-cache' }).then(r => (r.ok ? r.json() : null)).catch(() => null);
+  if (!key || !cfg.SUPABASE_URL || !cfg.SUPABASE_ANON_KEY) return fromFile();
+  return fetch(`${cfg.SUPABASE_URL}/rest/v1/website_content?key=eq.${key}&select=data`, {
+    cache: 'no-store',
+    headers: { apikey: cfg.SUPABASE_ANON_KEY, Authorization: `Bearer ${cfg.SUPABASE_ANON_KEY}` },
+  })
+    .then(r => (r.ok ? r.json() : Promise.reject(new Error('rest ' + r.status))))
+    .then(rows => (Array.isArray(rows) && rows.length && rows[0].data ? rows[0].data : fromFile()))
+    .catch(fromFile);
+}
 function useSiteJson(file) {
   const [data, setData] = useState(__siteJsonCache[file]);
   useEffect(() => {
     let on = true;
     if (__siteJsonCache[file] !== undefined) { setData(__siteJsonCache[file]); return; }
-    // no-cache: always revalidate these tiny owner-edited files so edits show
-    // up on the next visit (a 304 costs almost nothing).
-    fetch(file, { cache: 'no-cache' }).then(r => (r.ok ? r.json() : null)).catch(() => null)
-      .then(d => { __siteJsonCache[file] = d; if (on) setData(d); });
+    __fetchSiteData(file).then(d => { __siteJsonCache[file] = d; if (on) setData(d); });
     return () => { on = false; };
   }, [file]);
   return data;

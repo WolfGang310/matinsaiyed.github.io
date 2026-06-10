@@ -19,6 +19,16 @@ window.TROY_CONFIG = {
      Once set, the dashboard shows page views plus custom events:
      provider_click (exam hand-offs), seat_alert_signup, faq_no_match. */
   PLAUSIBLE_DOMAIN: "",
+
+  /* 3) LIVE CONTENT FROM THE SCHEDULER (managers edit, site updates).
+     The site first tries to read sessions + the announcement banner from the
+     scheduler's database (the "Website" page in the scheduler app). If that's
+     unreachable — paused project, offline — it falls back to the static
+     sessions.json / announcements.json files, then to built-in defaults.
+     The key below is the PUBLIC (publishable) key; writes still require a
+     signed-in manager. Clear both values to disable the connection.        */
+  SUPABASE_URL: "https://igfchvbzmvfveecivswb.supabase.co",
+  SUPABASE_ANON_KEY: "sb_publishable_iz7Rbg2pVJSBBIfMt6gXNw_CddgML0Z",
 };
 
 /* ── Do not edit below: activates analytics when configured ── */

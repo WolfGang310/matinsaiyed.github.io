@@ -1,12 +1,12 @@
 /* Troy Testing — service worker (offline shell + installable PWA).
    Bump CACHE whenever the ?v= asset version changes so clients refresh. */
-const CACHE = 'troy-v5';
+const CACHE = 'troy-v6';
 
 // Same-origin shell + the cross-origin runtime, so the app mounts with no network.
 const SHELL = [
-  './', './index.html', './styles.css?v=5',
-  './components.js?v=5', './features.js?v=5', './pages.js?v=5', './home.js?v=5',
-  './programs.js?v=5', './test-center.js?v=5', './contact.js?v=5', './app.js?v=5',
+  './', './index.html', './styles.css?v=6',
+  './components.js?v=6', './features.js?v=6', './pages.js?v=6', './home.js?v=6',
+  './programs.js?v=6', './test-center.js?v=6', './contact.js?v=6', './app.js?v=6',
   './config.js', './sessions.json', './announcements.json',
   './manifest.webmanifest', './icon.svg', './logo.jpg',
   './apple-touch-icon.png', './icon-192.png', './icon-512.png',
