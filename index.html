@@ -74,7 +74,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
 
   <link rel="preload" as="image" href="/images/portrait-768w.webp" />
-  <link rel="stylesheet" href="/site.css?v=1" />
+  <link rel="stylesheet" href="/site.css?v=2" />
 </head>
 
 <body>
@@ -88,6 +88,7 @@
       <nav class="masthead-nav" aria-label="Sections">
         <a href="#profile">Profile</a>
         <a href="#competencies">Competencies</a>
+        <a href="#initiatives">Initiatives</a>
         <a href="#experience">Experience</a>
         <a href="#references">References</a>
         <a href="#education">Education</a>
@@ -104,6 +105,7 @@
 
     <!-- ════════ Hero ════════ -->
     <section class="hero" aria-label="Introduction">
+      <canvas id="hero-chart" aria-hidden="true"></canvas>
       <div class="hero-grid">
         <div class="hero-copy">
           <p class="kicker reveal-load" style="--d:0">OPERATIONS &nbsp;·&nbsp; CLIENT SUCCESS &nbsp;·&nbsp; FINANCIAL PRODUCTS</p>
@@ -111,7 +113,7 @@
             <span class="reveal-load" style="--d:1">Matin</span>
             <span class="reveal-load hero-name-accent" style="--d:2">Saiyed</span>
           </h1>
-          <p class="hero-role reveal-load" style="--d:3">Operations Associate, <span class="nowrap">Golden Quasar Inc.</span></p>
+          <p class="hero-role reveal-load" style="--d:3" data-scramble>Operations Associate, Golden Quasar Inc.</p>
           <p class="hero-summary reveal-load" style="--d:4">
             Hands-on ownership of project budgets, vendor invoices, and month-end close —
             alongside a Mutual Funds licence (CIFC, Ontario) and a CFA&nbsp;Level&nbsp;I
@@ -132,7 +134,7 @@
             <source type="image/webp" srcset="/images/portrait-480w.webp 480w, /images/portrait-768w.webp 768w, /images/portrait-1074w.webp 1074w" sizes="(max-width: 720px) 76vw, 360px" />
             <img src="/images/portrait.jpg" srcset="/images/portrait-480w.jpg 480w, /images/portrait-768w.jpg 768w" sizes="(max-width: 720px) 76vw, 360px" width="1074" height="1232" alt="Portrait of Matin Saiyed" />
           </picture>
-          <figcaption class="mono">CIFC LICENSED · ONTARIO</figcaption>
+          <figcaption class="portrait-chip mono">CIFC LICENSED · ONTARIO</figcaption>
         </figure>
       </div>
 
@@ -169,7 +171,44 @@
             College in April&nbsp;2025, and I'm a CFA&nbsp;Level&nbsp;I candidate for 2026.
           </p>
         </div>
-        <aside class="fact-sheet" aria-label="Quick facts">
+        <aside class="fact-sheet" aria-label="Quick facts and performance indicators">
+          <p class="panel-label mono">PERFORMANCE INDICATORS</p>
+          <div class="rings" role="list">
+            <div class="ring-item" role="listitem">
+              <svg class="ring" viewBox="0 0 76 76" data-pct="96" aria-hidden="true">
+                <circle class="ring-track" cx="38" cy="38" r="32" />
+                <circle class="ring-fill" cx="38" cy="38" r="32" />
+              </svg>
+              <span class="ring-value mono" data-ring-count="96" data-suffix="%">0%</span>
+              <span class="ring-label mono">CLIENT SAT.</span>
+            </div>
+            <div class="ring-item" role="listitem">
+              <svg class="ring" viewBox="0 0 76 76" data-pct="80" aria-hidden="true">
+                <circle class="ring-track" cx="38" cy="38" r="32" />
+                <circle class="ring-fill" cx="38" cy="38" r="32" />
+              </svg>
+              <span class="ring-value mono" data-ring-count="80" data-suffix="%">0%</span>
+              <span class="ring-label mono">CAPACITY</span>
+            </div>
+            <div class="ring-item" role="listitem">
+              <svg class="ring ring-green" viewBox="0 0 76 76" data-pct="25" aria-hidden="true">
+                <circle class="ring-track" cx="38" cy="38" r="32" />
+                <circle class="ring-fill" cx="38" cy="38" r="32" />
+              </svg>
+              <span class="ring-value mono up" data-ring-count="25" data-prefix="+" data-suffix="%">+0%</span>
+              <span class="ring-label mono">VS. TARGET</span>
+            </div>
+          </div>
+          <div class="qtr" aria-label="2024 quarterly performance above target">
+            <div class="qtr-bars" aria-hidden="true">
+              <i style="--h:64%"><b>18</b><span>Q1</span></i>
+              <i style="--h:78%"><b>22</b><span>Q2</span></i>
+              <i style="--h:100%"><b>28</b><span>Q3</span></i>
+              <i style="--h:89%"><b>25</b><span>Q4</span></i>
+            </div>
+            <p class="qtr-caption mono">FY 2024 · % ABOVE SALES TARGET, BY QUARTER</p>
+          </div>
+          <p class="panel-label mono">FACT SHEET</p>
           <dl>
             <div><dt>Location</dt><dd>Mississauga, ON</dd></div>
             <div><dt>Status</dt><dd>Open to opportunities</dd></div>
@@ -188,6 +227,32 @@
         <span class="item-no mono">ITEM 02</span>
         <h2>Core Competencies</h2>
       </header>
+
+      <div class="radar-row">
+        <figure class="radar-fig">
+          <svg id="radar" viewBox="0 0 360 330" role="img" aria-label="Competency radar: client relations 91, sales 88, operations 86, financial products 90, needs discovery 87, technical 83 out of 100">
+            <g class="radar-grid"></g>
+            <polygon class="radar-shape" points="" />
+            <g class="radar-dots"></g>
+            <g class="radar-labels"></g>
+          </svg>
+          <figcaption class="mono">COMPETENCY RADAR · INDEXED TO 100</figcaption>
+        </figure>
+        <div class="skills-index">
+          <p class="panel-label mono">SKILLS INDEX</p>
+          <div class="skillbar"><span>Target Achievement</span><span class="bar"><i style="--w:97%"></i></span><b class="mono">97</b></div>
+          <div class="skillbar"><span>Client Retention</span><span class="bar"><i style="--w:95%"></i></span><b class="mono">95</b></div>
+          <div class="skillbar"><span>Mutual Funds</span><span class="bar"><i style="--w:95%"></i></span><b class="mono">95</b></div>
+          <div class="skillbar"><span>Excel</span><span class="bar"><i style="--w:95%"></i></span><b class="mono">95</b></div>
+          <div class="skillbar"><span>Needs Assessment</span><span class="bar"><i style="--w:93%"></i></span><b class="mono">93</b></div>
+          <div class="skillbar"><span>Active Listening</span><span class="bar"><i style="--w:92%"></i></span><b class="mono">92</b></div>
+          <div class="skillbar"><span>RRSP / TFSA</span><span class="bar"><i style="--w:90%"></i></span><b class="mono">90</b></div>
+          <div class="skillbar"><span>Salesforce CRM</span><span class="bar"><i style="--w:88%"></i></span><b class="mono">88</b></div>
+          <div class="skillbar"><span>Regulatory Compliance</span><span class="bar"><i style="--w:88%"></i></span><b class="mono">88</b></div>
+          <div class="skillbar"><span>Power BI</span><span class="bar"><i style="--w:85%"></i></span><b class="mono">85</b></div>
+        </div>
+      </div>
+
       <div class="comp-grid">
         <article class="comp">
           <h3><span class="comp-index mono">2.1</span> Operations &amp; Financial Discipline</h3>
@@ -216,10 +281,44 @@
       </div>
     </section>
 
-    <!-- ════════ Item 03 · Experience ════════ -->
-    <section id="experience" class="item reveal">
+    <!-- ════════ Item 03 · Selected Initiatives ════════ -->
+    <section id="initiatives" class="item reveal">
       <header class="item-head">
         <span class="item-no mono">ITEM 03</span>
+        <h2>Selected Initiatives</h2>
+      </header>
+      <div class="initiatives-grid">
+        <article class="initiative">
+          <div class="initiative-figure mono"><span class="fig">96%</span><span class="fig-label">client satisfaction</span></div>
+          <h3>Client Onboarding Transformation</h3>
+          <p class="initiative-meta mono">GOLDEN QUASAR INC · JAN 2024 — APR 2025</p>
+          <p>Redesigned client onboarding from initial contact through the first 90 days — proactive communication touchpoints and personalized check-ins that dramatically improved retention.</p>
+        </article>
+        <article class="initiative">
+          <div class="initiative-figure mono"><span class="fig up">+25%</span><span class="fig-label">above target</span></div>
+          <h3>Sales Target Outperformance</h3>
+          <p class="initiative-meta mono">GOLDEN QUASAR INC · JAN 2024 — APR 2025</p>
+          <p>Consistently exceeded quarterly sales goals through strategic needs assessment and holistic financial recommendations, built on product knowledge and client trust.</p>
+        </article>
+        <article class="initiative">
+          <div class="initiative-figure mono"><span class="fig">100+</span><span class="fig-label">clients assessed</span></div>
+          <h3>Holistic Financial Planning</h3>
+          <p class="initiative-meta mono">GOLDEN QUASAR INC · JAN 2024 — APR 2025</p>
+          <p>Comprehensive needs assessments for each client — personalized recommendations across mutual funds, RRSP, TFSA, and GIC products aligned with individual goals.</p>
+        </article>
+        <article class="initiative">
+          <div class="initiative-figure mono"><span class="fig">5+</span><span class="fig-label">tools mastered</span></div>
+          <h3>CRM Platform Adoption</h3>
+          <p class="initiative-meta mono">GOLDEN QUASAR INC · JAN 2024 — APR 2025</p>
+          <p>Rapid adoption of new CRM platforms and digital tools — Salesforce for client tracking, pipeline management, and automated follow-up workflows.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- ════════ Item 04 · Experience ════════ -->
+    <section id="experience" class="item reveal">
+      <header class="item-head">
+        <span class="item-no mono">ITEM 04</span>
         <h2>Professional Experience</h2>
       </header>
 
@@ -343,7 +442,7 @@
     <!-- ════════ Item 04 · References ════════ -->
     <section id="references" class="item reveal">
       <header class="item-head">
-        <span class="item-no mono">ITEM 04</span>
+        <span class="item-no mono">ITEM 05</span>
         <h2>References &amp; Remarks</h2>
       </header>
       <div class="quotes">
@@ -369,7 +468,7 @@
     <!-- ════════ Item 05 · Education & Certifications ════════ -->
     <section id="education" class="item reveal">
       <header class="item-head">
-        <span class="item-no mono">ITEM 05</span>
+        <span class="item-no mono">ITEM 06</span>
         <h2>Education &amp; Certifications</h2>
       </header>
       <div class="edu-table" role="list">
@@ -400,10 +499,36 @@
       </div>
     </section>
 
-    <!-- ════════ Item 06 · Contact ════════ -->
+    <!-- ════════ Item 07 · CFA Study Atelier ════════ -->
+    <section id="atelier" class="item reveal">
+      <header class="item-head">
+        <span class="item-no mono">ITEM 07</span>
+        <h2>CFA Level I · Study Atelier</h2>
+      </header>
+      <div class="atelier-grid">
+        <div class="prose">
+          <p>
+            A self-built, self-contained study guide engineered for the 2026 exam. Every LOS,
+            every formula, every pitfall — with spaced repetition, a timed mock exam, and a
+            final three-week sprint plan. Installable and fully offline.
+          </p>
+          <a class="btn btn-primary" href="/cfa/index.html">Open the Study Atelier <span aria-hidden="true">→</span></a>
+        </div>
+        <div class="atelier-feats mono" role="list">
+          <div role="listitem"><b>93</b><span>MODULES — EVERY LOS COVERED</span></div>
+          <div role="listitem"><b>109</b><span>FORMULAS, WORKED EXAMPLES</span></div>
+          <div role="listitem"><b>SRS</b><span>FLASHCARDS · SPACED REPETITION</span></div>
+          <div role="listitem"><b>MOCK</b><span>PROCTORED, TIMED EXAM</span></div>
+          <div role="listitem"><b>RADAR</b><span>WEAKNESS TRACKING</span></div>
+          <div role="listitem"><b>21d</b><span>FINAL SPRINT PLAN</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════ Item 08 · Contact ════════ -->
     <section id="contact" class="item reveal">
       <header class="item-head">
-        <span class="item-no mono">ITEM 06</span>
+        <span class="item-no mono">ITEM 08</span>
         <h2>Contact</h2>
       </header>
       <div class="contact-grid">
@@ -411,6 +536,13 @@
           Whether you're looking for a dedicated finance professional, exploring a
           collaboration, or simply want to connect — I'd love to hear from you.
         </p>
+        <form id="contact-form" class="contact-form" aria-label="Send a message">
+          <label><span class="mono">YOUR NAME</span><input type="text" name="name" required autocomplete="name" /></label>
+          <label><span class="mono">YOUR EMAIL</span><input type="email" name="email" required autocomplete="email" /></label>
+          <label><span class="mono">MESSAGE</span><textarea name="message" rows="5" required></textarea></label>
+          <button class="btn btn-primary" type="submit">Compose Email <span aria-hidden="true">→</span></button>
+          <p class="form-note mono">OPENS YOUR MAIL APP — NOTHING IS SENT FROM THIS PAGE</p>
+        </form>
         <div class="contact-table mono" role="list">
           <a role="listitem" href="mailto:matinsaiyed310@gmail.com"><span>EMAIL</span>matinsaiyed310@gmail.com</a>
           <a role="listitem" href="tel:+16478709976"><span>PHONE</span>+1 (647) 870-9976</a>
@@ -422,6 +554,21 @@
 
   </main>
 
+  <!-- Section rail — desktop filing index -->
+  <nav class="rail" aria-label="Filing index">
+    <a href="#top" data-rail="top"><span class="mono">CV</span></a>
+    <a href="#profile" data-rail="profile"><span class="mono">01</span></a>
+    <a href="#competencies" data-rail="competencies"><span class="mono">02</span></a>
+    <a href="#initiatives" data-rail="initiatives"><span class="mono">03</span></a>
+    <a href="#experience" data-rail="experience"><span class="mono">04</span></a>
+    <a href="#references" data-rail="references"><span class="mono">05</span></a>
+    <a href="#education" data-rail="education"><span class="mono">06</span></a>
+    <a href="#atelier" data-rail="atelier"><span class="mono">07</span></a>
+    <a href="#contact" data-rail="contact"><span class="mono">08</span></a>
+  </nav>
+
+  <button id="back-to-top" class="mono" type="button" aria-label="Back to top">↑ TOP</button>
+
   <footer class="colophon">
     <div class="colophon-inner mono">
       <span>END OF FILING — THANK YOU FOR READING</span>
@@ -429,7 +576,7 @@
     </div>
   </footer>
 
-  <script src="/site.js?v=1" defer></script>
+  <script src="/site.js?v=2" defer></script>
 </body>
 
 </html>
