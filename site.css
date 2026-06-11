@@ -615,16 +615,7 @@ main { position: relative; z-index: 2; max-width: 1140px; margin: 0 auto; paddin
    atelier, rail, back-to-top, contact form
    ═══════════════════════════════════════════════════════════════ */
 
-/* hero market-line canvas */
 .hero { position: relative; }
-#hero-chart {
-  position: absolute;
-  inset: 0 0 64px 0;
-  width: 100%;
-  height: calc(100% - 64px);
-  pointer-events: none;
-  opacity: 0.5;
-}
 .hero-grid, .ticker { position: relative; }
 
 /* portrait certification chip */
@@ -1030,67 +1021,10 @@ main { position: relative; z-index: 2; max-width: 1140px; margin: 0 auto; paddin
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   Pointer-reactive layer — spotlight, crosshair, hover instruments
+   Quiet hover states — restraint, not theatre
    ═══════════════════════════════════════════════════════════════ */
 
-/* cursor spotlight (after-hours desk lamp) — hover devices only */
-#cursor-glow {
-  position: fixed;
-  inset: 0;
-  z-index: 3;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 600ms ease;
-  background: radial-gradient(
-    260px circle at var(--mx, 50%) var(--my, 40%),
-    color-mix(in srgb, var(--red) 5%, transparent),
-    transparent 70%
-  );
-}
-html[data-theme="dark"] #cursor-glow {
-  background: radial-gradient(
-    300px circle at var(--mx, 50%) var(--my, 40%),
-    color-mix(in srgb, var(--red) 9%, transparent),
-    transparent 70%
-  );
-}
-#cursor-glow.on { opacity: 1; }
-@media (hover: none) { #cursor-glow { display: none; } }
-
-/* hero crosshair readout (drawn on canvas; cursor hint here) */
-.hero { cursor: crosshair; }
-.hero a, .hero button { cursor: pointer; }
-
-/* portrait tilt */
-.hero-portrait { perspective: 700px; }
-.hero-portrait picture {
-  display: block;
-  transform: rotateX(var(--tx, 0deg)) rotateY(var(--ty, 0deg));
-  transition: transform 180ms ease-out;
-  will-change: transform;
-}
-
-/* item label scramble affordance */
-[data-scramble-hover] { cursor: default; }
-
-/* card hover instruments — registration tick reveals */
-.comp, .initiative { position: relative; }
-.comp::after, .initiative::after {
-  content: "";
-  position: absolute;
-  top: 7px;
-  right: 7px;
-  width: 14px;
-  height: 14px;
-  border-top: 2px solid var(--red);
-  border-right: 2px solid var(--red);
-  opacity: 0;
-  transform: translate(-4px, 4px);
-  transition: opacity 200ms ease, transform 200ms ease;
-}
-.comp:hover::after, .initiative:hover::after { opacity: 1; transform: none; }
-
-/* ledger entry hover — period inks red, row raises */
+/* ledger entry hover — period inks red */
 .entry { transition: background-color 200ms ease; }
 .entry:hover { background: color-mix(in srgb, var(--paper-raised) 55%, transparent); }
 .entry-period { transition: color 200ms ease; }

@@ -1,6 +1,5 @@
-/* matinsaiyed.com — theme, motion, and restored instruments
-   (hero market-line, ticker-board scramble, competency radar,
-    performance rings, section rail, back-to-top, contact form) */
+/* matinsaiyed.com — theme, reveals, and the two genuine instruments
+   (competency radar drill-down, reference selector). Restrained by design. */
 (function () {
   'use strict';
 
@@ -25,7 +24,6 @@
       root.dataset.theme = next;
       localStorage.setItem('ms-theme', next);
       syncLabel();
-      drawChartSoon(); // re-ink the hero chart in the new palette
     });
   }
 
@@ -33,216 +31,23 @@
     if (!localStorage.getItem('ms-theme')) {
       root.dataset.theme = e.matches ? 'dark' : 'light';
       syncLabel();
-      drawChartSoon();
     }
   });
 
-  /* ── Hero market-line canvas ──────────────────────────────────
-     A slow-drifting index chart behind the hero — the after-hours
-     tape. Two series: ink (faint) and red (accent). Static when
-     prefers-reduced-motion. */
-  var canvas = document.getElementById('hero-chart');
-  var ctx = canvas && canvas.getContext('2d');
-  var chartT = 0;
-  var rafId = null;
-  var heroVisible = true;
-
-  function cssVar(name) {
-    return getComputedStyle(root).getPropertyValue(name).trim();
-  }
-
-  // Deterministic smooth pseudo-noise (sum of sines) — seedless and seamless.
-  function series(t, x, seed) {
-    return (
-      Math.sin(x * 0.013 + t + seed) * 0.45 +
-      Math.sin(x * 0.031 + t * 1.7 + seed * 2.1) * 0.3 +
-      Math.sin(x * 0.007 - t * 0.6 + seed * 3.7) * 0.25
-    );
-  }
-
-  var pointer = { x: -1, y: -1 }; // hero-local pointer for the crosshair
-
-  function drawChart() {
-    if (!ctx) return;
-    var dpr = Math.min(devicePixelRatio || 1, 2);
-    var w = canvas.clientWidth, h = canvas.clientHeight;
-    if (!w || !h) return;
-    if (canvas.width !== w * dpr) { canvas.width = w * dpr; canvas.height = h * dpr; }
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, w, h);
-
-    var ink = cssVar('--ink-faint') || '#8d8474';
-    var red = cssVar('--red') || '#9e1b1b';
-    var base = h * 0.62, amp = h * 0.2;
-    var accent = { seed: 4.1, dy: h * 0.06 };
-
-    [{ color: ink, alpha: 0.16, seed: 1.3, dy: 0 },
-     { color: red, alpha: 0.22, seed: accent.seed, dy: accent.dy }].forEach(function (s) {
-      ctx.beginPath();
-      for (var x = 0; x <= w; x += 4) {
-        var y = base + s.dy + series(chartT, x, s.seed) * amp;
-        if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-      }
-      ctx.strokeStyle = s.color;
-      ctx.globalAlpha = s.alpha;
-      ctx.lineWidth = 1.25;
-      ctx.stroke();
-      // soft area under the accent line
-      if (s.color === red) {
-        ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath();
-        ctx.globalAlpha = s.alpha * 0.25;
-        ctx.fillStyle = s.color;
-        ctx.fill();
-      }
-      ctx.globalAlpha = 1;
-    });
-
-    /* trading-terminal crosshair: hairline + node + index readout */
-    if (pointer.x >= 0 && pointer.x <= w && pointer.y >= 0 && pointer.y <= h) {
-      var px = pointer.x;
-      var py = base + accent.dy + series(chartT, px, accent.seed) * amp;
-      ctx.strokeStyle = ink;
-      ctx.globalAlpha = 0.35;
-      ctx.setLineDash([3, 4]);
-      ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, h); ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.globalAlpha = 1;
-      ctx.fillStyle = red;
-      ctx.beginPath(); ctx.arc(px, py, 3.5, 0, Math.PI * 2); ctx.fill();
-      var idx = (1180 + series(chartT, px, accent.seed) * 240);
-      var lblText = 'MS-IDX ' + idx.toFixed(2);
-      ctx.font = '11px "IBM Plex Mono", monospace';
-      var tw = ctx.measureText(lblText).width + 12;
-      var lx = Math.min(px + 10, w - tw - 4);
-      ctx.globalAlpha = 0.92;
-      ctx.fillStyle = cssVar('--ink') || '#211d17';
-      ctx.fillRect(lx, py - 22, tw, 17);
-      ctx.fillStyle = cssVar('--paper') || '#f5f1e8';
-      ctx.fillText(lblText, lx + 6, py - 10);
-      ctx.globalAlpha = 1;
+  /* ── Count-up (ticker + rings) ────────────────────────────── */
+  function countUp(node, target, prefix, suffix) {
+    if (reduced) { node.textContent = prefix + target + suffix; return; }
+    var start = null, dur = 1000;
+    function tick(ts) {
+      if (start === null) start = ts;
+      var p = Math.min((ts - start) / dur, 1);
+      node.textContent = prefix + Math.round(target * (1 - Math.pow(1 - p, 3))) + suffix;
+      if (p < 1) requestAnimationFrame(tick);
     }
+    requestAnimationFrame(tick);
   }
 
-  function tickChart() {
-    chartT += 0.0035;
-    drawChart();
-    rafId = heroVisible ? requestAnimationFrame(tickChart) : null;
-  }
-
-  var drawTimer = null;
-  function drawChartSoon() {
-    clearTimeout(drawTimer);
-    drawTimer = setTimeout(drawChart, 340); // after the theme transition settles
-  }
-
-  if (canvas) {
-    drawChart();
-    if (!reduced) {
-      if ('IntersectionObserver' in window) {
-        new IntersectionObserver(function (en) {
-          heroVisible = en[0].isIntersecting;
-          if (heroVisible && rafId === null) rafId = requestAnimationFrame(tickChart);
-        }).observe(canvas);
-      }
-      rafId = requestAnimationFrame(tickChart);
-    }
-    addEventListener('resize', drawChart, { passive: true });
-  }
-
-  /* pointer tracking for the hero crosshair (hover devices) */
-  var hoverable = matchMedia('(hover: hover)').matches;
-  var hero = document.querySelector('.hero');
-  if (hero && canvas && hoverable) {
-    hero.addEventListener('pointermove', function (e) {
-      var r = canvas.getBoundingClientRect();
-      pointer.x = e.clientX - r.left;
-      pointer.y = e.clientY - r.top;
-      if (reduced) drawChart(); // static chart still gets a live crosshair
-    });
-    hero.addEventListener('pointerleave', function () {
-      pointer.x = -1; pointer.y = -1;
-      if (reduced) drawChart();
-    });
-  }
-
-  /* cursor spotlight — eased follow */
-  var glow = document.getElementById('cursor-glow');
-  if (glow && hoverable) {
-    var gx = innerWidth / 2, gy = innerHeight / 3, tx2 = gx, ty2 = gy, glowRaf = null;
-    function glowTick() {
-      gx += (tx2 - gx) * 0.16;
-      gy += (ty2 - gy) * 0.16;
-      glow.style.setProperty('--mx', gx + 'px');
-      glow.style.setProperty('--my', gy + 'px');
-      if (Math.abs(tx2 - gx) + Math.abs(ty2 - gy) > 0.4) glowRaf = requestAnimationFrame(glowTick);
-      else glowRaf = null;
-    }
-    addEventListener('pointermove', function (e) {
-      tx2 = e.clientX; ty2 = e.clientY;
-      glow.classList.add('on');
-      if (reduced) {
-        glow.style.setProperty('--mx', tx2 + 'px');
-        glow.style.setProperty('--my', ty2 + 'px');
-      } else if (glowRaf === null) glowRaf = requestAnimationFrame(glowTick);
-    }, { passive: true });
-    document.documentElement.addEventListener('pointerleave', function () { glow.classList.remove('on'); });
-  }
-
-  /* portrait tilt — a nod to the old 3D scene */
-  var portrait = document.querySelector('.hero-portrait');
-  if (portrait && hoverable && !reduced) {
-    var pic = portrait.querySelector('picture');
-    portrait.addEventListener('pointermove', function (e) {
-      var r = portrait.getBoundingClientRect();
-      var dx = (e.clientX - r.left) / r.width - 0.5;
-      var dy = (e.clientY - r.top) / r.height - 0.5;
-      pic.style.setProperty('--ty', (dx * 7) + 'deg');
-      pic.style.setProperty('--tx', (-dy * 7) + 'deg');
-    });
-    portrait.addEventListener('pointerleave', function () {
-      pic.style.setProperty('--tx', '0deg');
-      pic.style.setProperty('--ty', '0deg');
-    });
-  }
-
-  /* ── Ticker-board scramble (hero role) ────────────────────── */
-  var GLYPHS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789·—';
-
-  function scramble(el) {
-    if (reduced || el.dataset.scrambling) return;
-    el.dataset.scrambling = '1';
-    var final = el.dataset.final || el.textContent;
-    el.dataset.final = final;
-    var frame = 0;
-    var total = Math.max(22, final.length + 12);
-    function step() {
-      var settle = Math.floor((frame / total) * final.length);
-      var out = '';
-      for (var i = 0; i < final.length; i++) {
-        var ch = final[i];
-        out += (i < settle || ch === ' ' || ch === ',' || ch === '.')
-          ? ch
-          : GLYPHS[(Math.random() * GLYPHS.length) | 0];
-      }
-      el.textContent = out;
-      if (++frame <= total) requestAnimationFrame(step);
-      else { el.textContent = final; delete el.dataset.scrambling; }
-    }
-    requestAnimationFrame(step);
-  }
-
-  document.querySelectorAll('[data-scramble]').forEach(function (el) {
-    setTimeout(function () { scramble(el); }, 320);        // settle on load…
-    el.addEventListener('pointerenter', function () { scramble(el); }); // …re-flip on hover
-  });
-
-  // section ITEM labels flicker like a departures board on hover
-  document.querySelectorAll('[data-scramble-hover]').forEach(function (el) {
-    var head = el.closest('.item-head') || el;
-    head.addEventListener('pointerenter', function () { scramble(el); });
-  });
-
-  /* ── Competency radar (inline SVG, interactive) ───────────── */
+  /* ── Competency radar (inline SVG, drill-down) ────────────── */
   var radar = document.getElementById('radar');
   var AXES = [
     { label: 'CLIENT RELATIONS', v: 91, skills: [
@@ -264,7 +69,6 @@
     ['Regulatory Compliance', 88], ['Power BI', 85]
   ];
 
-  /* skills panel renderer — rows rebuilt per selection, bars re-animate */
   var skillsRows = document.getElementById('skills-rows');
   var skillsTitle = document.getElementById('skills-title');
   var skillsReset = document.getElementById('skills-reset');
@@ -274,10 +78,25 @@
   function renderSkills(list, title) {
     if (!skillsRows) return;
     skillsTitle.textContent = title;
-    skillsRows.innerHTML = list.map(function (s) {
-      return '<div class="skillbar"><span>' + s[0] + '</span><span class="bar"><i style="--w:' + s[1] +
-        '%"></i></span><b class="mono">' + s[1] + '</b></div>';
-    }).join('');
+    skillsRows.textContent = '';
+    list.forEach(function (s) {
+      var row = document.createElement('div');
+      row.className = 'skillbar';
+      var name = document.createElement('span');
+      name.textContent = s[0];
+      var bar = document.createElement('span');
+      bar.className = 'bar';
+      var fill = document.createElement('i');
+      fill.style.setProperty('--w', s[1] + '%');
+      bar.appendChild(fill);
+      var val = document.createElement('b');
+      val.className = 'mono';
+      val.textContent = s[1];
+      row.appendChild(name);
+      row.appendChild(bar);
+      row.appendChild(val);
+      skillsRows.appendChild(row);
+    });
     if (skillsIndexEl) {
       skillsIndexEl.classList.remove('armed');
       requestAnimationFrame(function () {
@@ -336,9 +155,8 @@
     AXES.forEach(function (a, i) {
       var g = el('g', { 'class': 'radar-hit', role: 'button', tabindex: 0,
         'aria-pressed': 'false',
-        'aria-label': a.label + ' — ' + a.v + ' out of 100. Activate to drill into these skills.' }, dots);
+        'aria-label': a.label + ' — ' + a.v + ' out of 100. Activate to see these skills.' }, dots);
       var p = pt(i, R * a.v / 100);
-      // generous invisible hit area around the node
       el('circle', { cx: p[0], cy: p[1], r: 16, fill: 'transparent' }, g);
       el('circle', { cx: p[0], cy: p[1], r: 3, 'class': 'radar-dot' }, g);
       var lp = pt(i, R + 24);
@@ -358,14 +176,14 @@
     });
   }
 
-  /* ── Scroll reveals (+ arm rings when visible) ────────────── */
+  /* ── Scroll reveals (+ arm rings / skill bars when visible) ── */
   function armRings(scope) {
     if (scope.querySelector && scope.querySelector('#skills-index')) {
       scope.querySelector('#skills-index').classList.add('armed');
     }
     scope.querySelectorAll('.ring').forEach(function (svg) {
       var pct = parseFloat(svg.dataset.pct) || 0;
-      var C = 2 * Math.PI * 32; // r=32 → ≈201
+      var C = 2 * Math.PI * 32;
       svg.querySelector('.ring-fill').style.setProperty('--off', String(C * (1 - pct / 100)));
     });
     scope.querySelectorAll('[data-ring-count]').forEach(function (n) {
@@ -394,19 +212,6 @@
     });
   }
 
-  /* ── Count-up (ticker + rings) ────────────────────────────── */
-  function countUp(node, target, prefix, suffix) {
-    if (reduced) { node.textContent = prefix + target + suffix; return; }
-    var start = null, dur = 1100;
-    function tick(ts) {
-      if (start === null) start = ts;
-      var p = Math.min((ts - start) / dur, 1);
-      node.textContent = prefix + Math.round(target * (1 - Math.pow(1 - p, 3))) + suffix;
-      if (p < 1) requestAnimationFrame(tick);
-    }
-    requestAnimationFrame(tick);
-  }
-
   if (!reduced && 'IntersectionObserver' in window) {
     var cio = new IntersectionObserver(function (entries) {
       entries.forEach(function (en) {
@@ -417,6 +222,69 @@
       });
     }, { threshold: 0.4 });
     document.querySelectorAll('[data-count]').forEach(function (el) { cio.observe(el); });
+  }
+
+  /* ── Reference selector (manual; no auto-advance) ─────────── */
+  var QUOTES = [
+    { text: '“Matin has a rare combination of analytical thinking and genuine empathy for clients. He doesn’t just meet targets — he builds relationships that make those targets sustainable. His capacity growth work was nothing short of transformative.”',
+      who: 'Regional Operations Director', what: 'Direct Supervisor · Prometric Center' },
+    { text: '“What sets Matin apart is his ability to truly listen. He took the time to understand my financial goals before recommending any products. I felt like a person, not a transaction. That level of care is rare in financial services.”',
+      who: 'Investment Client', what: 'Client · Golden Quasar Inc' },
+    { text: '“During our collaboration at Collision Conference, Matin led a team of 20 volunteers with remarkable composure. He balanced operational demands with team morale in a way that felt effortless, though I know it wasn’t.”',
+      who: 'Event Coordinator', what: 'Program Manager · Web Summit / Collision' },
+    { text: '“Matin brought a fresh perspective to our research division. His financial models were thorough, his client presentations were polished, and he consistently went beyond what was asked. A natural self-starter with a strong work ethic.”',
+      who: 'Research Team Lead', what: 'Senior Analyst · Investor Quotient IQ' }
+  ];
+
+  var exQuote = document.getElementById('exhibit-quote');
+  if (exQuote) {
+    var exText = document.getElementById('exhibit-text');
+    var exCite = document.getElementById('exhibit-cite');
+    var exRole = document.getElementById('exhibit-role');
+    var exList = document.getElementById('exhibit-list');
+    var exCounter = document.getElementById('exhibit-counter');
+    var exIdx = 0;
+
+    QUOTES.forEach(function (q, i) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'exhibit-item';
+      b.setAttribute('role', 'tab');
+      b.setAttribute('aria-selected', i === 0 ? 'true' : 'false');
+      var who = document.createElement('span');
+      who.className = 'who';
+      who.textContent = q.who;
+      var what = document.createElement('span');
+      what.className = 'what';
+      what.textContent = q.what;
+      b.appendChild(who);
+      b.appendChild(what);
+      b.addEventListener('click', function () { showQuote(i); });
+      exList.appendChild(b);
+    });
+    var exItems = exList.querySelectorAll('.exhibit-item');
+
+    function setQuote(i) {
+      exText.textContent = QUOTES[i].text;
+      exCite.textContent = QUOTES[i].who;
+      exRole.textContent = QUOTES[i].what;
+      exCounter.textContent = (i + 1) + ' / ' + QUOTES.length;
+      exItems.forEach(function (b, bi) { b.setAttribute('aria-selected', bi === i ? 'true' : 'false'); });
+    }
+
+    function showQuote(i) {
+      exIdx = (i + QUOTES.length) % QUOTES.length;
+      if (reduced) { setQuote(exIdx); return; }
+      exQuote.classList.add('fading');
+      setTimeout(function () {
+        setQuote(exIdx);
+        exQuote.classList.remove('fading');
+      }, 220);
+    }
+
+    document.getElementById('exhibit-prev').addEventListener('click', function () { showQuote(exIdx - 1); });
+    document.getElementById('exhibit-next').addEventListener('click', function () { showQuote(exIdx + 1); });
+    setQuote(0);
   }
 
   /* ── Section rail — active tracking ───────────────────────── */
@@ -451,72 +319,6 @@
     topBtn.addEventListener('click', function () {
       scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' });
     });
-  }
-
-  /* ── Reference exhibit (testimonial carousel) ─────────────── */
-  var QUOTES = [
-    { text: '\u201cMatin has a rare combination of analytical thinking and genuine empathy for clients. He doesn\u2019t just meet targets \u2014 he builds relationships that make those targets sustainable. His capacity growth work was nothing short of transformative.\u201d',
-      who: 'Regional Operations Director', what: 'DIRECT SUPERVISOR · PROMETRIC CENTER' },
-    { text: '\u201cWhat sets Matin apart is his ability to truly listen. He took the time to understand my financial goals before recommending any products. I felt like a person, not a transaction. That level of care is rare in financial services.\u201d',
-      who: 'Investment Client', what: 'CLIENT · GOLDEN QUASAR INC' },
-    { text: '\u201cDuring our collaboration at Collision Conference, Matin led a team of 20 volunteers with remarkable composure. He balanced operational demands with team morale in a way that felt effortless, though I know it wasn\u2019t.\u201d',
-      who: 'Event Coordinator', what: 'PROGRAM MANAGER · WEB SUMMIT / COLLISION' },
-    { text: '\u201cMatin brought a fresh perspective to our research division. His financial models were thorough, his client presentations were polished, and he consistently went beyond what was asked. A natural self-starter with a strong work ethic.\u201d',
-      who: 'Research Team Lead', what: 'SENIOR ANALYST · INVESTOR QUOTIENT IQ' }
-  ];
-
-  var exQuote = document.getElementById('exhibit-quote');
-  if (exQuote) {
-    var exText = document.getElementById('exhibit-text');
-    var exCite = document.getElementById('exhibit-cite');
-    var exRole = document.getElementById('exhibit-role');
-    var exList = document.getElementById('exhibit-list');
-    var exCounter = document.getElementById('exhibit-counter');
-    var exIdx = 0;
-    var exTimer = null;
-
-    QUOTES.forEach(function (q, i) {
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'exhibit-item';
-      b.setAttribute('role', 'tab');
-      b.setAttribute('aria-selected', i === 0 ? 'true' : 'false');
-      b.innerHTML = '<span class="who">' + q.who + '</span><span class="what">' + q.what + '</span>';
-      b.addEventListener('click', function () { showQuote(i, true); });
-      exList.appendChild(b);
-    });
-    var exItems = exList.querySelectorAll('.exhibit-item');
-
-    function setQuote(i) {
-      exText.textContent = QUOTES[i].text;
-      exCite.textContent = QUOTES[i].who;
-      exRole.textContent = QUOTES[i].what.toLowerCase();
-      exCounter.textContent = (i + 1) + ' / ' + QUOTES.length;
-      exItems.forEach(function (b, bi) { b.setAttribute('aria-selected', bi === i ? 'true' : 'false'); });
-    }
-
-    function showQuote(i, manual) {
-      exIdx = (i + QUOTES.length) % QUOTES.length;
-      if (manual) stopAuto();
-      if (reduced) { setQuote(exIdx); return; }
-      exQuote.classList.add('fading');
-      setTimeout(function () {
-        setQuote(exIdx);
-        exQuote.classList.remove('fading');
-      }, 270);
-    }
-
-    function stopAuto() {
-      if (exTimer) { clearInterval(exTimer); exTimer = null; }
-    }
-
-    document.getElementById('exhibit-prev').addEventListener('click', function () { showQuote(exIdx - 1, true); });
-    document.getElementById('exhibit-next').addEventListener('click', function () { showQuote(exIdx + 1, true); });
-    exQuote.addEventListener('mouseenter', stopAuto);
-
-    setQuote(0);
-    // auto-advance until the reader interacts
-    if (!reduced) exTimer = setInterval(function () { showQuote(exIdx + 1, false); }, 8000);
   }
 
   /* ── Contact form → composes an email locally ─────────────── */
