@@ -102,41 +102,17 @@ import * as THREE from 'three';
     return m;
   }
 
-  var spinners = [];
-  function turbine(x, z, group) {
-    var g = new THREE.Group();
-    g.position.set(x, 0, z);
-    var pole = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.055, 2.3, 10), WHITE);
-    pole.position.y = 1.15; pole.castShadow = true;
-    g.add(pole);
-    var hub = new THREE.Group();
-    hub.position.set(0, 2.32, 0.08);
-    for (var i = 0; i < 3; i++) {
-      var blade = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.95, 0.045), WHITE);
-      blade.position.y = 0.45;
-      var arm = new THREE.Group();
-      arm.rotation.z = i * Math.PI * 2 / 3;
-      arm.add(blade);
-      hub.add(arm);
-    }
-    g.add(hub);
-    spinners.push(hub);
-    (group || world).add(g);
-  }
 
-  function coolingTower(x, z, s, group) {
-    s = s || 1;
-    var pts = [];
-    for (var i = 0; i <= 12; i++) {
-      var t = i / 12;
-      var r = 0.85 - 0.42 * Math.sin(t * 2.4) + 0.18 * t * t;
-      pts.push(new THREE.Vector2(r * s, t * 2.4 * s));
+
+  var COIN = new THREE.MeshStandardMaterial({ color: 0xf2ead8, roughness: 0.45, metalness: 0.25 });
+  function coinStack(x, z, count, group) {
+    for (var i = 0; i < count; i++) {
+      var c = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.34, 0.085, 22), COIN);
+      c.position.set(x + (i % 2) * 0.03, 0.045 + i * 0.09, z + ((i * 3) % 2) * 0.03);
+      if (i === count - 1) { c.rotation.y = 0.5; }
+      c.castShadow = true; c.receiveShadow = true;
+      (group || world).add(c);
     }
-    var m = new THREE.Mesh(new THREE.LatheGeometry(pts, 30), WHITE);
-    m.position.set(x, 0, z);
-    m.castShadow = true; m.receiveShadow = true;
-    (group || world).add(m);
-    m.userData.baseY = 0;
   }
 
   function containerStack(x, z, cols, rows, group) {
@@ -161,14 +137,15 @@ import * as THREE from 'three';
     box(1.5, 2.6, 1.5, -4.6, 2.6); box(1.1, 1.7, 1.1, -3.2, 3.4);
     box(1.6, 3.4, 1.6, 4.8, 2.2); box(1.2, 2.0, 1.2, 6.2, 3.2);
     box(2.4, 1.1, 1.6, 5.7, -2.4, null, { ry: 0.4 });
-    coolingTower(-9.2, -4.6, 1);
-    coolingTower(-7.4, -6.2, 0.78);
-    containerStack(-7.6, 1.6, 3, 3);
-    turbine(8.6, 0.8); turbine(9.8, 2.6); turbine(10.6, -0.6);
-    box(1.0, 0.5, 2.0, 2.8, 4.6, null, { ry: -0.25 }); // truck-ish slab
-    containerStack(-3.4, 6.2, 3, 2);
+    // financial-district skyline: stepped podium (a bar chart in architecture)
+    box(0.9, 0.7, 0.9, -8.6, -3.4); box(0.9, 1.3, 0.9, -7.5, -4.0);
+    box(0.9, 2.0, 0.9, -6.4, -4.6); box(0.9, 2.8, 0.9, -5.3, -5.2);
+    coinStack(-7.8, -1.8, 5); coinStack(-6.9, -1.2, 3);
+    box(1.0, 0.5, 2.0, 2.8, 4.6, null, { ry: -0.25 }); // low annex
+    coinStack(8.9, 0.9, 6); coinStack(9.7, 1.7, 4); coinStack(10.3, 0.3, 2);
     box(1.7, 0.8, 1.2, -6.4, 5.4, null, { ry: 0.2 });
     box(0.8, 1.4, 0.8, -8.2, 4.0);
+    containerStack(-3.4, 6.2, 3, 2); // archive boxes
   })();
 
   // 01 — research roots: scattered startup blocks + HQ
@@ -202,8 +179,18 @@ import * as THREE from 'three';
     for (var i = 0; i < hs.length; i++)
       box(0.95, hs[i], 0.95, c.x - 2.4 + i * 1.25, c.z + 0.4);
     box(2.2, 0.9, 1.4, c.x + 0.4, c.z - 2.4, null, { ry: 0.3 });
-    turbine(c.x - 4.2, c.z - 2.2);
-    coolingTower(c.x + 4.4, c.z + 2.2, 0.85);
+    // chart trend line over the bar tops
+    var trendPts = hs.map(function (h, i) {
+      return new THREE.Vector3(c.x - 2.4 + i * 1.25, h + 0.32, c.z + 0.4);
+    });
+    trendPts.push(new THREE.Vector3(c.x - 2.4 + hs.length * 1.25, hs[hs.length - 1] + 1.05, c.z + 0.4));
+    var trend = new THREE.Mesh(
+      new THREE.TubeGeometry(new THREE.CatmullRomCurve3(trendPts), 40, 0.045, 8, false),
+      new THREE.MeshStandardMaterial({ color: 0x8fa7c4, roughness: 0.5 }));
+    trend.castShadow = true;
+    world.add(trend);
+    coinStack(c.x - 4.2, c.z - 2.2, 4);
+    coinStack(c.x + 4.4, c.z + 2.2, 6); coinStack(c.x + 5.2, c.z + 1.5, 3);
   })();
 
   // 04 — operations owned: arrow monument + diamond frames
@@ -225,10 +212,10 @@ import * as THREE from 'three';
     [[2.8, -2.2], [-2.6, -1.6], [3.0, 1.8], [-1.8, 2.8]].forEach(function (o, i) {
       var d = box(0.85, 0.16, 0.85, c.x + o[0], c.z + o[1], null, { y: 0.18 });
       d.rotation.y = Math.PI / 4;
-      var inner = box(0.45, 0.18, 0.45, c.x + o[0], c.z + o[1], null, { y: 0.2, still: true });
-      inner.rotation.y = Math.PI / 4;
+      var stackN = 3 + (i % 3) * 2;
+      coinStack(c.x + o[0] * 1.45, c.z + o[1] * 1.45, stackN);
     });
-    containerStack(c.x - 4.6, c.z + 2.6, 3, 2);
+    containerStack(c.x - 4.6, c.z + 2.6, 3, 2); // archive boxes
   })();
 
   // mid-route patches so no stretch reads empty
@@ -236,11 +223,11 @@ import * as THREE from 'three';
     // between d2 and d3
     box(1.1, 1.7, 1.1, 8.5, -25.5); box(0.8, 0.9, 0.8, 7.2, -24.2);
     containerStack(5.4, -27.4, 2, 3);
-    coolingTower(12.5, -23.5, 0.7);
+    coinStack(12.5, -23.5, 5); coinStack(13.3, -24.2, 3);
     // between d3 and d4
     box(1.3, 2.2, 1.3, 19.5, -35.5); box(0.9, 1.2, 0.9, 21.2, -34.0);
     containerStack(17.0, -38.2, 3, 2);
-    turbine(23.5, -32.0); turbine(24.8, -33.8);
+    coinStack(23.5, -32.0, 6); coinStack(24.6, -33.4, 4); coinStack(25.2, -31.4, 2);
     // around the monument's far side
     box(1.0, 1.5, 1.0, 30.5, -42.5); box(0.7, 0.8, 0.7, 29.0, -44.0);
   })();
@@ -249,7 +236,7 @@ import * as THREE from 'three';
   [[-13, -4], [-3, -15], [7, -16], [-1, -27], [9, -25], [19, -25], [20, -36], [10, -37], [30, -35]].forEach(function (p, i) {
     if (i % 3 === 0) containerStack(p[0], p[1], 2, 2);
     else if (i % 3 === 1) box(0.9 + (i % 2) * 0.5, 0.7 + (i % 4) * 0.45, 0.9, p[0], p[1]);
-    else turbine(p[0], p[1]);
+    else coinStack(p[0], p[1], 3 + (i % 4));
   });
 
   /* ── The glowing path ─────────────────────────────────────── */
@@ -263,8 +250,8 @@ import * as THREE from 'three';
   var beamUniforms = {
     uProgress: { value: 0 },
     uWake: { value: 0 },
-    uColor: { value: new THREE.Color(0x6fd6ff) },
-    uHot: { value: new THREE.Color(0xeafaff) }
+    uColor: { value: new THREE.Color(0xffb554) },
+    uHot: { value: new THREE.Color(0xfff4dd) }
   };
   var beamMat = new THREE.ShaderMaterial({
     uniforms: beamUniforms,
@@ -298,7 +285,7 @@ import * as THREE from 'three';
   var DOTS = isMobile ? 700 : 1500;
   var dotGeo = new THREE.CircleGeometry(0.08, 8);
   dotGeo.rotateX(-Math.PI / 2);
-  var dotMat = new THREE.MeshBasicMaterial({ color: 0x7adcff, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false });
+  var dotMat = new THREE.MeshBasicMaterial({ color: 0xffc878, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false });
   var dots = new THREE.InstancedMesh(dotGeo, dotMat, DOTS);
   var dotBase = [];
   (function placeDots() {
@@ -328,8 +315,8 @@ import * as THREE from 'three';
     var x = c.getContext('2d');
     var g = x.createRadialGradient(64, 64, 2, 64, 64, 62);
     g.addColorStop(0, 'rgba(255,255,255,1)');
-    g.addColorStop(0.25, 'rgba(170,235,255,0.85)');
-    g.addColorStop(1, 'rgba(110,210,255,0)');
+    g.addColorStop(0.25, 'rgba(255,216,150,0.85)');
+    g.addColorStop(1, 'rgba(255,176,80,0)');
     x.fillStyle = g;
     x.fillRect(0, 0, 128, 128);
     return new THREE.CanvasTexture(c);
@@ -337,7 +324,7 @@ import * as THREE from 'three';
   var comet = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
   comet.scale.setScalar(2.4);
   scene.add(comet);
-  var cometLight = new THREE.PointLight(0x6fd6ff, 14, 9, 1.6);
+  var cometLight = new THREE.PointLight(0xffb554, 14, 9, 1.6);
   scene.add(cometLight);
 
   /* ── Scroll choreography ──────────────────────────────────── */
@@ -449,6 +436,10 @@ import * as THREE from 'three';
     }
     dots.instanceMatrix.needsUpdate = true;
 
+    // cinematic push-in as the story builds
+    var zoom = 1 + 0.12 * progress;
+    if (Math.abs(camera.zoom - zoom) > 0.001) { camera.zoom = zoom; camera.updateProjectionMatrix(); }
+
     // camera rides the head; gentle mouse parallax
     var px = (mousePx.x - 0.5) * 1.6, pz = (mousePx.y - 0.5) * 1.2;
     camPos.copy(headPos).add(ISO);
@@ -458,8 +449,6 @@ import * as THREE from 'three';
     sun.target.position.copy(headPos);
     sun.position.set(headPos.x - 7, 34, headPos.z + 5);
 
-    // turbines spin
-    for (var k = 0; k < spinners.length; k++) spinners[k].rotation.z += dt * 1.6;
 
     // overlays
     var heroFade = THREE.MathUtils.clamp(1 - progress / 0.07, 0, 1);

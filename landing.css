@@ -9,7 +9,7 @@
   --ink: #0e1118;
   --ink-soft: #3c4350;
   --ink-faint: #707a89;
-  --glow: #46c8ff;
+  --glow: #f0a83e;
   --navy: #0a0c14;
   --paper: #ffffff;
 }
@@ -179,6 +179,13 @@ a { color: inherit; }
   transition: background-color 240ms ease, color 240ms ease, box-shadow 240ms ease;
   align-self: start;
 }
+.step-date {
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+  margin-left: 8px;
+  vertical-align: 2px;
+}
 .step h3 {
   font-family: "Archivo", sans-serif;
   font-weight: 600;
@@ -238,6 +245,17 @@ a { color: inherit; }
   margin: 0 0 12px;
 }
 .strip-col p { font-size: 14px; line-height: 1.62; color: var(--ink-soft); margin: 0; }
+
+.credentials {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 36px;
+  padding: 0 clamp(24px, 6vw, 90px) clamp(60px, 8vw, 100px);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}
+.credentials span { border-left: 2px solid var(--glow); padding-left: 10px; }
 
 .proof {
   display: grid;
