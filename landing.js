@@ -55,7 +55,8 @@ import * as THREE from 'three';
   }
 
   /* ── Lights ───────────────────────────────────────────────── */
-  scene.add(new THREE.HemisphereLight(0xffffff, 0xd2dfee, 1.5));
+  var hemi = new THREE.HemisphereLight(0xffffff, 0xd2dfee, 1.5);
+  scene.add(hemi);
   var sun = new THREE.DirectionalLight(0xffffff, 1.05);
   sun.position.set(-7, 34, 5);
   sun.castShadow = true;
@@ -69,6 +70,7 @@ import * as THREE from 'three';
   /* ── Materials ────────────────────────────────────────────── */
   var WHITE = new THREE.MeshStandardMaterial({ color: 0xf7fafd, roughness: 0.62 });
   var GROUND_MAT = new THREE.MeshStandardMaterial({ color: 0xe8eff8, roughness: 1 });
+  var TREND_MAT = new THREE.MeshStandardMaterial({ color: 0x8fa7c4, roughness: 0.5 });
 
   var ground = new THREE.Mesh(new THREE.PlaneGeometry(220, 220), GROUND_MAT);
   ground.rotation.x = -Math.PI / 2;
@@ -186,7 +188,7 @@ import * as THREE from 'three';
     trendPts.push(new THREE.Vector3(c.x - 2.4 + hs.length * 1.25, hs[hs.length - 1] + 1.05, c.z + 0.4));
     var trend = new THREE.Mesh(
       new THREE.TubeGeometry(new THREE.CatmullRomCurve3(trendPts), 40, 0.045, 8, false),
-      new THREE.MeshStandardMaterial({ color: 0x8fa7c4, roughness: 0.5 }));
+      TREND_MAT);
     trend.castShadow = true;
     world.add(trend);
     coinStack(c.x - 4.2, c.z - 2.2, 4);
@@ -309,23 +311,71 @@ import * as THREE from 'three';
   scene.add(dots);
 
   // comet head sprite + light
-  function glowTexture() {
+  function glowTexture(midRGB, edgeRGB) {
     var c = document.createElement('canvas');
     c.width = c.height = 128;
     var x = c.getContext('2d');
     var g = x.createRadialGradient(64, 64, 2, 64, 64, 62);
     g.addColorStop(0, 'rgba(255,255,255,1)');
-    g.addColorStop(0.25, 'rgba(255,216,150,0.85)');
-    g.addColorStop(1, 'rgba(255,176,80,0)');
+    g.addColorStop(0.25, 'rgba(' + midRGB + ',0.85)');
+    g.addColorStop(1, 'rgba(' + edgeRGB + ',0)');
     x.fillStyle = g;
     x.fillRect(0, 0, 128, 128);
     return new THREE.CanvasTexture(c);
   }
-  var comet = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+  var comet = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture('255,216,150', '255,176,80'), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
   comet.scale.setScalar(2.4);
   scene.add(comet);
   var cometLight = new THREE.PointLight(0xffb554, 14, 9, 1.6);
   scene.add(cometLight);
+
+  /* ── Theme: the world re-lights itself with the page toggle ── */
+  var PALETTES = {
+    light: {
+      bg: 0xf5f1e8, ground: 0xeee7d8, build: 0xfaf6ec, coin: 0xefe3c9, trend: 0x8a8174,
+      hemiSky: 0xffffff, hemiGround: 0xe2d8c4, hemiInt: 1.5, sunInt: 1.0,
+      beamCol: 0xb3271a, beamHot: 0xff8e6b, dotCol: 0xb84a36, dotOp: 0.6,
+      blending: THREE.NormalBlending, lightCol: 0xd96a4f, lightMax: 6,
+      glowMid: '232,112,84', glowEdge: '178,52,32'
+    },
+    dark: {
+      bg: 0x14120f, ground: 0x1b1814, build: 0x3a342b, coin: 0x55492f, trend: 0x6e6354,
+      hemiSky: 0x9a9183, hemiGround: 0x2a2520, hemiInt: 0.9, sunInt: 0.45,
+      beamCol: 0xff6a4e, beamHot: 0xffe4d6, dotCol: 0xff7a5a, dotOp: 0.9,
+      blending: THREE.AdditiveBlending, lightCol: 0xff6a4e, lightMax: 18,
+      glowMid: '255,170,140', glowEdge: '255,106,78'
+    }
+  };
+  var lightMax = 14;
+
+  function applyTheme() {
+    var p = PALETTES[document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'];
+    BG.set(p.bg);
+    scene.fog.color.set(p.bg);
+    GROUND_MAT.color.set(p.ground);
+    WHITE.color.set(p.build);
+    COIN.color.set(p.coin);
+    TREND_MAT.color.set(p.trend);
+    hemi.color.set(p.hemiSky);
+    hemi.groundColor.set(p.hemiGround);
+    hemi.intensity = p.hemiInt;
+    sun.intensity = p.sunInt;
+    beamUniforms.uColor.value.set(p.beamCol);
+    beamUniforms.uHot.value.set(p.beamHot);
+    [beam, halo].forEach(function (m) { m.material.blending = p.blending; m.material.needsUpdate = true; });
+    dotMat.color.set(p.dotCol);
+    dotMat.opacity = p.dotOp;
+    dotMat.blending = p.blending;
+    dotMat.needsUpdate = true;
+    cometLight.color.set(p.lightCol);
+    lightMax = p.lightMax;
+    if (comet.material.map) comet.material.map.dispose();
+    comet.material.map = glowTexture(p.glowMid, p.glowEdge);
+    comet.material.needsUpdate = true;
+  }
+  applyTheme();
+  new MutationObserver(applyTheme)
+    .observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
   /* ── Scroll choreography ──────────────────────────────────── */
   var progress = 0;          // smoothed
@@ -347,14 +397,16 @@ import * as THREE from 'three';
     stepEls.forEach(function (el, j) { el.classList.toggle('active', j === i); });
   }
 
-  gsap.registerPlugin(ScrollTrigger);
-  ScrollTrigger.create({
-    trigger: '#journey',
-    start: 'top top',
-    end: 'bottom bottom',
-    scrub: 0.9,
-    onUpdate: function (self) { targetProgress = self.progress; }
-  });
+  // Progress straight from layout — immune to resize/refresh mismeasures.
+  var journeyEl = document.getElementById('journey');
+  function updateTarget() {
+    var range = journeyEl.offsetHeight - innerHeight;
+    if (range <= 0) { targetProgress = 0; return; }
+    targetProgress = Math.min(1, Math.max(0, (scrollY - journeyEl.offsetTop) / range));
+  }
+  addEventListener('scroll', updateTarget, { passive: true });
+  addEventListener('resize', updateTarget, { passive: true });
+  updateTarget();
 
   /* ── Hover lift (desktop) ─────────────────────────────────── */
   var raycaster = new THREE.Raycaster();
@@ -382,13 +434,6 @@ import * as THREE from 'three';
   }
 
   /* ── Frame loop ───────────────────────────────────────────── */
-  /* nav gets a backdrop once the journey ends (legibility over content) */
-  var navEl = document.querySelector('.nav');
-  var journeyEl = document.getElementById('journey');
-  addEventListener('scroll', function () {
-    navEl.classList.toggle('scrolled', scrollY > journeyEl.offsetHeight - innerHeight * 0.5);
-  }, { passive: true });
-
   var lookTarget = new THREE.Vector3();
   var camPos = new THREE.Vector3();
   var headPos = new THREE.Vector3();
@@ -419,7 +464,7 @@ import * as THREE from 'three';
     var pulse = 1 + Math.sin(clock.elapsedTime * 5.2) * 0.1;
     comet.scale.setScalar((0.9 + 1.3 * wake) * pulse);
     comet.material.opacity = 0.22 + 0.78 * wake;
-    cometLight.intensity = 4 + 9 * wake;
+    cometLight.intensity = lightMax * (0.3 + 0.7 * wake);
     cometLight.position.set(headPos.x, 1.1, headPos.z);
 
     // dotted ripple — scale by distance to head
