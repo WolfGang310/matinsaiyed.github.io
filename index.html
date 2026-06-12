@@ -68,12 +68,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
 
   <link rel="stylesheet" href="/site.css?v=5" />
-  <link rel="stylesheet" href="/landing.css?v=3" />
+  <link rel="stylesheet" href="/landing.css?v=4" />
 
-  <script type="importmap">
-    { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
-  </script>
-  <script src="https://unpkg.com/gsap@3.12.5/dist/gsap.min.js" defer></script>
 </head>
 
 <body>
@@ -101,64 +97,45 @@
 
   <main id="top">
 
-    <!-- ════════ 3D journey — the career path (pinned, scroll-scrubbed) ════════ -->
-    <div id="journey">
-      <div id="stage">
-        <canvas id="world" aria-hidden="true"></canvas>
-
-        <div class="hero-copy" id="hero-copy">
-          <p class="kicker mono reveal-load" style="--d:0">OPERATIONS &nbsp;·&nbsp; CLIENT SUCCESS &nbsp;·&nbsp; FINANCIAL PRODUCTS</p>
-          <h1><span class="reveal-load" style="--d:1">The Numbers Have</span>
-            <span class="reveal-load" style="--d:2">to <em>Balance</em></span></h1>
-          <p class="hero-sub reveal-load" style="--d:3">
-            Operations Associate · CIFC-licensed · CFA Level I Candidate.
-            I mobilize finance-grade discipline — budgets owned, close on time,
-            clients kept — to protect your schedule and your bottom line.
+    <!-- ════════ Hero — who, what, where in one screen ════════ -->
+    <section class="hero" aria-label="Introduction">
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <p class="kicker mono reveal-load" style="--d:0">OPERATIONS · CLIENT SUCCESS · FINANCIAL PRODUCTS</p>
+          <h1 class="reveal-load" style="--d:1">Hi, I'm Matin<span class="dot">.</span></h1>
+          <p class="hero-sub reveal-load" style="--d:2">
+            I'm an <strong>Operations Associate</strong> at Golden Quasar Inc. — project budgets,
+            vendor invoices, and month-end close — and a CIFC-licensed Mutual Funds
+            Representative working toward the CFA designation. Three client-facing years
+            taught me a simple habit: <em>treat every account like it has to balance.</em>
           </p>
+          <div class="hero-meta mono reveal-load" style="--d:3">
+            <span>📍 MISSISSAUGA, ON</span>
+            <span><i class="status-dot" aria-hidden="true"></i> OPEN TO OPPORTUNITIES</span>
+          </div>
           <div class="hero-actions reveal-load" style="--d:4">
             <a class="btn btn-primary" href="/Matin_Saiyed_Resume.pdf" download>Download CV <span aria-hidden="true">↓</span></a>
             <a class="btn" href="https://linkedin.com/in/matinsaiyed/" target="_blank" rel="noopener">LinkedIn <span aria-hidden="true">↗</span></a>
             <a class="btn" href="mailto:matinsaiyed310@gmail.com">Email</a>
           </div>
-          <div class="hero-cue mono" aria-hidden="true">SCROLL TO FOLLOW THE PATH</div>
         </div>
-
-        <div class="steps" id="steps" aria-hidden="true">
-          <div class="step" data-step="0">
-            <span class="step-no mono">01</span>
-            <div class="step-body">
-              <h3>Research roots <span class="step-date mono">2021</span></h3>
-              <p>Investor Quotient IQ — market research and client support across a portfolio of early-stage startups. Pitch decks, CRM follow-ups, tailored insights.</p>
-            </div>
-          </div>
-          <div class="step" data-step="1">
-            <span class="step-no mono">02</span>
-            <div class="step-body">
-              <h3>Scale under pressure <span class="step-date mono">2023–24</span></h3>
-              <p>Prometric · Yukon Consultants — 100–200 clients a day. Satisfaction raised 68→94%, utilization 30→80%, a 15-person team coached to Regional Best Test Centre.</p>
-            </div>
-          </div>
-          <div class="step" data-step="2">
-            <span class="step-no mono">03</span>
-            <div class="step-body">
-              <h3>Clients kept <span class="step-date mono">2024–25</span></h3>
-              <p>Golden Quasar · Client Success — +25% over sales target with 96% satisfaction. Onboarding redesigned from first contact through day 90.</p>
-            </div>
-          </div>
-          <div class="step" data-step="3">
-            <span class="step-no mono">04</span>
-            <div class="step-body">
-              <h3>Operations owned <span class="step-date mono">2025—NOW</span></h3>
-              <p>Golden Quasar · Operations — budgets re-forecast, vendor invoices end-to-end, month-end close on schedule with audit-ready files.</p>
-            </div>
-          </div>
-        </div>
+        <figure class="hero-portrait reveal-load" style="--d:2">
+          <picture>
+            <source type="image/webp" srcset="/images/portrait-480w.webp 480w, /images/portrait-768w.webp 768w" sizes="(max-width: 860px) 78vw, 380px" />
+            <img src="/images/portrait.jpg" srcset="/images/portrait-480w.jpg 480w, /images/portrait-768w.jpg 768w" sizes="(max-width: 860px) 78vw, 380px" width="1074" height="1232" fetchpriority="high" alt="Portrait of Matin Saiyed" />
+          </picture>
+          <figcaption class="portrait-chip mono">CIFC LICENSED · ONTARIO</figcaption>
+        </figure>
       </div>
-    </div>
 
-    <!-- bridge between the journey and the filing -->
-    <section class="claim reveal">
-      <h2>Built for today's operations,<br />grounded in client-first years.</h2>
+      <!-- career figures — real numbers, first screen -->
+      <div class="figures-strip reveal-load" style="--d:5" role="list" aria-label="Career highlights">
+        <span role="listitem"><b class="up">+25%</b> vs. sales target</span>
+        <span role="listitem"><b>96%</b> client satisfaction</span>
+        <span role="listitem"><b class="up">68→94%</b> satisfaction lift</span>
+        <span role="listitem"><b class="up">30→80%</b> capacity utilization</span>
+        <span role="listitem"><b>15</b> people coached</span>
+      </div>
     </section>
 
     <!-- ════════ About ════════ -->
@@ -184,13 +161,6 @@
           </p>
         </div>
         <aside class="fact-sheet" aria-label="Quick facts and performance indicators">
-          <figure class="fact-portrait">
-            <picture>
-              <source type="image/webp" srcset="/images/portrait-480w.webp 480w, /images/portrait-768w.webp 768w" sizes="(max-width: 920px) 86vw, 320px" />
-              <img src="/images/portrait.jpg" srcset="/images/portrait-480w.jpg 480w, /images/portrait-768w.jpg 768w" sizes="(max-width: 920px) 86vw, 320px" width="1074" height="1232" loading="lazy" alt="Portrait of Matin Saiyed" />
-            </picture>
-            <figcaption class="portrait-chip mono">CIFC LICENSED · ONTARIO</figcaption>
-          </figure>
           <p class="panel-label mono">PERFORMANCE INDICATORS</p>
           <div class="rings" role="list">
             <div class="ring-item" role="listitem">
@@ -595,7 +565,6 @@
   </footer>
 
   <script src="/site.js?v=5" defer></script>
-  <script type="module" src="/landing.js?v=3"></script>
 </body>
 
 </html>
