@@ -65,10 +65,13 @@
   <!-- Fonts: Newsreader (prose) · Archivo (labels) · IBM Plex Mono (figures) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
 
   <link rel="stylesheet" href="/site.css?v=5" />
   <link rel="stylesheet" href="/landing.css?v=4" />
+  <link rel="stylesheet" href="/armory.css?v=1" />
+  <script src="https://unpkg.com/gsap@3.12.5/dist/gsap.min.js" defer></script>
+  <script src="https://unpkg.com/gsap@3.12.5/dist/ScrollTrigger.min.js" defer></script>
 
 </head>
 
@@ -97,45 +100,53 @@
 
   <main id="top">
 
-    <!-- ════════ Hero — who, what, where in one screen ════════ -->
-    <section class="hero" aria-label="Introduction">
-      <div class="hero-grid">
-        <div class="hero-copy">
-          <p class="kicker mono reveal-load" style="--d:0">OPERATIONS · CLIENT SUCCESS · FINANCIAL PRODUCTS</p>
-          <h1 class="reveal-load" style="--d:1">Hi, I'm Matin<span class="dot">.</span></h1>
-          <p class="hero-sub reveal-load" style="--d:2">
-            I'm an <strong>Operations Associate</strong> at Golden Quasar Inc. — project budgets,
-            vendor invoices, and month-end close — and a CIFC-licensed Mutual Funds
-            Representative working toward the CFA designation. Three client-facing years
-            taught me a simple habit: <em>treat every account like it has to balance.</em>
-          </p>
-          <div class="hero-meta mono reveal-load" style="--d:3">
-            <span>📍 MISSISSAUGA, ON</span>
-            <span><i class="status-dot" aria-hidden="true"></i> OPEN TO OPPORTUNITIES</span>
-          </div>
-          <div class="hero-actions reveal-load" style="--d:4">
-            <a class="btn btn-primary" href="/Matin_Saiyed_Resume.pdf" download>Download CV <span aria-hidden="true">↓</span></a>
-            <a class="btn" href="https://linkedin.com/in/matinsaiyed/" target="_blank" rel="noopener">LinkedIn <span aria-hidden="true">↗</span></a>
-            <a class="btn" href="mailto:matinsaiyed310@gmail.com">Email</a>
-          </div>
+    <!-- ════════ Hero — armory composition: services top-right, headline lower-left ════════ -->
+    <section class="hero" id="hero" aria-label="Introduction">
+      <figure class="hero-visual" aria-hidden="true">
+        <canvas id="dither-portrait"></canvas>
+        <img id="dither-src" src="/images/portrait-768w.webp" alt="" crossorigin="anonymous" />
+      </figure>
+
+      <nav class="hero-services" aria-label="Focus areas">
+        <a href="#about">Operations &amp; Close</a>
+        <a href="#competencies">Client Success</a>
+        <a href="#education">Financial Products</a>
+        <a href="#projects">Data &amp; Reporting</a>
+      </nav>
+
+      <div class="hero-foot">
+        <h1><span class="hl">Operations</span><span class="hl">that balance<i class="dot">.</i></span></h1>
+        <p class="hero-sub">
+          Operations Associate at Golden Quasar Inc. — budgets, vendor invoices, month-end close.
+          CIFC-licensed Mutual Funds Representative · CFA Level I Candidate (2026).
+        </p>
+        <div class="hero-meta mono">
+          <span>MISSISSAUGA, ON</span>
+          <span><i class="status-dot" aria-hidden="true"></i> OPEN TO OPPORTUNITIES</span>
         </div>
-        <figure class="hero-portrait reveal-load" style="--d:2">
-          <picture>
-            <source type="image/webp" srcset="/images/portrait-480w.webp 480w, /images/portrait-768w.webp 768w" sizes="(max-width: 860px) 78vw, 380px" />
-            <img src="/images/portrait.jpg" srcset="/images/portrait-480w.jpg 480w, /images/portrait-768w.jpg 768w" sizes="(max-width: 860px) 78vw, 380px" width="1074" height="1232" fetchpriority="high" alt="Portrait of Matin Saiyed" />
-          </picture>
-          <figcaption class="portrait-chip mono">CIFC LICENSED · ONTARIO</figcaption>
-        </figure>
+        <div class="hero-ctas">
+          <a class="cta" href="/Matin_Saiyed_Resume.pdf" download><span class="cta-ico" aria-hidden="true">↓</span>Download CV</a>
+          <a class="cta cta-ghost" href="mailto:matinsaiyed310@gmail.com"><span class="cta-ico" aria-hidden="true">→</span>Get In Touch</a>
+        </div>
       </div>
 
-      <!-- career figures — real numbers, first screen -->
-      <div class="figures-strip reveal-load" style="--d:5" role="list" aria-label="Career highlights">
-        <span role="listitem"><b class="up">+25%</b> vs. sales target</span>
-        <span role="listitem"><b>96%</b> client satisfaction</span>
-        <span role="listitem"><b class="up">68→94%</b> satisfaction lift</span>
-        <span role="listitem"><b class="up">30→80%</b> capacity utilization</span>
-        <span role="listitem"><b>15</b> people coached</span>
+      <!-- figures marquee — the logos-strip position, carrying his real numbers -->
+      <div class="figures-marquee" aria-label="Career highlights">
+        <div class="marquee-track mono" aria-hidden="false">
+          <span><b class="up">+25%</b> VS. SALES TARGET</span>
+          <span><b>96%</b> CLIENT SATISFACTION</span>
+          <span><b class="up">68→94%</b> SATISFACTION LIFT</span>
+          <span><b class="up">30→80%</b> CAPACITY UTILIZATION</span>
+          <span><b>15</b> PEOPLE COACHED</span>
+          <span><b>35,000+</b> ATTENDEE EVENT LED</span>
+        </div>
       </div>
+    </section>
+
+    <!-- ════════ Statement — scroll-revealed conviction ════════ -->
+    <section class="statement" aria-label="Philosophy">
+      <p id="statement-text">Treat every account like it has to balance. Budgets owned, variances flagged early, close on schedule — and clients who feel like people, not transactions.</p>
+      <p class="statement-sub mono">THE HABIT THREE CLIENT-FACING YEARS LEFT ME WITH.</p>
     </section>
 
     <!-- ════════ About ════════ -->
@@ -565,6 +576,7 @@
   </footer>
 
   <script src="/site.js?v=5" defer></script>
+  <script src="/home.js?v=1" defer></script>
 </body>
 
 </html>

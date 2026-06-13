@@ -1,0 +1,306 @@
+/* ═══════════════════════════════════════════════════════════════
+   matinsaiyed.com — armory skin (after armory.framer.ai)
+   Monochrome instrument-panel: exposed column rules, /// labels,
+   light grotesk display, //dates, » arrows, gauge cards, dithered
+   portrait. Loaded AFTER site.css; overrides tokens + components.
+   Light = gallery white · Dark = armory near-black. Red stays as
+   the single accent. The /cv/ mirror keeps the serif identity.
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  --paper: #f4f3f0;
+  --paper-raised: #fcfbf9;
+  --ink: #0c0c0b;
+  --ink-soft: #46453f;
+  --ink-faint: #8a887f;
+  --rule: #e0ded8;
+  --rule-strong: #0c0c0b;
+  --red: #c43222;
+  --red-bright: #df4530;
+  --green: #1d7a4c;
+}
+
+html[data-theme="dark"] {
+  --paper: #0a0a0a;
+  --paper-raised: #131312;
+  --ink: #f1efea;
+  --ink-soft: #b9b6ad;
+  --ink-faint: #6e6c64;
+  --rule: #232320;
+  --rule-strong: #f1efea;
+  --red: #e0564a;
+  --red-bright: #f0685c;
+  --green: #4eb583;
+}
+
+/* grotesk voice everywhere on this page */
+body { font-family: "Archivo", system-ui, sans-serif; font-size: 16.5px; }
+
+h1, h2, h3, .item-head h2, .claim h2, .entry-main h3, .edu-row h3,
+.initiative h3, .comp h3, .exhibit-quote p, .quote p, .step h3 {
+  font-family: "Archivo", sans-serif !important;
+  font-style: normal !important;
+}
+.item-head h2 { font-weight: 300; letter-spacing: -0.02em; }
+.exhibit-quote p { font-weight: 300; font-style: normal; }
+
+/* exposed column grid — armory's signature */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background:
+    linear-gradient(var(--rule), var(--rule)) calc(50% - 25vw) 0 / 1px 100% no-repeat,
+    linear-gradient(var(--rule), var(--rule)) 50% 0 / 1px 100% no-repeat,
+    linear-gradient(var(--rule), var(--rule)) calc(50% + 25vw) 0 / 1px 100% no-repeat;
+  opacity: 0.5;
+}
+@media (max-width: 860px) { body::after { display: none; } }
+
+/* /// mono section labels */
+.item-no { color: var(--red); }
+.item-no::before { content: "/// "; letter-spacing: 0; }
+.panel-label::before { content: "/// "; }
+
+/* ── Hero ───────────────────────────────────────────────────── */
+.hero {
+  position: relative;
+  min-height: calc(100svh - 56px);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 0 0 0;
+}
+
+.hero-visual {
+  position: absolute;
+  right: -4%;
+  top: 2%;
+  width: min(46vw, 560px);
+  aspect-ratio: 1074 / 1232;
+  margin: 0;
+  opacity: 0.92;
+  z-index: 0;
+  -webkit-mask-image: linear-gradient(180deg, #000 62%, transparent 96%);
+  mask-image: linear-gradient(180deg, #000 62%, transparent 96%);
+}
+.hero-visual canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+.hero-visual img { display: none; }
+
+.hero-services {
+  position: absolute;
+  top: clamp(16px, 5vh, 56px);
+  left: calc(50% + 16px);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 2;
+}
+.hero-services a {
+  font-family: "Archivo", sans-serif;
+  font-weight: 400;
+  font-size: clamp(19px, 2vw, 27px);
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  color: var(--ink);
+  width: fit-content;
+  background: color-mix(in srgb, var(--paper) 82%, transparent);
+  backdrop-filter: blur(3px);
+  padding: 2px 12px 2px 0;
+  transition: color 160ms ease, transform 200ms ease;
+}
+.hero-services a:hover { color: var(--red); transform: translateX(6px); }
+
+.hero-foot { position: relative; z-index: 2; padding-bottom: 26px; }
+
+.hero h1 {
+  font-weight: 300;
+  font-size: clamp(52px, 7.6vw, 110px);
+  line-height: 0.98;
+  letter-spacing: -0.03em;
+  margin: 0 0 18px;
+  display: flex;
+  flex-direction: column;
+}
+.hero h1 .hl { display: block; overflow: hidden; }
+.hero h1 .dot { color: var(--red); font-style: normal; }
+
+.hero-sub {
+  font-size: clamp(14px, 1.15vw, 16.5px);
+  line-height: 1.6;
+  color: var(--ink-soft);
+  max-width: 52ch;
+  margin: 0 0 14px;
+}
+
+.hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 26px;
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  color: var(--ink-faint);
+  margin: 0 0 22px;
+}
+.hero-meta span { display: inline-flex; align-items: center; gap: 7px; }
+
+.hero-ctas { display: flex; flex-wrap: wrap; gap: 12px; }
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-family: "Archivo", sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  color: var(--paper);
+  background: var(--ink);
+  padding: 7px 18px 7px 7px;
+  transition: transform 180ms ease, background-color 180ms ease;
+}
+.cta:hover { transform: translateY(-2px); color: var(--paper); }
+.cta-ico {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 14px;
+  transition: transform 200ms ease;
+}
+.cta:hover .cta-ico { transform: translateY(2px); }
+.cta-ghost { background: transparent; color: var(--ink); border: 1px solid var(--rule-strong); }
+.cta-ghost .cta-ico { background: var(--ink); color: var(--paper); }
+.cta-ghost:hover { color: var(--ink); }
+.cta-ghost:hover .cta-ico { transform: translateX(3px); }
+
+/* figures marquee — full-bleed band under the hero */
+.figures-marquee {
+  margin: 38px calc(50% - 50vw) 0;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  overflow: hidden;
+  position: relative;
+  z-index: 2;
+  background: var(--paper);
+}
+.marquee-track {
+  display: inline-flex;
+  gap: 64px;
+  padding: 13px 0;
+  white-space: nowrap;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+  animation: marquee 36s linear infinite;
+  will-change: transform;
+}
+.marquee-track span { display: inline-flex; gap: 10px; align-items: baseline; }
+.marquee-track b { color: var(--ink); font-weight: 600; }
+.marquee-track b.up { color: var(--green); }
+@keyframes marquee { to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) { .marquee-track { animation: none; } }
+
+/* ── Statement — big light text, word-by-word reveal ────────── */
+.statement { padding: clamp(90px, 14vw, 170px) 0 clamp(40px, 6vw, 80px); max-width: 880px; }
+.statement p:first-child {
+  font-weight: 300;
+  font-size: clamp(26px, 3.4vw, 44px);
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  margin: 0 0 26px;
+}
+.statement .word { display: inline; }
+.statement-sub { font-size: 10.5px; letter-spacing: 0.14em; color: var(--ink-faint); margin: 0; }
+.statement-sub::before { content: "/// "; color: var(--red); }
+
+/* ── Experience → case-study rows ───────────────────────────── */
+.ledger { gap: 0; border-top: 1px solid var(--rule-strong); }
+.entry { padding: 26px 0 30px; border-bottom: 1px solid var(--rule); transition: background-color 200ms ease; }
+.entry:hover { background: color-mix(in srgb, var(--paper-raised) 80%, transparent); }
+.entry-rule { border-bottom: 0; padding-bottom: 2px; position: relative; }
+.entry-period::before { content: "//"; margin-right: 6px; color: var(--red); }
+.entry-rule::after {
+  content: "»";
+  position: absolute;
+  right: 2px;
+  top: -4px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 20px;
+  color: var(--ink-faint);
+  transition: transform 200ms ease, color 200ms ease;
+}
+.entry:hover .entry-rule::after { transform: translateX(6px); color: var(--red); }
+.entry-main h3 { font-weight: 400; font-size: 24px; letter-spacing: -0.01em; }
+.entry-main li { font-size: 15px; }
+.fig { font-family: "IBM Plex Mono", monospace; }
+
+/* ── Rings → instrument gauge cards ─────────────────────────── */
+.fact-sheet { background: transparent; border-color: var(--rule); }
+.rings { gap: 12px; }
+.ring-item {
+  border: 1px solid var(--rule);
+  background: var(--paper-raised);
+  padding: 14px 8px 12px;
+}
+.ring-track { stroke: var(--rule); }
+.ring-fill { stroke: var(--ink); }
+.ring-green .ring-fill { stroke: var(--green); }
+.ring-value { font-size: 16px; }
+
+/* quarterly bars: ink on paper */
+.qtr-bars i { background: var(--ink); }
+html[data-theme="dark"] .qtr-bars i { background: var(--ink); }
+
+/* ── Cards: competencies / projects flatten to the grid ─────── */
+.comp-grid, .initiatives-grid, .atelier-feats { background: var(--rule); border-color: var(--rule); }
+.comp, .initiative, .atelier-feats > div { background: var(--paper); }
+.comp:hover, .initiative:hover, .atelier-feats > div:hover { background: var(--paper-raised); }
+.initiative-meta::before { content: "// "; color: var(--red); }
+
+/* radar follows the monochrome */
+#radar .radar-shape { fill: color-mix(in srgb, var(--ink) 10%, transparent); stroke: var(--ink); }
+#radar .radar-dot { fill: var(--red); }
+#radar .radar-hit.sel .radar-label, #radar .radar-hit:hover .radar-label { fill: var(--red); }
+.skillbar .bar i { background: var(--ink); }
+.skills-reset:hover, .exhibit-btn:hover { color: var(--red); border-color: var(--red); }
+
+/* exhibit: statement-style quotes */
+.quote { border-top-color: var(--red); background: var(--paper-raised); }
+.exhibit-quote p { font-size: clamp(19px, 2vw, 24px); line-height: 1.45; }
+
+/* education rows pick up the // */
+.edu-year::before { content: "//"; margin-right: 5px; }
+
+/* buttons inherit the grotesk */
+.btn { border-radius: 0; }
+.btn-primary:hover { background: var(--red); border-color: var(--red); }
+
+/* masthead: flat, mono nav */
+.masthead { background: color-mix(in srgb, var(--paper) 92%, transparent); }
+.masthead-nav a { font-weight: 500; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; }
+
+/* footer stays near-black in both themes (armory constant) */
+.footer { background: #0a0a0a; }
+.footer-links a { font-family: "Archivo", sans-serif; font-weight: 400; }
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 860px) {
+  .hero { min-height: auto; padding-top: 24px; }
+  .hero-visual {
+    position: relative;
+    right: auto; top: auto;
+    width: min(78vw, 380px);
+    margin: 0 0 6px;
+    -webkit-mask-image: linear-gradient(180deg, #000 70%, transparent 100%);
+    mask-image: linear-gradient(180deg, #000 70%, transparent 100%);
+  }
+  .hero-services { position: static; margin: 8px 0 26px; }
+  .hero-services a { font-size: 17px; }
+  .hero h1 { font-size: clamp(44px, 12vw, 64px); }
+}
