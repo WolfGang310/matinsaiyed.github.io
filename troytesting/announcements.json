@@ -1,9 +1,0 @@
-{
-  "_help": "Owner-editable site banner. Set 'message' to show a red announcement band above the header (e.g. holiday closures, new sessions). Leave message empty to hide. 'until' (YYYY-MM-DD) auto-hides it after that date. 'link' is optional — either an external URL or an internal page id like #availability. Visitors can dismiss the banner; changing the message shows it again. See OWNER-GUIDE.md.",
-  "message": "",
-  "messageFr": "",
-  "link": "",
-  "linkText": "",
-  "linkTextFr": "",
-  "until": ""
-}
