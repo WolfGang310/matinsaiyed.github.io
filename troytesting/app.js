@@ -107,6 +107,7 @@ function Header({
     key: l.id,
     href: `#${l.id}`,
     className: route === l.id ? 'active' : '',
+    "aria-current": route === l.id ? 'page' : undefined,
     onClick: e => {
       e.preventDefault();
       navTo(l.id);
@@ -134,6 +135,7 @@ function Header({
     key: l.id,
     href: `#${l.id}`,
     className: route === l.id ? 'active' : '',
+    "aria-current": route === l.id ? 'page' : undefined,
     onClick: e => {
       e.preventDefault();
       navTo(l.id);
@@ -317,7 +319,7 @@ const EXAMS = [{
   org: 'CFA Institute',
   url: 'https://www.cfainstitute.org/programs/cfa-program',
   featured: true,
-  fee: 'US$ 1,290',
+  fee: 'from US$ 940',
   duration: '4h 30m',
   seats: 'Feb / May / Aug / Nov',
   preferredCenter: 'Mississauga'
@@ -327,7 +329,7 @@ const EXAMS = [{
   org: 'CFA Institute',
   url: 'https://www.cfainstitute.org/programs/cfa-program',
   featured: true,
-  fee: 'US$ 1,290',
+  fee: 'from US$ 940',
   duration: '4h 30m',
   seats: 'May / Aug / Nov',
   preferredCenter: 'Mississauga'
@@ -337,7 +339,7 @@ const EXAMS = [{
   org: 'CFA Institute',
   url: 'https://www.cfainstitute.org/programs/cfa-program',
   featured: true,
-  fee: 'US$ 1,290',
+  fee: 'from US$ 940',
   duration: '4h 30m',
   seats: 'Feb / Aug',
   preferredCenter: 'Mississauga'
@@ -755,6 +757,7 @@ function LangToggle({
   }, ['en', 'fr'].map(l => React.createElement("button", {
     key: l,
     className: lang === l ? 'active' : '',
+    "aria-pressed": lang === l,
     onClick: () => setLang(l)
   }, l.toUpperCase())));
 }
@@ -1422,7 +1425,8 @@ function CallFab() {
   }, "\u260E"), " Call centre")), React.createElement("button", {
     className: "fab-btn",
     onClick: () => setOpen(o => !o),
-    "aria-label": "Contact"
+    "aria-label": "Contact",
+    "aria-expanded": open
   }, open ? '✕' : '✆'));
 }
 const GUIDES = [{
@@ -3156,6 +3160,7 @@ function FAQPage({
     className: `faq-item ${open === f.q || open === 'all' && query ? 'open' : ''}`
   }, React.createElement("button", {
     className: "faq-q",
+    "aria-expanded": open === f.q,
     onClick: () => setOpen(open === f.q ? '' : f.q)
   }, React.createElement("span", null, React.createElement(Hi, {
     text: f.q,
@@ -3315,7 +3320,7 @@ function HomePage({
   }, React.createElement("div", {
     className: "n"
   }, React.createElement(Counter, {
-    to: 2
+    to: 7
   })), React.createElement("div", {
     className: "l"
   }, t(lang, 'm.centres'))))), React.createElement("div", {
@@ -3539,6 +3544,7 @@ function ProgramsPage({
     }
   }, React.createElement("button", {
     className: "prog-q",
+    "aria-expanded": open === p.num,
     onClick: () => setOpen(open === p.num ? '' : p.num)
   }, React.createElement("span", {
     className: "prog-num"
@@ -3944,7 +3950,16 @@ function TestCenterPage({
     return React.createElement("div", {
       key: ex.code,
       className: `exam ${ex.featured ? 'featured' : ''}`,
-      onClick: () => openReserve(ex)
+      role: "button",
+      tabIndex: 0,
+      "aria-label": `${ex.name} — book on ${ex.org}`,
+      onClick: () => openReserve(ex),
+      onKeyDown: e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          openReserve(ex);
+        }
+      }
     }, React.createElement("div", {
       className: "code"
     }, ex.code), React.createElement("h4", {
@@ -4486,9 +4501,27 @@ const {
   useState: useStateA,
   useEffect: useEffectA
 } = React;
+const ROUTE_META = {
+  'home': ['Troy Testing | The GTA’s Top-Rated CELPIP Test Centre · CFA · LSAC', 'One of Canada’s best test centre services — the GTA’s top-rated CELPIP centre on Google, and an official CFA & LSAT delivery site.'],
+  'programs': ['Programs — Troy Testing', 'Exam prep and tutoring programs for CELPIP, CFA and LSAT at Troy Testing.'],
+  'test-center': ['Exams — Troy Testing', 'Every CELPIP, CFA and LSAT exam Troy Testing hosts, with full exam guides and provider booking links.'],
+  'availability': ['Availability — Troy Testing', 'Upcoming CELPIP, CFA and LSAT sessions across Troy Testing centres, filterable by exam and centre.'],
+  'reviews': ['Reviews — Troy Testing', 'What candidates say about Troy Testing — the GTA’s top-rated CELPIP centre on Google.'],
+  'centres': ['Centres — Troy Testing', 'Troy Testing exam-delivery centres, with directions and what each location hosts.'],
+  'faq': ['FAQ — Troy Testing', 'ID rules, exam-day logistics and how booking works at Troy Testing.'],
+  'guides': ['Exam Guides — Troy Testing', 'Plain-English guides to CELPIP, CFA and LSAT — formats, scoring and what to expect on the day.'],
+  'corporate': ['Corporate & Pop-up Testing — Troy Testing', 'Large-scale and pop-up exam delivery for organizations.'],
+  'contact': ['Contact — Troy Testing', 'Talk to the Troy Testing team about exams, prep and booking — a real person reads every message.'],
+  'exam-celpip': ['CELPIP at Troy Testing', 'Sit CELPIP General or CELPIP-LS at Troy Testing — official Paragon delivery, exam guide and booking.'],
+  'exam-cfa': ['CFA at Troy Testing', 'Sit CFA Levels I–III at Troy Testing’s Prometric-authorized Mississauga centre.'],
+  'exam-lsat': ['LSAT at Troy Testing', 'Sit the LSAT at Troy Testing — official LSAC delivery, exam guide and booking.']
+};
 function App() {
   const [route, setRoute] = useStateA(() => {
-    const saved = localStorage.getItem('troy.route');
+    let saved = null;
+    try {
+      saved = localStorage.getItem('troy.route');
+    } catch (_) {}
     const hash = window.location.hash.replace('#', '');
     return hash || saved || 'home';
   });
@@ -4502,20 +4535,13 @@ function App() {
       return 'en';
     }
   });
-  const [tweaksOn, setTweaksOn] = useStateA(false);
-  const [tweaks, setTweaks] = useStateA(() => {
-    const d = {
-      "accent": "#E02020",
-      "headline": "bold",
-      "density": "roomy"
-    };
-    return d;
-  });
   const go = r => {
     setRoute(r);
-    localStorage.setItem('troy.route', r);
+    try {
+      localStorage.setItem('troy.route', r);
+    } catch (_) {}
     if (window.__pageTransition) window.__pageTransition();
-    window.history.replaceState(null, '', '#' + r);
+    window.history.pushState(null, '', '#' + r);
     window.scrollTo({
       top: 0,
       behavior: 'instant'
@@ -4539,34 +4565,23 @@ function App() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
   useEffectA(() => {
-    const onMsg = e => {
-      const d = e.data || {};
-      if (d.type === '__activate_edit_mode') setTweaksOn(true);
-      if (d.type === '__deactivate_edit_mode') setTweaksOn(false);
+    const onNav = () => {
+      const h = window.location.hash.replace('#', '');
+      if (h) setRoute(h);
     };
-    window.addEventListener('message', onMsg);
-    window.parent.postMessage({
-      type: '__edit_mode_available'
-    }, '*');
-    return () => window.removeEventListener('message', onMsg);
+    window.addEventListener('hashchange', onNav);
+    window.addEventListener('popstate', onNav);
+    return () => {
+      window.removeEventListener('hashchange', onNav);
+      window.removeEventListener('popstate', onNav);
+    };
   }, []);
   useEffectA(() => {
-    document.documentElement.style.setProperty('--accent', tweaks.accent);
-    document.documentElement.style.setProperty('--accent-ink', '#FFFFFF');
-  }, [tweaks.accent]);
-  const setTweak = (k, v) => {
-    const next = {
-      ...tweaks,
-      [k]: v
-    };
-    setTweaks(next);
-    window.parent.postMessage({
-      type: '__edit_mode_set_keys',
-      edits: {
-        [k]: v
-      }
-    }, '*');
-  };
+    const m = ROUTE_META[route] || ROUTE_META.home;
+    document.title = m[0];
+    const d = document.querySelector('meta[name="description"]');
+    if (d) d.setAttribute('content', m[1]);
+  }, [route]);
   useReveal();
   const examMap = {
     'exam-celpip': 'celpip',
@@ -4621,36 +4636,7 @@ function App() {
     open: quizOpen,
     close: () => setQuizOpen(false),
     go: go
-  }), React.createElement(CallFab, null), React.createElement(PlanBar, null), React.createElement("div", {
-    className: `tweaks ${tweaksOn ? 'show' : ''}`
-  }, React.createElement("h5", null, "Tweaks"), React.createElement("div", {
-    className: "row"
-  }, React.createElement("label", null, "Accent color"), React.createElement("div", {
-    className: "swatches"
-  }, ['#E02020', '#0A0A0A', '#0F3D2E', '#1E3A5F', '#B85A2E'].map(c => React.createElement("button", {
-    key: c,
-    style: {
-      background: c
-    },
-    className: tweaks.accent === c ? 'active' : '',
-    onClick: () => setTweak('accent', c)
-  })))), React.createElement("div", {
-    className: "row"
-  }, React.createElement("label", null, "Headline weight"), React.createElement("div", {
-    className: "chips"
-  }, ['light', 'bold'].map(w => React.createElement("button", {
-    key: w,
-    className: tweaks.headline === w ? 'active' : '',
-    onClick: () => setTweak('headline', w)
-  }, w)))), React.createElement("div", {
-    className: "row"
-  }, React.createElement("label", null, "Density"), React.createElement("div", {
-    className: "chips"
-  }, ['roomy', 'tight'].map(d => React.createElement("button", {
-    key: d,
-    className: tweaks.density === d ? 'active' : '',
-    onClick: () => setTweak('density', d)
-  }, d))))));
+  }), React.createElement(CallFab, null), React.createElement(PlanBar, null));
 }
 (function mountTroy() {
   const el = document.getElementById('root');
