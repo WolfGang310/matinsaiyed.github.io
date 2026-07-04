@@ -374,6 +374,7 @@ function Swap({
   const [i, setI] = useState(0);
   const [phase, setPhase] = useState('in');
   useEffect(() => {
+    if (REDUCED) return;
     const t = setInterval(() => {
       setPhase('out');
       setTimeout(() => {
@@ -403,6 +404,10 @@ function FlipCell({
   useEffect(() => {
     if (target === ' ') {
       setCh('\u00A0');
+      return;
+    }
+    if (REDUCED) {
+      setCh(target);
       return;
     }
     let n = 0;
@@ -479,6 +484,7 @@ function ExamBoard() {
     };
     fmt();
     const c = setInterval(fmt, 1000);
+    if (REDUCED) return () => clearInterval(c);
     const s = setInterval(() => {
       setRows(prev => {
         const idx = Math.floor(Math.random() * prev.length);
@@ -4328,11 +4334,14 @@ function ContactPage({
     className: `field ${errors.name ? 'error' : ''}`
   }, React.createElement("label", null, "Full name"), React.createElement("input", {
     type: "text",
+    "aria-label": "Full name",
+    "aria-invalid": !!errors.name,
     value: form.name,
     onChange: e => set('name', e.target.value),
     placeholder: "Priya Ramaswamy"
   }), React.createElement("div", {
-    className: "err"
+    className: "err",
+    role: "alert"
   }, errors.name)), React.createElement("div", {
     style: {
       display: 'grid',
@@ -4343,15 +4352,19 @@ function ContactPage({
     className: `field ${errors.email ? 'error' : ''}`
   }, React.createElement("label", null, "Email"), React.createElement("input", {
     type: "email",
+    "aria-label": "Email",
+    "aria-invalid": !!errors.email,
     value: form.email,
     onChange: e => set('email', e.target.value),
     placeholder: "you@example.com"
   }), React.createElement("div", {
-    className: "err"
+    className: "err",
+    role: "alert"
   }, errors.email)), React.createElement("div", {
     className: "field"
   }, React.createElement("label", null, "Phone (optional)"), React.createElement("input", {
     type: "tel",
+    "aria-label": "Phone (optional)",
     value: form.phone,
     onChange: e => set('phone', e.target.value),
     placeholder: "+1 416 ..."
@@ -4364,15 +4377,19 @@ function ContactPage({
   }, React.createElement("div", {
     className: `field ${errors.interest ? 'error' : ''}`
   }, React.createElement("label", null, "I'm interested in"), React.createElement("select", {
+    "aria-label": "I'm interested in",
+    "aria-invalid": !!errors.interest,
     value: form.interest,
     onChange: e => set('interest', e.target.value)
   }, React.createElement("option", {
     value: ""
   }, "\u2014 Select \u2014"), React.createElement("option", null, "CELPIP \xB7 help with Paragon booking"), React.createElement("option", null, "CELPIP \xB7 prep program"), React.createElement("option", null, "CFA \xB7 help with Prometric booking"), React.createElement("option", null, "CFA \xB7 prep program"), React.createElement("option", null, "LSAT \xB7 help with LSAC booking"), React.createElement("option", null, "LSAT \xB7 prep program"), React.createElement("option", null, "Pop-up / corporate testing"), React.createElement("option", null, "Something else")), React.createElement("div", {
-    className: "err"
+    className: "err",
+    role: "alert"
   }, errors.interest)), React.createElement("div", {
     className: "field"
   }, React.createElement("label", null, "Preferred center"), React.createElement("select", {
+    "aria-label": "Preferred center",
     value: form.center,
     onChange: e => set('center', e.target.value)
   }, React.createElement("option", {
@@ -4387,11 +4404,13 @@ function ContactPage({
     className: "field"
   }, React.createElement("label", null, "Target test date (optional)"), React.createElement("input", {
     type: "date",
+    "aria-label": "Target test date (optional)",
     value: form.targetDate,
     onChange: e => set('targetDate', e.target.value)
   })), React.createElement("div", {
     className: "field"
   }, React.createElement("label", null, "Current level / band (optional)"), React.createElement("select", {
+    "aria-label": "Current level / band (optional)",
     value: form.level,
     onChange: e => set('level', e.target.value)
   }, React.createElement("option", {
@@ -4399,11 +4418,14 @@ function ContactPage({
   }, "\u2014 Select \u2014"), React.createElement("option", null, "Just starting out"), React.createElement("option", null, "CELPIP band 5\u20136 / CFA new to finance"), React.createElement("option", null, "CELPIP band 7\u20138 / CFA some background"), React.createElement("option", null, "CELPIP band 9+ / finance professional")))), React.createElement("div", {
     className: `field ${errors.message ? 'error' : ''}`
   }, React.createElement("label", null, "Tell us a bit more"), React.createElement("textarea", {
+    "aria-label": "Tell us a bit more",
+    "aria-invalid": !!errors.message,
     value: form.message,
     onChange: e => set('message', e.target.value),
     placeholder: "e.g. I'm preparing for CELPIP in May and looking for next available test dates."
   }), React.createElement("div", {
-    className: "err"
+    className: "err",
+    role: "alert"
   }, errors.message)), React.createElement("div", null, React.createElement("button", {
     type: "submit",
     className: "btn"
