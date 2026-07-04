@@ -1722,66 +1722,8 @@ Object.assign(window, {
   CallFab,
   GuidesPage,
   AvailabilitySection,
-  SESSIONS,
-  SectionNav
+  SESSIONS
 });
-function SectionNav({
-  items
-}) {
-  const [active, setActive] = useF(items[0] ? items[0].id : '');
-  useFE(() => {
-    const onScroll = () => {
-      const probe = window.scrollY + 150;
-      let cur = items[0] ? items[0].id : '';
-      for (const it of items) {
-        const el = document.getElementById(it.id);
-        if (el) {
-          const top = el.getBoundingClientRect().top + window.scrollY;
-          if (top <= probe) cur = it.id;
-        }
-      }
-      setActive(cur);
-    };
-    onScroll();
-    window.addEventListener('scroll', onScroll, {
-      passive: true
-    });
-    window.addEventListener('resize', onScroll);
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onScroll);
-    };
-  }, [items]);
-  const jump = id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    const top = el.getBoundingClientRect().top + window.scrollY - 104;
-    try {
-      window.scrollTo({
-        top,
-        behavior: 'smooth'
-      });
-    } catch (_) {
-      window.scrollTo(0, top);
-    }
-    setTimeout(() => {
-      if (Math.abs(window.scrollY - top) > 80) window.scrollTo(0, top);
-    }, 600);
-  };
-  return React.createElement("div", {
-    className: "section-nav"
-  }, React.createElement("div", {
-    className: "container section-nav-inner"
-  }, React.createElement("span", {
-    className: "section-nav-label"
-  }, "On this page"), React.createElement("div", {
-    className: "section-nav-links"
-  }, items.map(it => React.createElement("button", {
-    key: it.id,
-    className: active === it.id ? 'active' : '',
-    onClick: () => jump(it.id)
-  }, it.label)))));
-}
 const {
   useState: useM,
   useEffect: useME,
@@ -1792,83 +1734,6 @@ const HAS_GSAP = typeof gsap !== 'undefined';
 const HAS_THREE = typeof THREE !== 'undefined';
 const MOTION = HAS_GSAP && !REDUCED;
 if (HAS_GSAP && typeof ScrollTrigger !== 'undefined') gsap.registerPlugin(ScrollTrigger);
-function OdoDigit({
-  d,
-  delay
-}) {
-  const ref = useMR(null);
-  const prev = useMR('0');
-  useME(() => {
-    if (!ref.current) return;
-    if (!MOTION) {
-      ref.current.style.transform = `translateY(${-parseInt(d, 10)}em)`;
-      return;
-    }
-    gsap.to(ref.current, {
-      y: `-${parseInt(d, 10)}em`,
-      duration: 1.1,
-      delay: delay || 0,
-      ease: 'power4.out'
-    });
-    prev.current = d;
-  }, [d]);
-  return React.createElement("span", {
-    className: "odo-digit",
-    "aria-hidden": "true"
-  }, React.createElement("span", {
-    className: "odo-strip",
-    ref: ref
-  }, '0123456789'.split('').map(n => React.createElement("span", {
-    key: n,
-    className: "odo-n"
-  }, n))));
-}
-function OdoCounter({
-  to,
-  suffix = '',
-  prefix = '',
-  duration = 1400
-}) {
-  const ref = useMR(null);
-  const [go, setGo] = useM(false);
-  useME(() => {
-    const el = ref.current;
-    if (!el) return;
-    const check = () => {
-      const h = window.innerHeight || document.documentElement.clientHeight;
-      if (el.getBoundingClientRect().top < h * 0.94) {
-        setGo(true);
-        cleanup();
-      }
-    };
-    const cleanup = () => {
-      window.removeEventListener('scroll', check);
-      timers.forEach(clearTimeout);
-    };
-    const timers = [120, 480, 1000].map(ms => setTimeout(check, ms));
-    window.addEventListener('scroll', check, {
-      passive: true
-    });
-    check();
-    return cleanup;
-  }, []);
-  const str = go ? Math.round(to).toLocaleString('en-US') : '0';
-  const label = `${prefix}${Math.round(to).toLocaleString('en-US')}${suffix}`;
-  return React.createElement("span", {
-    ref: ref,
-    className: "odo",
-    role: "text",
-    "aria-label": label
-  }, prefix, str.split('').map((ch, i) => /\d/.test(ch) ? React.createElement(OdoDigit, {
-    key: str.length + '-' + i,
-    d: ch,
-    delay: i * 0.06
-  }) : React.createElement("span", {
-    key: i,
-    className: "odo-sep"
-  }, ch)), suffix);
-}
-if (MOTION) window.Counter = OdoCounter;
 if (MOTION && window.matchMedia('(pointer: fine)').matches) {
   const MAG = 5;
   let current = null;
