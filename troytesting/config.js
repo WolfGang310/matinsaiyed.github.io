@@ -7,7 +7,7 @@ window.TROY_CONFIG = {
      https://formspree.io, then paste its endpoint here, e.g.
        FORM_ENDPOINT: "https://formspree.io/f/abcdwxyz",
      While empty, forms fall back to opening the visitor's email app. */
-  FORM_ENDPOINT: "",
+  FORM_ENDPOINT: "https://formspree.io/f/xdarywap",
 
   /* 2) VISITOR ANALYTICS (privacy-friendly). Put your domain here to enable
      Plausible, e.g. PLAUSIBLE_DOMAIN: "matinsaiyed.com". Empty = off. */
