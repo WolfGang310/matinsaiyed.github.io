@@ -322,7 +322,7 @@ const EXAMS = [{
   fee: 'from US$ 940',
   duration: '4h 30m',
   seats: 'Feb / May / Aug / Nov',
-  preferredCenter: 'Mississauga'
+  preferredCenter: 'North York or Mississauga'
 }, {
   code: 'CFA-II',
   name: 'CFA Level II',
@@ -332,7 +332,7 @@ const EXAMS = [{
   fee: 'from US$ 940',
   duration: '4h 30m',
   seats: 'May / Aug / Nov',
-  preferredCenter: 'Mississauga'
+  preferredCenter: 'North York or Mississauga'
 }, {
   code: 'CFA-III',
   name: 'CFA Level III',
@@ -342,7 +342,7 @@ const EXAMS = [{
   fee: 'from US$ 940',
   duration: '4h 30m',
   seats: 'Feb / Aug',
-  preferredCenter: 'Mississauga'
+  preferredCenter: 'North York or Mississauga'
 }, {
   code: 'LSAT',
   name: 'LSAT',
@@ -352,7 +352,7 @@ const EXAMS = [{
   fee: 'US$ 238',
   duration: '3 hrs',
   seats: 'Multiple / year',
-  preferredCenter: 'Multiple centres'
+  preferredCenter: 'North York'
 }];
 Object.assign(window, {
   Header,
@@ -836,21 +836,21 @@ const SESSIONS = [{
 }, {
   code: 'LSAT',
   label: 'LSAT',
-  centre: 'Calgary',
+  centre: 'North York',
   date: '14 Jun',
   time: '12:30',
   status: 'filling'
 }, {
   code: 'LSAT',
   label: 'LSAT',
-  centre: 'San Francisco',
+  centre: 'North York',
   date: '19 Jun',
   time: '09:00',
   status: 'open'
 }, {
   code: 'LSAT',
   label: 'LSAT',
-  centre: 'Boston',
+  centre: 'North York',
   date: '20 Jun',
   time: '09:00',
   status: 'open'
@@ -989,7 +989,7 @@ function ExamWizard({
   const lsat = EXAMS.filter(e => e.code === 'LSAT');
   const famExams = fam === 'CELPIP' ? celpip : fam === 'CFA' ? cfa : lsat;
   const exam = EXAMS.find(e => e.code === code);
-  const centres = fam === 'CFA' ? ['Mississauga'] : fam === 'LSAT' ? ['Calgary', 'San Francisco', 'Chicago', 'Boston'] : ['North York', 'Mississauga'];
+  const centres = fam === 'CFA' ? ['North York', 'Mississauga'] : fam === 'LSAT' ? ['North York'] : ['North York', 'Mississauga'];
   const stepTitles = ['Which exam?', 'Which level?', 'Which centre?', "You're set"];
   return React.createElement("div", {
     className: "modal-bg",
@@ -1330,7 +1330,7 @@ const CHECKLIST = [{
   d: 'Scratch paper and (for CFA) an approved calculator are provided or specified by the provider.'
 }, {
   t: 'Know your centre',
-  d: 'CELPIP runs at North York & Mississauga; CFA at Mississauga; LSAT at Calgary, San Francisco, Chicago & Boston. Double-check before you travel.'
+  d: 'CELPIP and CFA run at North York & Mississauga; LSAT at North York. Double-check before you travel.'
 }, {
   t: 'Confirmation email',
   d: 'Bring your provider confirmation — printed or on a device you check in before entering.'
@@ -1448,7 +1448,7 @@ const GUIDES = [{
   read: '6 min',
   title: 'A realistic CFA Level I study plan',
   excerpt: 'The CFA Institute suggests ~300 hours. Here is how to spread them without burning out.',
-  body: ['The often-quoted figure is roughly 300 hours of study for CFA Level I. Treat it as a floor, not a guarantee, and work backward from your exam date.', 'At 15 hours per week, 300 hours is about 20 weeks — five months. At 10 hours per week you are closer to seven months. Pick a cadence you can actually sustain through work and life.', 'Front-load Ethics and Quantitative Methods; they underpin everything and reward early repetition. Save a full month at the end purely for mock exams and review.', 'Sit at least three full-length, timed mocks under real conditions. Scoring above the mid-60s consistently is a reasonable readiness signal.', 'Book your seat early. CFA windows are fixed and Prometric seats at popular centres go quickly — we host Level I, II and III at our Mississauga centre.']
+  body: ['The often-quoted figure is roughly 300 hours of study for CFA Level I. Treat it as a floor, not a guarantee, and work backward from your exam date.', 'At 15 hours per week, 300 hours is about 20 weeks — five months. At 10 hours per week you are closer to seven months. Pick a cadence you can actually sustain through work and life.', 'Front-load Ethics and Quantitative Methods; they underpin everything and reward early repetition. Save a full month at the end purely for mock exams and review.', 'Sit at least three full-length, timed mocks under real conditions. Scoring above the mid-60s consistently is a reasonable readiness signal.', 'Book your seat early. CFA windows are fixed and Prometric seats at popular centres go quickly — we host Level I, II and III at our North York and Mississauga centres.']
 }, {
   id: 'celpip-speaking',
   tag: 'CELPIP',
@@ -1462,21 +1462,21 @@ const GUIDES = [{
   read: '3 min',
   title: 'Your test-day morning, minute by minute',
   excerpt: 'Remove every avoidable variable so the only challenge is the exam itself.',
-  body: ['Lay out your passport and confirmation the night before. ID issues are the single most common reason candidates are turned away.', 'Eat a real breakfast and arrive 30 minutes early. Check-in, lockers and verification take time, and rushing spikes your stress before you even sit down.', 'Leave your phone and smartwatch at home or expect to lock them away. The room is device-free, no exceptions.', 'Build in buffer for transit and parking. Know which centre you are booked at — CELPIP at North York or Mississauga, CFA at Mississauga, LSAT at Calgary or a US centre.', 'Once you are checked in, the room does the rest. That is the whole point of testing with us.']
+  body: ['Lay out your passport and confirmation the night before. ID issues are the single most common reason candidates are turned away.', 'Eat a real breakfast and arrive 30 minutes early. Check-in, lockers and verification take time, and rushing spikes your stress before you even sit down.', 'Leave your phone and smartwatch at home or expect to lock them away. The room is device-free, no exceptions.', 'Build in buffer for transit and parking. Know which centre you are booked at — CELPIP and CFA at North York or Mississauga, LSAT at North York.', 'Once you are checked in, the room does the rest. That is the whole point of testing with us.']
 }, {
   id: 'lsat-logical-reasoning',
   tag: 'LSAT',
   read: '6 min',
   title: 'LSAT logical reasoning: a beginner\u2019s primer',
   excerpt: 'Two of the LSAT\u2019s scored sections are logical reasoning. Here is how to start reading arguments like the test wants you to.',
-  body: ['Logical reasoning rewards a specific reading habit: separate the conclusion from the evidence before you touch the answers. Find the claim the author most wants you to believe, then ask what supports it.', 'Learn the common question stems — strengthen, weaken, assumption, flaw, inference. Each has a predictable answer shape, and recognising the type instantly narrows what a correct answer can look like.', 'Assumption questions are the backbone. The right answer is the unstated link the argument needs to survive; negate a candidate answer and, if the argument collapses, you have found it.', 'Wrong answers are engineered to attract. Watch for choices that are true but irrelevant, or that address the topic but not the specific gap in the argument.', 'Timing comes last. Build accuracy first on untimed sets, then compress. We run timed LSAT practice on the same computer setup used at our Calgary and US centres.']
+  body: ['Logical reasoning rewards a specific reading habit: separate the conclusion from the evidence before you touch the answers. Find the claim the author most wants you to believe, then ask what supports it.', 'Learn the common question stems — strengthen, weaken, assumption, flaw, inference. Each has a predictable answer shape, and recognising the type instantly narrows what a correct answer can look like.', 'Assumption questions are the backbone. The right answer is the unstated link the argument needs to survive; negate a candidate answer and, if the argument collapses, you have found it.', 'Wrong answers are engineered to attract. Watch for choices that are true but irrelevant, or that address the topic but not the specific gap in the argument.', 'Timing comes last. Build accuracy first on untimed sets, then compress. We run timed LSAT practice on the same computer setup used at our North York centre.']
 }, {
   id: 'cfa-ethics',
   tag: 'CFA',
   read: '5 min',
   title: 'Why Ethics decides borderline CFA results',
   excerpt: 'The ethics-adjustment rule is real. Here is how to treat the section it applies to.',
-  body: ['The CFA Institute applies an "ethics adjustment" to candidates whose overall score sits near the passing line — strong ethics performance can tip a borderline result toward a pass, and weak performance the other way.', 'That makes Ethics disproportionately valuable relative to its exam weight. It is also one of the few areas where the material barely changes year to year, so early study compounds.', 'Ethics is not about memorising rules; it is about applying the Code and Standards to messy scenarios. Practise with vignettes, not flashcards, and articulate why a specific standard is violated.', 'Common traps: assuming disclosure fixes everything, and conflating legal compliance with the higher bar the Standards set. When in doubt, the more conservative, client-first action is usually correct.', 'Revisit Ethics in the final two weeks even if you are comfortable — it is the cheapest insurance against a borderline miss. We host CFA Levels I–III at our Mississauga centre.']
+  body: ['The CFA Institute applies an "ethics adjustment" to candidates whose overall score sits near the passing line — strong ethics performance can tip a borderline result toward a pass, and weak performance the other way.', 'That makes Ethics disproportionately valuable relative to its exam weight. It is also one of the few areas where the material barely changes year to year, so early study compounds.', 'Ethics is not about memorising rules; it is about applying the Code and Standards to messy scenarios. Practise with vignettes, not flashcards, and articulate why a specific standard is violated.', 'Common traps: assuming disclosure fixes everything, and conflating legal compliance with the higher bar the Standards set. When in doubt, the more conservative, client-first action is usually correct.', 'Revisit Ethics in the final two weeks even if you are comfortable — it is the cheapest insurance against a borderline miss. We host CFA Levels I–III at our North York and Mississauga centres.']
 }, {
   id: 'crs-band-mapping',
   tag: 'CELPIP',
@@ -2069,11 +2069,11 @@ const EXAM_DETAIL = {
     org: 'CFA Institute (delivered via Prometric)',
     book: 'https://www.cfainstitute.org/programs/cfa-program',
     tagline: 'The global benchmark for investment-management professionals.',
-    intro: 'The CFA Program is a three-level, computer-based credential administered by Prometric on behalf of the CFA Institute. We host Levels I, II and III at our Mississauga centre; you register through the CFA Institute and select us as your test site.',
+    intro: 'The CFA Program is a three-level, computer-based credential administered by Prometric on behalf of the CFA Institute. We host Levels I, II and III at our Toronto (North York) and Mississauga centres; you register through the CFA Institute and select us as your test site.',
     format: [['Level I', '2 sessions · 4h30', 'Multiple choice across the ten topic areas'], ['Level II', '2 sessions · 4h30', 'Item sets (vignettes) with multiple choice'], ['Level III', '2 sessions · 4h30', 'Constructed-response essays plus item sets']],
     scoring: 'Pass/fail per level, benchmarked against the Minimum Passing Score. Plan roughly 300 hours of study per level.',
     fees: 'Registration from US$940–1,290 depending on window (set by CFA Institute)',
-    centres: ['Mississauga'],
+    centres: ['North York', 'Mississauga'],
     bring: ['Valid international passport', 'CFA-approved calculator', 'Prometric confirmation']
   },
   lsat: {
@@ -2083,11 +2083,11 @@ const EXAM_DETAIL = {
     org: 'LSAC',
     book: 'https://www.lsac.org/lsat/register-lsat',
     tagline: 'The reasoning test at the heart of law-school admission.',
-    intro: 'The LSAT measures reading comprehension and logical reasoning skills central to legal study. Administered by LSAC, it is offered multiple times a year. We host LSAT candidates at our Calgary, San Francisco, Chicago and Boston centres.',
+    intro: 'The LSAT measures reading comprehension and logical reasoning skills central to legal study. Administered by LSAC, it is offered multiple times a year. We host LSAT candidates at our Toronto (North York) centre.',
     format: [['Logical Reasoning', '2 scored sections', 'Argument analysis and evaluation'], ['Reading Comprehension', '1 scored section', 'Dense passages with question sets'], ['Unscored section', 'variable', 'An additional experimental section'], ['Writing sample', 'separate', 'Completed online, on your own schedule']],
     scoring: 'Scored on a 120–180 scale. Most competitive schools look for 160+; know your target school\u2019s median before you book.',
     fees: 'US$238 test fee (set by LSAC); fee waivers available',
-    centres: ['Calgary', 'San Francisco', 'Chicago', 'Boston'],
+    centres: ['North York'],
     bring: ['Government photo ID matching your registration', 'LSAC admission ticket', 'Arrive early for check-in']
   }
 };
@@ -2936,7 +2936,7 @@ const CENTRES = [{
   tag: 'Canada · North York',
   city: 'Toronto, ON',
   addr: ['2 Sheppard Ave E, Suite 505', 'North York, ON · M2N 5Y7'],
-  hosts: 'CELPIP General · CELPIP LS',
+  hosts: 'CELPIP · CFA · LSAT',
   transit: 'Sheppard–Yonge stn · 4 min walk',
   parking: 'Paid underground + green-P nearby',
   tel: '+1 (437) 264-0311',
@@ -2945,7 +2945,7 @@ const CENTRES = [{
   tag: 'Canada · Mississauga',
   city: 'Mississauga, ON',
   addr: ['30 Eglinton Ave W, Suite 720', 'Mississauga, ON · L5R 3E7'],
-  hosts: 'CFA Level I · II · III',
+  hosts: 'CELPIP · CFA',
   transit: 'Square One transit hub · 6 min',
   parking: 'Free on-site surface lot',
   tel: '+1 (437) 264-0311',
@@ -2954,7 +2954,7 @@ const CENTRES = [{
   tag: 'Canada · Calgary',
   city: 'Calgary, AB',
   addr: ['888 3rd Street SW, Bankers Hall', 'Suite 1001, Calgary, AB · T2P 5C5'],
-  hosts: 'CELPIP · LSAT · corporate',
+  hosts: 'Corporate & pop-up testing',
   transit: '3 St SW C-Train · 2 min',
   parking: 'Bankers Hall parkade',
   tel: '+1 (437) 264-0311',
@@ -2963,7 +2963,7 @@ const CENTRES = [{
   tag: 'Canada · Montreal',
   city: 'Montreal, QC',
   addr: ['2235 Mont-Royal Ave East', 'Montreal, QC · H2H 1K5'],
-  hosts: 'CELPIP · CFA · corporate',
+  hosts: 'Corporate & pop-up testing',
   transit: 'Préfontaine Métro · 7 min',
   parking: 'Street + nearby lots',
   tel: '+1 (437) 264-0311',
@@ -2972,7 +2972,7 @@ const CENTRES = [{
   tag: 'United States · San Francisco',
   city: 'San Francisco, CA',
   addr: ['1160 Battery St E, Suite 100E', 'San Francisco, CA · 94111'],
-  hosts: 'LSAT · CFA · corporate',
+  hosts: 'Corporate & pop-up testing',
   transit: 'Embarcadero BART · 10 min',
   parking: 'Battery St garages',
   tel: '+1 (415) 825-6725',
@@ -2981,7 +2981,7 @@ const CENTRES = [{
   tag: 'United States · Chicago',
   city: 'Chicago, IL',
   addr: ['3111 W Jackson Blvd, Suite 18', 'Chicago, IL · 60612'],
-  hosts: 'LSAT · CFA · corporate',
+  hosts: 'Corporate & pop-up testing',
   transit: 'Medical District ‘L’ · 8 min',
   parking: 'On-site lot',
   tel: '+1 (415) 825-6725',
@@ -2990,7 +2990,7 @@ const CENTRES = [{
   tag: 'United States · Boston',
   city: 'Boston, MA',
   addr: ['75 Arlington St, Office 1662', 'Boston, MA · 02116'],
-  hosts: 'LSAT · CFA · corporate',
+  hosts: 'Corporate & pop-up testing',
   transit: 'Arlington ‘T’ (Green) · 3 min',
   parking: 'Garage at Arlington',
   tel: '+1 (415) 825-6725',
@@ -3103,10 +3103,10 @@ const FAQS = [{
   a: 'Yes. Troy Testing is an accredited CELPIP delivery site for Paragon Testing. Book your exam on Paragon\'s portal and select our North York or Mississauga centre as your location.'
 }, {
   q: 'Can I sit the CFA exam at Troy Testing?',
-  a: 'CFA Levels I, II and III are administered by Prometric on behalf of the CFA Institute. Our Mississauga centre is a Prometric-authorized site — book through the CFA portal and select us at check-in.'
+  a: 'CFA Levels I, II and III are administered by Prometric on behalf of the CFA Institute. Our Toronto (North York) and Mississauga centres are Prometric-authorized sites — book through the CFA portal and select us at check-in.'
 }, {
   q: 'Do you administer the LSAT?',
-  a: 'Yes. Troy Testing is an official LSAC test centre for the LSAT. Register through LSAC and select one of our participating centres — LSAT is offered at our Calgary, San Francisco, Chicago and Boston locations.'
+  a: 'Yes. Troy Testing is an official LSAC test centre for the LSAT. Register through LSAC and select our Toronto (North York) centre — that is where we host the LSAT.'
 }, {
   q: 'What identification do I need on exam day?',
   a: 'A valid, unexpired, government-issued photo ID — typically a passport. Requirements vary per exam; your confirmation email will list accepted documents.'
