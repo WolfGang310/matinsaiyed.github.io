@@ -1,0 +1,8 @@
+{
+  "_help": "Owner-editable banner (also editable from the scheduler app). Set 'message' to show a red band above the header; leave empty to hide. 'until' (YYYY-MM-DD) auto-hides after that date. 'link' optional (external URL or internal id like #availability). See OWNER-GUIDE.md.",
+  "message": "",
+  "messageFr": "",
+  "link": "",
+  "linkText": "",
+  "until": ""
+}

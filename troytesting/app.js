@@ -50,6 +50,44 @@ function useFocusTrap(active, onClose) {
   }, [active]);
   return ref;
 }
+const __siteJsonCache = {};
+const __SUPA_KEYS = {
+  'sessions.json': 'sessions',
+  'announcements.json': 'announcement'
+};
+function __fetchSiteData(file) {
+  const cfg = window.TROY_CONFIG || {};
+  const key = __SUPA_KEYS[file];
+  const fromFile = () => fetch(file, {
+    cache: 'no-cache'
+  }).then(r => r.ok ? r.json() : null).catch(() => null);
+  if (!key || !cfg.SUPABASE_URL || !cfg.SUPABASE_ANON_KEY) return fromFile();
+  return fetch(`${cfg.SUPABASE_URL}/rest/v1/website_content?key=eq.${key}&select=data`, {
+    cache: 'no-store',
+    headers: {
+      apikey: cfg.SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${cfg.SUPABASE_ANON_KEY}`
+    }
+  }).then(r => r.ok ? r.json() : Promise.reject(new Error('rest ' + r.status))).then(rows => Array.isArray(rows) && rows.length && rows[0].data ? rows[0].data : fromFile()).catch(fromFile);
+}
+function useSiteJson(file) {
+  const [data, setData] = useState(__siteJsonCache[file]);
+  useEffect(() => {
+    let on = true;
+    if (__siteJsonCache[file] !== undefined) {
+      setData(__siteJsonCache[file]);
+      return;
+    }
+    __fetchSiteData(file).then(d => {
+      __siteJsonCache[file] = d;
+      if (on) setData(d);
+    });
+    return () => {
+      on = false;
+    };
+  }, [file]);
+  return data;
+}
 function Header({
   route,
   go,
@@ -508,7 +546,7 @@ const BOARD_BASE = [{
   status: 'open'
 }, {
   exam: 'LSAT',
-  centre: 'CALGARY',
+  centre: 'NORTH YORK',
   when: '14 JUN 12:30',
   status: 'waitlist'
 }, {
@@ -525,8 +563,18 @@ const STATUS_LABEL = {
 };
 const STATUS_CYCLE = ['open', 'filling', 'open', 'waitlist', 'open', 'full'];
 function ExamBoard() {
-  const [rows, setRows] = useState(BOARD_BASE);
+  const site = useSiteJson('sessions.json');
+  const owner = site && Array.isArray(site.sessions) && site.sessions.length ? site.sessions.slice(0, 6).map(s => ({
+    exam: (s.label || '').toUpperCase(),
+    centre: (s.centre || '').toUpperCase(),
+    when: (s.when || [s.date, s.time].filter(Boolean).join(' ')).toUpperCase(),
+    status: s.status || 'open'
+  })) : null;
+  const [rows, setRows] = useState(owner || BOARD_BASE);
   const [clock, setClock] = useState('');
+  useEffect(() => {
+    if (owner) setRows(owner);
+  }, [site]);
   useEffect(() => {
     const fmt = () => {
       const d = new Date();
@@ -535,7 +583,7 @@ function ExamBoard() {
     };
     fmt();
     const c = setInterval(fmt, 1000);
-    if (REDUCED) return () => clearInterval(c);
+    if (REDUCED || owner) return () => clearInterval(c);
     const s = setInterval(() => {
       setRows(prev => {
         const idx = Math.floor(Math.random() * prev.length);
@@ -553,7 +601,7 @@ function ExamBoard() {
       clearInterval(c);
       clearInterval(s);
     };
-  }, []);
+  }, [site]);
   return React.createElement("div", {
     className: "exam-board"
   }, React.createElement("div", {
@@ -913,6 +961,9 @@ const ST = {
   full: 'Full'
 };
 function AvailabilitySection() {
+  const site = useSiteJson('sessions.json');
+  const SRC = site && Array.isArray(site.sessions) && site.sessions.length ? site.sessions : SESSIONS;
+  const live = !!(site && site.live);
   const [fam, setFam] = useF(() => {
     try {
       return localStorage.getItem('troy.av.fam') || 'all';
@@ -936,8 +987,8 @@ function AvailabilitySection() {
   const setFamP = pick(setFam, 'troy.av.fam');
   const setCentreP = pick(setCentre, 'troy.av.centre');
   const famOf = c => c.startsWith('CELPIP') ? 'CELPIP' : c.startsWith('CFA') ? 'CFA' : 'LSAT';
-  const centreList = ['all', ...Array.from(new Set(SESSIONS.map(s => s.centre)))];
-  const rows = SESSIONS.filter(s => (fam === 'all' || famOf(s.code) === fam) && (centre === 'all' || s.centre === centre));
+  const centreList = ['all', ...Array.from(new Set(SRC.map(s => s.centre)))];
+  const rows = SRC.filter(s => (fam === 'all' || famOf(s.code) === fam) && (centre === 'all' || s.centre === centre));
   const chip = active => ({
     fontFamily: 'var(--font-mono)',
     fontSize: 11,
@@ -970,7 +1021,7 @@ function AvailabilitySection() {
     style: {
       transitionDelay: '120ms'
     }
-  }, "A live snapshot of the next sessions at each centre. Book on the provider's portal \u2014 these fill quickly.")), React.createElement("div", {
+  }, live ? 'Updated ' + (site.updated || 'recently') + ' — book on the provider portal; seats fill quickly.' : 'Typical availability at each centre — book on the provider portal; seats fill quickly.')), React.createElement("div", {
     className: "avail-filters reveal",
     role: "group",
     "aria-label": "Filter sessions"
@@ -1005,11 +1056,13 @@ function AvailabilitySection() {
       className: "av-centre"
     }, s.centre), React.createElement("span", {
       className: "av-when"
-    }, s.date, " \xB7 ", s.time), React.createElement("span", {
+    }, s.when || [s.date, s.time].filter(Boolean).join(' · ')), s.status ? React.createElement("span", {
       className: `av-pill ${s.status}`
     }, React.createElement("span", {
       className: "pill-dot"
-    }), ST[s.status]), React.createElement("span", {
+    }), ST[s.status]) : React.createElement("span", {
+      "aria-hidden": "true"
+    }), React.createElement("span", {
       className: "av-go"
     }, "Book ", React.createElement("span", {
       className: "arrow"
@@ -2581,15 +2634,18 @@ function CorporatePage({
     seats: '',
     date: '',
     format: '',
-    notes: ''
+    notes: '',
+    company: ''
   });
   const [err, setErr] = useX({});
   const [sent, setSent] = useX(false);
+  const [delivered, setDelivered] = useX(false);
+  const [status, setStatus] = useX('idle');
   const set = (k, v) => setF(s => ({
     ...s,
     [k]: v
   }));
-  const submit = e => {
+  const submit = async e => {
     e.preventDefault();
     const er = {};
     if (!f.org.trim()) er.org = 1;
@@ -2597,7 +2653,37 @@ function CorporatePage({
     if (!f.email.match(/^[^@\s]+@[^@\s]+\.[^@\s]+$/)) er.email = 1;
     if (!f.seats) er.seats = 1;
     setErr(er);
-    if (Object.keys(er).length === 0) setSent(true);
+    if (Object.keys(er).length) return;
+    if (f.company) {
+      setSent(true);
+      return;
+    }
+    const ep = (window.TROY_CONFIG || {}).FORM_ENDPOINT || '';
+    if (!ep) {
+      setSent(true);
+      return;
+    }
+    setStatus('submitting');
+    try {
+      const fd = new FormData();
+      fd.append('_subject', 'RFP — ' + f.org + ' (' + f.seats + ' seats)');
+      Object.entries(f).forEach(([k, v]) => {
+        if (k !== 'company') fd.append(k, v);
+      });
+      const res = await fetch(ep, {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json'
+        },
+        body: fd
+      });
+      if (res.ok) {
+        setDelivered(true);
+        setSent(true);
+      } else setStatus('error');
+    } catch (_) {
+      setStatus('error');
+    }
   };
   if (sent) {
     const rfpBody = encodeURIComponent(`Organization: ${f.org}\nContact: ${f.name}\nEmail: ${f.email}\nCity: ${f.city || '—'}\nExam: ${f.exam || '—'}\nSeats: ${f.seats}\nTarget date: ${f.date || '—'}\nFormat: ${f.format || '—'}\n\n${f.notes}`);
@@ -2800,12 +2886,35 @@ function CorporatePage({
     value: f.notes,
     onChange: e => set('notes', e.target.value),
     placeholder: "Accommodations, security requirements, timeline\u2026"
-  })), React.createElement("div", null, React.createElement("button", {
+  })), React.createElement("input", {
+    type: "text",
+    name: "company",
+    tabIndex: "-1",
+    autoComplete: "off",
+    "aria-hidden": "true",
+    value: f.company,
+    onChange: e => set('company', e.target.value),
+    style: {
+      position: 'absolute',
+      left: '-9999px',
+      width: 1,
+      height: 1,
+      opacity: 0
+    }
+  }), React.createElement("div", null, React.createElement("button", {
     type: "submit",
-    className: "btn"
-  }, "Request a proposal ", React.createElement("span", {
+    className: "btn",
+    disabled: status === 'submitting'
+  }, status === 'submitting' ? 'Sending…' : React.createElement(React.Fragment, null, "Request a proposal ", React.createElement("span", {
     className: "arrow"
-  })))))));
+  }))), status === 'error' && React.createElement("div", {
+    className: "err",
+    role: "alert",
+    style: {
+      display: 'block',
+      marginTop: 12
+    }
+  }, "Something went wrong. Please try again, or email Enquiry@troytesting.com."))))));
 }
 Object.assign(window, {
   ExamDetailPage,
@@ -4308,6 +4417,7 @@ window.TestCenterPage = TestCenterPage;
 const {
   useState: useStateC
 } = React;
+const FORM_ENDPOINT = (window.TROY_CONFIG || {}).FORM_ENDPOINT || '';
 function ContactPage({
   go
 }) {
@@ -4319,15 +4429,18 @@ function ContactPage({
     center: '',
     targetDate: '',
     level: '',
-    message: ''
+    message: '',
+    company: ''
   });
   const [errors, setErrors] = useStateC({});
   const [submitted, setSubmitted] = useStateC(false);
+  const [sent, setSent] = useStateC(false);
+  const [status, setStatus] = useStateC('idle');
   const set = (k, v) => setForm(s => ({
     ...s,
     [k]: v
   }));
-  const submit = e => {
+  const submit = async e => {
     e.preventDefault();
     const errs = {};
     if (!form.name.trim()) errs.name = 'Please add your name';
@@ -4335,8 +4448,34 @@ function ContactPage({
     if (!form.interest) errs.interest = 'Pick an interest';
     if (!form.message.trim() || form.message.length < 10) errs.message = 'A sentence or two please';
     setErrors(errs);
-    if (Object.keys(errs).length === 0) {
+    if (Object.keys(errs).length) return;
+    if (form.company) {
       setSubmitted(true);
+      return;
+    }
+    if (!FORM_ENDPOINT) {
+      setSubmitted(true);
+      return;
+    }
+    setStatus('submitting');
+    try {
+      const fd = new FormData();
+      Object.entries(form).forEach(([k, v]) => {
+        if (k !== 'company') fd.append(k, v);
+      });
+      const res = await fetch(FORM_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json'
+        },
+        body: fd
+      });
+      if (res.ok) {
+        setSent(true);
+        setSubmitted(true);
+      } else setStatus('error');
+    } catch (_) {
+      setStatus('error');
     }
   };
   if (submitted) {
@@ -4375,17 +4514,22 @@ function ContactPage({
         fontStyle: 'normal',
         color: 'var(--accent)'
       }
-    }, form.name.split(' ')[0]), ". One tap to send it to us."), React.createElement("p", {
+    }, form.name.split(' ')[0]), ". ", sent ? 'Your message is on its way.' : 'One tap to send it to us.'), React.createElement("p", {
       style: {
         color: 'var(--text-dim)',
         fontSize: 17
       }
-    }, "Press the button below to send your message to ", React.createElement("strong", null, "Enquiry@troytesting.com"), " from your email app. In a hurry? Call ", React.createElement("a", {
+    }, sent ? React.createElement(React.Fragment, null, "We\u2019ve received your message and will reply soon. In a hurry? Call ", React.createElement("a", {
       href: "tel:+14372640311",
       style: {
         color: 'var(--accent)'
       }
-    }, "+1 437 264 0311"), "."), React.createElement("div", {
+    }, "+1 437 264 0311"), ".") : React.createElement(React.Fragment, null, "Press the button below to send your message to ", React.createElement("strong", null, "Enquiry@troytesting.com"), " from your email app. In a hurry? Call ", React.createElement("a", {
+      href: "tel:+14372640311",
+      style: {
+        color: 'var(--accent)'
+      }
+    }, "+1 437 264 0311"), ".")), React.createElement("div", {
       style: {
         marginTop: 36,
         display: 'inline-flex',
@@ -4393,7 +4537,7 @@ function ContactPage({
         flexWrap: 'wrap',
         justifyContent: 'center'
       }
-    }, React.createElement("a", {
+    }, !sent && React.createElement("a", {
       className: "btn",
       href: mailHref
     }, "Send to Enquiry@troytesting.com ", React.createElement("span", {
@@ -4547,12 +4691,35 @@ function ContactPage({
   }), React.createElement("div", {
     className: "err",
     role: "alert"
-  }, errors.message)), React.createElement("div", null, React.createElement("button", {
+  }, errors.message)), React.createElement("input", {
+    type: "text",
+    name: "company",
+    tabIndex: "-1",
+    autoComplete: "off",
+    "aria-hidden": "true",
+    value: form.company,
+    onChange: e => set('company', e.target.value),
+    style: {
+      position: 'absolute',
+      left: '-9999px',
+      width: 1,
+      height: 1,
+      opacity: 0
+    }
+  }), React.createElement("div", null, React.createElement("button", {
     type: "submit",
-    className: "btn"
-  }, "Send message ", React.createElement("span", {
+    className: "btn",
+    disabled: status === 'submitting'
+  }, status === 'submitting' ? 'Sending…' : React.createElement(React.Fragment, null, "Send message ", React.createElement("span", {
     className: "arrow"
-  })))), React.createElement("aside", null, React.createElement("div", {
+  }))), status === 'error' && React.createElement("div", {
+    className: "err",
+    role: "alert",
+    style: {
+      display: 'block',
+      marginTop: 12
+    }
+  }, "Something went wrong sending your message. Please try again, or email Enquiry@troytesting.com directly."))), React.createElement("aside", null, React.createElement("div", {
     className: "eyebrow"
   }, "Or reach us directly"), React.createElement("div", {
     style: {

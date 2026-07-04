@@ -1,0 +1,13 @@
+{
+  "_help": "Owner-editable exam sessions (also editable live from the scheduler app's Website page). Shown on the homepage board and the Availability page. Set live=true ONLY when keeping these rows accurate — that switches the 'Sample' label to 'Updated <date>' and shows status pills. Status: open | filling | waitlist | full (or \"\"). 'when' is free text. Keep 5-6 rows. See OWNER-GUIDE.md.",
+  "live": false,
+  "updated": "2026-07-03",
+  "sessions": [
+    { "code": "CELPIP-G",  "label": "CELPIP General",    "centre": "North York",  "when": "Daily seats",  "status": "" },
+    { "code": "CELPIP-LS", "label": "CELPIP General LS", "centre": "North York",  "when": "Weekly seats", "status": "" },
+    { "code": "CELPIP-G",  "label": "CELPIP General",    "centre": "Mississauga", "when": "Weekly seats", "status": "" },
+    { "code": "CFA-I",     "label": "CFA Level I",       "centre": "Mississauga", "when": "Feb / May / Aug / Nov", "status": "" },
+    { "code": "CFA-I",     "label": "CFA Level I",       "centre": "North York",  "when": "Feb / May / Aug / Nov", "status": "" },
+    { "code": "LSAT",      "label": "LSAT",              "centre": "North York",  "when": "Multiple / year", "status": "" }
+  ]
+}
