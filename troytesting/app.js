@@ -2625,12 +2625,16 @@ function CorporatePage({
   }, React.createElement("div", {
     className: `field ${err.org ? 'error' : ''}`
   }, React.createElement("label", null, "Organization *"), React.createElement("input", {
+    "aria-label": "Organization",
+    "aria-invalid": !!err.org,
     value: f.org,
     onChange: e => set('org', e.target.value),
     placeholder: "Company / institution"
   })), React.createElement("div", {
     className: `field ${err.name ? 'error' : ''}`
   }, React.createElement("label", null, "Contact name *"), React.createElement("input", {
+    "aria-label": "Contact name",
+    "aria-invalid": !!err.name,
     value: f.name,
     onChange: e => set('name', e.target.value),
     placeholder: "Your name"
@@ -2638,24 +2642,30 @@ function CorporatePage({
     className: `field ${err.email ? 'error' : ''}`
   }, React.createElement("label", null, "Work email *"), React.createElement("input", {
     type: "email",
+    "aria-label": "Work email",
+    "aria-invalid": !!err.email,
     value: f.email,
     onChange: e => set('email', e.target.value),
     placeholder: "you@org.com"
   })), React.createElement("div", {
     className: "field"
   }, React.createElement("label", null, "City / region"), React.createElement("input", {
+    "aria-label": "City / region",
     value: f.city,
     onChange: e => set('city', e.target.value),
     placeholder: "e.g. Toronto, ON"
   })), React.createElement("div", {
     className: "field"
   }, React.createElement("label", null, "Exam / assessment"), React.createElement("input", {
+    "aria-label": "Exam / assessment",
     value: f.exam,
     onChange: e => set('exam', e.target.value),
     placeholder: "e.g. licensing exam, corporate test"
   })), React.createElement("div", {
     className: `field ${err.seats ? 'error' : ''}`
   }, React.createElement("label", null, "Seats needed *"), React.createElement("select", {
+    "aria-label": "Seats needed",
+    "aria-invalid": !!err.seats,
     value: f.seats,
     onChange: e => set('seats', e.target.value)
   }, React.createElement("option", {
@@ -2664,11 +2674,13 @@ function CorporatePage({
     className: "field"
   }, React.createElement("label", null, "Target date"), React.createElement("input", {
     type: "date",
+    "aria-label": "Target date",
     value: f.date,
     onChange: e => set('date', e.target.value)
   })), React.createElement("div", {
     className: "field"
   }, React.createElement("label", null, "Format"), React.createElement("select", {
+    "aria-label": "Format",
     value: f.format,
     onChange: e => set('format', e.target.value)
   }, React.createElement("option", {
@@ -2676,6 +2688,7 @@ function CorporatePage({
   }, "\u2014 Select \u2014"), React.createElement("option", null, "Computer-based (CBT)"), React.createElement("option", null, "Paper-based (PBT)"), React.createElement("option", null, "Hybrid"), React.createElement("option", null, "Not sure yet")))), React.createElement("div", {
     className: "field"
   }, React.createElement("label", null, "Anything else?"), React.createElement("textarea", {
+    "aria-label": "Anything else?",
     value: f.notes,
     onChange: e => set('notes', e.target.value),
     placeholder: "Accommodations, security requirements, timeline\u2026"
