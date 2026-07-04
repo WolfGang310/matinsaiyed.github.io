@@ -882,6 +882,9 @@ function Stars({
 function GoogleBadge({
   compact
 }) {
+  const r = useSiteJson('rating.json');
+  const rating = r && r.rating ? r.rating : '4.9';
+  const reviews = r && r.count ? r.count + ' Google reviews' : '120+ Google reviews';
   return React.createElement("a", {
     className: `gbadge ${compact ? 'compact' : ''}`,
     href: "https://www.google.com/search?q=Troy+Testing+%26+Learning+Centers+reviews",
@@ -893,9 +896,9 @@ function GoogleBadge({
     className: "g-body"
   }, React.createElement("span", {
     className: "g-top"
-  }, React.createElement("strong", null, "4.9"), React.createElement(Stars, null)), React.createElement("span", {
+  }, React.createElement("strong", null, rating), React.createElement(Stars, null)), React.createElement("span", {
     className: "g-sub"
-  }, "120+ Google reviews")));
+  }, reviews)));
 }
 const SESSIONS = [{
   code: 'CELPIP-G',

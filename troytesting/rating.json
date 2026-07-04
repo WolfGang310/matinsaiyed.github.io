@@ -1,0 +1,6 @@
+{
+  "_note": "Auto-updated daily from the Google Places API by .github/workflows/troy-rating.yml (on the main branch). Until it first runs, rating is null and the badge shows its safe fallback (4.9 / 120+).",
+  "rating": null,
+  "count": null,
+  "updated": ""
+}
