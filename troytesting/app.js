@@ -5,6 +5,51 @@ const {
   useEffect,
   useRef
 } = React;
+function useFocusTrap(active, onClose) {
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!active) return;
+    const node = ref.current;
+    if (!node) return;
+    const prev = document.activeElement;
+    const SEL = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+    const list = () => Array.from(node.querySelectorAll(SEL)).filter(el => el.offsetParent !== null);
+    const first = list()[0];
+    (first || node).focus();
+    const onKey = e => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose && onClose();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const f = list();
+      if (!f.length) {
+        e.preventDefault();
+        return;
+      }
+      const a = f[0],
+        b = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === a) {
+        e.preventDefault();
+        b.focus();
+      } else if (!e.shiftKey && document.activeElement === b) {
+        e.preventDefault();
+        a.focus();
+      }
+    };
+    node.addEventListener('keydown', onKey);
+    return () => {
+      node.removeEventListener('keydown', onKey);
+      if (prev && prev.focus) {
+        try {
+          prev.focus();
+        } catch (_) {}
+      }
+    };
+  }, [active]);
+  return ref;
+}
 function Header({
   route,
   go,
@@ -247,6 +292,7 @@ function ReserveModal({
   exam,
   close
 }) {
+  const trapRef = useFocusTrap(!!exam, close);
   if (!exam) return null;
   const centreUrls = exam.centreUrls || {};
   const centreKeys = Object.keys(centreUrls);
@@ -257,10 +303,15 @@ function ReserveModal({
     className: "modal",
     role: "dialog",
     "aria-modal": "true",
+    "aria-labelledby": "reserve-title",
+    ref: trapRef,
+    tabIndex: -1,
     onClick: e => e.stopPropagation()
   }, React.createElement("div", {
     className: "eyebrow"
-  }, "Book on ", exam.org, " \xB7 ", exam.code), React.createElement("h3", null, exam.name), React.createElement("p", null, "All exam bookings are made directly with the official provider. Click through to", ' ', React.createElement("strong", null, exam.org), "'s portal to pick your date \u2014 we deliver the exam at our", ' ', exam.preferredCenter || 'Toronto or Mississauga', " center. Bring a valid ID on the day."), React.createElement("div", {
+  }, "Book on ", exam.org, " \xB7 ", exam.code), React.createElement("h3", {
+    id: "reserve-title"
+  }, exam.name), React.createElement("p", null, "All exam bookings are made directly with the official provider. Click through to", ' ', React.createElement("strong", null, exam.org), "'s portal to pick your date \u2014 we deliver the exam at our", ' ', exam.preferredCenter || 'Toronto or Mississauga', " center. Bring a valid ID on the day."), React.createElement("div", {
     className: "modal-actions"
   }, React.createElement("a", {
     className: "btn",
@@ -971,6 +1022,7 @@ function ExamWizard({
   open,
   close
 }) {
+  const trapRef = useFocusTrap(open, close);
   const [step, setStep] = useF(0);
   const [fam, setFam] = useF(null);
   const [code, setCode] = useF(null);
@@ -998,6 +1050,9 @@ function ExamWizard({
     className: "modal wizard",
     role: "dialog",
     "aria-modal": "true",
+    "aria-label": "Find your exam",
+    ref: trapRef,
+    tabIndex: -1,
     onClick: e => e.stopPropagation()
   }, React.createElement("div", {
     className: "wiz-top"
@@ -1198,6 +1253,7 @@ function DiagnosticQuiz({
   close,
   go
 }) {
+  const trapRef = useFocusTrap(open, close);
   const [step, setStep] = useF(0);
   const [fam, setFam] = useF(null);
   const [level, setLevel] = useF(null);
@@ -1231,6 +1287,9 @@ function DiagnosticQuiz({
     className: "modal wizard",
     role: "dialog",
     "aria-modal": "true",
+    "aria-label": "Study planner",
+    ref: trapRef,
+    tabIndex: -1,
     onClick: e => e.stopPropagation()
   }, React.createElement("div", {
     className: "wiz-top"
@@ -2409,6 +2468,7 @@ function PlanToggle({
 function PlanBar() {
   const plan = usePlan();
   const [open, setOpen] = useX(false);
+  const trapRef = useFocusTrap(open, () => setOpen(false));
   if (plan.length === 0) return null;
   const items = plan.map(c => EXAMS.find(e => e.code === c)).filter(Boolean);
   const body = encodeURIComponent('My Troy Testing shortlist:\n\n' + items.map(e => `• ${e.name} (${e.org}) — ${e.fee}\n  Book: ${e.url}`).join('\n\n') + '\n\n— Sent from troytesting.com');
@@ -2425,13 +2485,18 @@ function PlanBar() {
     className: "modal",
     role: "dialog",
     "aria-modal": "true",
+    "aria-labelledby": "plan-title",
+    ref: trapRef,
+    tabIndex: -1,
     onClick: e => e.stopPropagation()
   }, React.createElement("div", {
     className: "eyebrow",
     style: {
       color: 'var(--accent)'
     }
-  }, "My plan \xB7 ", items.length, " exam", items.length > 1 ? 's' : ''), React.createElement("h3", null, "Your shortlist"), React.createElement("div", {
+  }, "My plan \xB7 ", items.length, " exam", items.length > 1 ? 's' : ''), React.createElement("h3", {
+    id: "plan-title"
+  }, "Your shortlist"), React.createElement("div", {
     className: "plan-items"
   }, items.map(e => React.createElement("div", {
     className: "plan-item",
