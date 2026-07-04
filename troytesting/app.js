@@ -1975,7 +1975,7 @@ function CorporateGlobe() {
   const ref = useMR(null);
   const [ready, setReady] = useM(typeof THREE !== 'undefined');
   useME(() => {
-    if (REDUCED) return;
+    if (REDUCED || window.innerWidth < 900) return;
     if (typeof THREE !== 'undefined') {
       setReady(true);
       return;
@@ -1989,7 +1989,7 @@ function CorporateGlobe() {
     };
   }, []);
   useME(() => {
-    if (!ready || REDUCED || !ref.current || typeof THREE === 'undefined') return;
+    if (!ready || REDUCED || window.innerWidth < 900 || !ref.current || typeof THREE === 'undefined') return;
     const wrap = ref.current;
     const S = Math.min(wrap.clientWidth, 460);
     const scene = new THREE.Scene();
@@ -2051,7 +2051,7 @@ function CorporateGlobe() {
       wrap.contains(renderer.domElement) && wrap.removeChild(renderer.domElement);
     };
   }, [ready]);
-  if (REDUCED || !ready) return null;
+  if (REDUCED || window.innerWidth < 900 || !ready) return null;
   return React.createElement("div", {
     className: "globe-wrap reveal",
     ref: ref,

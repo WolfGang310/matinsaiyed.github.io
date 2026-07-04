@@ -1,9 +1,11 @@
-/* Fetch Troy Testing's live Google rating and write troytesting/rating.json,
-   and refresh the aggregateRating in troytesting/index.html's JSON-LD.
-   Runs daily from the GitHub Action. Requires env:
-     GOOGLE_MAPS_API_KEY  — a Google Cloud key with the Places API enabled
+/* Fetch Troy Testing's live Google rating → write troytesting/rating.json and
+   refresh the aggregateRating in troytesting/index.html's JSON-LD. Runs daily
+   from the GitHub Action. Requires env:
+     GOOGLE_MAPS_API_KEY  — a Google Cloud key with "Places API (New)" (or legacy
+                            "Places API") enabled
      TROY_PLACE_ID        — the Google Place ID of the business listing
-   Exits 0 (no-op) if secrets are missing, so the schedule never fails. */
+   Tries the new Places API first, falls back to the legacy endpoint, so it works
+   whichever one the key has enabled. Exits 0 (no-op) if secrets are unset. */
 import { readFileSync, writeFileSync } from 'node:fs';
 
 const KEY = process.env.GOOGLE_MAPS_API_KEY;
@@ -13,19 +15,31 @@ if (!KEY || !PLACE) {
   process.exit(0);
 }
 
-const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(PLACE)}&fields=rating,user_ratings_total&key=${KEY}`;
-const res = await fetch(url);
-const body = await res.json();
-if (body.status !== 'OK' || !body.result) {
-  console.error('rating: Places API returned', body.status, body.error_message || '');
-  process.exit(1);
+async function fromNew() {
+  const res = await fetch(`https://places.googleapis.com/v1/places/${encodeURIComponent(PLACE)}`, {
+    headers: { 'X-Goog-Api-Key': KEY, 'X-Goog-FieldMask': 'rating,userRatingCount' },
+  });
+  if (!res.ok) { console.error('Places API (New):', res.status, (await res.text()).slice(0, 200)); return null; }
+  const b = await res.json();
+  if (typeof b.rating === 'number' && typeof b.userRatingCount === 'number') return { rating: b.rating, count: b.userRatingCount };
+  return null;
 }
-const rating = body.result.rating;
-const count = body.result.user_ratings_total;
-if (typeof rating !== 'number' || typeof count !== 'number') {
-  console.error('rating: missing rating/count in response'); process.exit(1);
+async function fromLegacy() {
+  const res = await fetch(`https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(PLACE)}&fields=rating,user_ratings_total&key=${KEY}`);
+  if (!res.ok) { console.error('legacy Places API HTTP', res.status); return null; }
+  const b = await res.json();
+  if (b.status === 'OK' && b.result && typeof b.result.rating === 'number' && typeof b.result.user_ratings_total === 'number')
+    return { rating: b.result.rating, count: b.result.user_ratings_total };
+  console.error('legacy Places API:', b.status, b.error_message || '');
+  return null;
 }
 
+let data = null;
+try { data = await fromNew(); } catch (e) { console.error('new API error:', e.message); }
+if (!data) { try { data = await fromLegacy(); } catch (e) { console.error('legacy API error:', e.message); } }
+if (!data) { console.error('rating: could not fetch rating from either Places API — leaving files unchanged.'); process.exit(1); }
+
+const { rating, count } = data;
 const stamp = new Date().toISOString().slice(0, 10);
 writeFileSync('troytesting/rating.json', JSON.stringify({
   _note: 'Auto-updated daily from the Google Places API. Do not edit by hand.',
@@ -40,9 +54,10 @@ try {
   const re = /(<script type="application\/ld\+json">)([\s\S]*?)(<\/script>)/;
   const m = html.match(re);
   if (m) {
-    const data = JSON.parse(m[2]);
-    data.aggregateRating = { '@type': 'AggregateRating', ratingValue: String(rating), reviewCount: String(count), bestRating: '5' };
-    html = html.replace(re, `$1${JSON.stringify(data)}$3`);
+    const obj = JSON.parse(m[2]);
+    obj.aggregateRating = { '@type': 'AggregateRating', ratingValue: String(rating), reviewCount: String(count), bestRating: '5' };
+    // function replacement avoids $-sequence interpretation in the JSON string
+    html = html.replace(re, (whole, open, _body, close) => open + JSON.stringify(obj) + close);
     writeFileSync(file, html);
     console.log('rating: patched JSON-LD aggregateRating');
   }
