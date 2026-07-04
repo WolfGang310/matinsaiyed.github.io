@@ -1930,10 +1930,38 @@ setTimeout(() => {
     subtree: true
   });
 }, 500);
+let __threeLoad = null;
+function loadThree() {
+  if (typeof THREE !== 'undefined') return Promise.resolve(true);
+  if (__threeLoad) return __threeLoad;
+  __threeLoad = new Promise(resolve => {
+    const s = document.createElement('script');
+    s.src = 'vendor/three.min.js';
+    s.onload = () => resolve(typeof THREE !== 'undefined');
+    s.onerror = () => resolve(false);
+    document.head.appendChild(s);
+  });
+  return __threeLoad;
+}
 function HeroParticles() {
   const ref = useMR(null);
+  const [ready, setReady] = useM(typeof THREE !== 'undefined');
   useME(() => {
-    if (!HAS_THREE || REDUCED || window.innerWidth < 900 || !ref.current) return;
+    if (REDUCED || window.innerWidth < 900) return;
+    if (typeof THREE !== 'undefined') {
+      setReady(true);
+      return;
+    }
+    let live = true;
+    loadThree().then(ok => {
+      if (live && ok) setReady(true);
+    });
+    return () => {
+      live = false;
+    };
+  }, []);
+  useME(() => {
+    if (!ready || REDUCED || window.innerWidth < 900 || !ref.current || typeof THREE === 'undefined') return;
     const wrap = ref.current;
     const W = wrap.clientWidth,
       H = wrap.clientHeight;
@@ -1990,7 +2018,7 @@ function HeroParticles() {
       red.rotation.copy(dots.rotation);
       dots.position.y = Math.sin(t) * 0.6;
       red.position.y = dots.position.y;
-      renderer.render(scene, cam);
+      if (!document.hidden) renderer.render(scene, cam);
       raf = requestAnimationFrame(tick);
     };
     tick();
@@ -2009,7 +2037,7 @@ function HeroParticles() {
       renderer.dispose();
       wrap.contains(renderer.domElement) && wrap.removeChild(renderer.domElement);
     };
-  }, []);
+  }, [ready]);
   return React.createElement("div", {
     className: "hero-3d",
     ref: ref,
@@ -2024,8 +2052,23 @@ function llToV3(lat, lon, r) {
 }
 function CorporateGlobe() {
   const ref = useMR(null);
+  const [ready, setReady] = useM(typeof THREE !== 'undefined');
   useME(() => {
-    if (!HAS_THREE || REDUCED || !ref.current) return;
+    if (REDUCED) return;
+    if (typeof THREE !== 'undefined') {
+      setReady(true);
+      return;
+    }
+    let live = true;
+    loadThree().then(ok => {
+      if (live && ok) setReady(true);
+    });
+    return () => {
+      live = false;
+    };
+  }, []);
+  useME(() => {
+    if (!ready || REDUCED || !ref.current || typeof THREE === 'undefined') return;
     const wrap = ref.current;
     const S = Math.min(wrap.clientWidth, 460);
     const scene = new THREE.Scene();
@@ -2077,7 +2120,7 @@ function CorporateGlobe() {
         r.scale.setScalar(1 + p * 2.2);
         r.material.opacity = 0.7 * (1 - p);
       });
-      renderer.render(scene, cam);
+      if (!document.hidden) renderer.render(scene, cam);
       raf = requestAnimationFrame(tick);
     };
     tick();
@@ -2086,8 +2129,8 @@ function CorporateGlobe() {
       renderer.dispose();
       wrap.contains(renderer.domElement) && wrap.removeChild(renderer.domElement);
     };
-  }, []);
-  if (!HAS_THREE || REDUCED) return null;
+  }, [ready]);
+  if (REDUCED || !ready) return null;
   return React.createElement("div", {
     className: "globe-wrap reveal",
     ref: ref,
