@@ -90,13 +90,20 @@
         scrollTrigger: {
           trigger: stage,
           pin: true,
-          scrub: 1,
+          scrub: 1.2,               /* a touch more glide so the track eases rather than tracks 1:1 */
           anticipatePin: 1,
           start: 'top 84px',
           end: function () { return '+=' + dist(); },
           invalidateOnRefresh: true,
-          /* chapters settle into frame like era stops */
-          snap: { snapTo: 1 / (entries.length - 1), duration: { min: 0.15, max: 0.5 }, ease: 'power1.inOut' },
+          /* chapters ease toward each era stop — long, gentle settle with a
+             brief delay so a mid-scroll pause doesn't yank you to the nearest one */
+          snap: {
+            snapTo: 1 / (entries.length - 1),
+            duration: { min: 0.4, max: 1.1 },
+            delay: 0.18,
+            ease: 'power3.out',
+            directional: false
+          },
           onUpdate: function (self) {
             var idx = Math.min(entries.length - 1, Math.floor(self.progress * entries.length + 1e-4));
             lightSegs(idx, false);
