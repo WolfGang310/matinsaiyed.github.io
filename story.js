@@ -51,29 +51,74 @@
     if (lcCount) lcCount.textContent = String(Math.min(n, rows.length)) + '/' + rows.length;
   }
 
+  function lightSegs(idx, animate) {
+    segs.forEach(function (s, i) {
+      s.classList.toggle('lit', i <= idx);
+      var fill = s.querySelector('i');
+      if (animate && MOTION) gsap.to(fill, { scaleX: i <= idx ? 1 : 0, duration: 0.5, ease: 'power2.out' });
+      else fill.style.transform = 'scaleX(' + (i <= idx ? 1 : 0) + ')';
+    });
+  }
+
+  var stage = exp ? exp.querySelector('.era-stage') : null;
+  var track = exp ? exp.querySelector('.ledger') : null;
+
+  /* Desktop + motion: pin the stage and drive the chapters HORIZONTALLY —
+     vertical scroll becomes sideways travel through the eras, with the year
+     bar and ledger booked against the same scrubbed progress. Elsewhere
+     (mobile, reduced-motion, no GSAP): classic vertical chapters via IO. */
+  var horizontalMode = false;
+  if (MOTION && stage && track && entries.length && typeof gsap.matchMedia === 'function') {
+    var mm = gsap.matchMedia();
+    mm.add('(min-width: 900px) and (prefers-reduced-motion: no-preference)', function () {
+      horizontalMode = true;
+      exp.classList.add('era-h');
+      var dist = function () { return Math.max(0, track.offsetWidth - stage.clientWidth); };
+      var tween = gsap.to(track, {
+        x: function () { return -dist(); },
+        ease: 'none',
+        scrollTrigger: {
+          trigger: stage,
+          pin: true,
+          scrub: 1,
+          anticipatePin: 1,
+          start: 'top 84px',
+          end: function () { return '+=' + dist(); },
+          invalidateOnRefresh: true,
+          onUpdate: function (self) {
+            var idx = Math.min(entries.length - 1, Math.floor(self.progress * entries.length + 1e-4));
+            lightSegs(idx, false);
+            bookThrough(idx + 1);
+          },
+          onToggle: function (self) { if (ledger) ledger.classList.toggle('on', self.isActive); }
+        }
+      });
+      return function () {           /* teardown when leaving the breakpoint */
+        horizontalMode = false;
+        exp.classList.remove('era-h');
+        tween.scrollTrigger && tween.scrollTrigger.kill(true);
+        tween.kill();
+        gsap.set(track, { clearProps: 'transform' });
+      };
+    });
+  }
+
   if (entries.length && 'IntersectionObserver' in window) {
-    /* entries are ordered newest→oldest in the DOM; the story reads top to
-       bottom, so booking follows document order. */
+    /* vertical fallback — inert while the horizontal journey is active */
     var io = new IntersectionObserver(function (ents) {
+      if (horizontalMode) return;
       ents.forEach(function (e) {
         if (!e.isIntersecting) return;
-        var idx = entries.indexOf(e.target);
-        segs.forEach(function (s, i) { s.classList.toggle('lit', i <= idx); });
-        if (MOTION) {
-          segs.forEach(function (s, i) {
-            gsap.to(s.querySelector('i'), { scaleX: i <= idx ? 1 : 0, duration: 0.5, ease: 'power2.out' });
-          });
-        } else {
-          segs.forEach(function (s, i) { s.querySelector('i').style.transform = 'scaleX(' + (i <= idx ? 1 : 0) + ')'; });
-        }
-        bookThrough(idx + 1);
+        lightSegs(entries.indexOf(e.target), true);
+        bookThrough(entries.indexOf(e.target) + 1);
       });
     }, { rootMargin: '-25% 0px -55% 0px' });
     entries.forEach(function (el) { io.observe(el); });
 
-    /* ledger card visible only while the career section is on screen (desktop) */
+    /* ledger card visibility outside horizontal mode */
     if (ledger && matchMedia('(min-width: 861px)').matches) {
       var io2 = new IntersectionObserver(function (ents) {
+        if (horizontalMode) return;
         ents.forEach(function (e) { ledger.classList.toggle('on', e.isIntersecting); });
       }, { rootMargin: '-10% 0px -10% 0px' });
       io2.observe(exp);

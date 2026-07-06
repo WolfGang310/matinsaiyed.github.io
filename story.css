@@ -144,6 +144,40 @@ h1, h2, .item-head h2, .claim h2, .statement #statement-text,
 }
 .era-years .seg.lit b { color: var(--ink); }
 
+/* ── Horizontal era journey (desktop, JS-armed via .era-h) ──
+   Vertical scroll is pinned while the six chapters travel sideways;
+   the year bar and ledger book figures against the same progress. */
+.era-h .era-stage {
+  min-height: calc(100vh - 120px);
+  overflow: hidden;
+  display: flex; flex-direction: column; justify-content: flex-start;
+}
+.era-h .era-years { position: relative; top: 0; }
+.era-h .ledger {
+  display: flex;
+  flex-direction: row;            /* site.css stacks the ledger; the journey rides sideways */
+  flex-wrap: nowrap;
+  gap: 6vw; align-items: flex-start;
+  width: max-content;             /* track is as wide as its chapters */
+  will-change: transform;
+  padding-top: 8px;
+  cursor: grab;
+}
+.era-h .entry {
+  flex: 0 0 auto;
+  width: min(880px, 74vw);
+  padding-top: 26px;
+  border-top: none;
+}
+/* directional arrow between chapters — the road ahead */
+.era-h .entry::after {
+  content: "→";
+  position: absolute; right: -4.2vw; top: 42%;
+  font-family: var(--serif); font-style: italic;
+  font-size: 42px; color: var(--red-bright); opacity: .55;
+}
+.era-h .entry:last-child::after { content: none; }
+
 /* each era chapter */
 .entry { position: relative; padding-top: 46px; }
 .era-no {
