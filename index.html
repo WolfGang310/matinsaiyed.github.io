@@ -62,16 +62,15 @@
     })();
   </script>
 
-  <!-- Fonts: Newsreader (prose) · Archivo (labels) · IBM Plex Mono (figures) -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <!-- Fonts (self-hosted): Fraunces (display) · Archivo (labels) · IBM Plex Mono (figures) -->
+  <link rel="stylesheet" href="/fonts/fonts.css?v=1" />
 
   <link rel="stylesheet" href="/site.css?v=5" />
   <link rel="stylesheet" href="/landing.css?v=4" />
   <link rel="stylesheet" href="/armory.css?v=2" />
-  <script src="https://unpkg.com/gsap@3.12.5/dist/gsap.min.js" defer></script>
-  <script src="https://unpkg.com/gsap@3.12.5/dist/ScrollTrigger.min.js" defer></script>
+  <link rel="stylesheet" href="/story.css?v=1" />
+  <script src="/vendor/gsap.min.js" defer></script>
+  <script src="/vendor/ScrollTrigger.min.js" defer></script>
 
 </head>
 
@@ -102,8 +101,10 @@
 
     <!-- ════════ Hero — clean two-column: copy left, real portrait right ════════ -->
     <section class="hero" id="hero" aria-label="Introduction">
+      <div id="hero-canvas" aria-hidden="true"></div>
       <div class="hero-grid">
         <div class="hero-foot">
+          <span class="chip-red">Five years of compounding · a career feature</span>
           <p class="kicker mono">/// OPERATIONS · CLIENT SUCCESS · FINANCIAL PRODUCTS</p>
           <h1><span class="hl">Operations</span><span class="hl">that balance<i class="dot">.</i></span></h1>
           <p class="hero-sub">
@@ -132,8 +133,10 @@
             <img src="/images/portrait.jpg" srcset="/images/portrait-480w.jpg 480w, /images/portrait-768w.jpg 768w" sizes="(max-width: 860px) 78vw, 400px" width="1074" height="1232" fetchpriority="high" alt="Portrait of Matin Saiyed" />
           </picture>
           <figcaption class="portrait-chip mono">CIFC LICENSED · ONTARIO</figcaption>
+          <p class="fig-note portrait-fig"><b>Fig. 1</b> THE OPERATOR — MISSISSAUGA, ON</p>
         </figure>
       </div>
+      <p class="scroll-cue" aria-hidden="true">Scroll to continue</p>
 
       <!-- figures marquee — full-bleed band carrying his real numbers -->
       <div class="figures-marquee" aria-label="Career highlights">
@@ -321,11 +324,36 @@
         <span class="item-no mono">04</span>
         <h2>Professional Experience</h2>
       </header>
+      <p class="fig-note"><b>Fig. 3</b> THE CAREER LEDGER · READ BACKWARDS FROM TODAY</p>
+
+      <!-- segmented era bar — fills as each chapter passes -->
+      <div class="era-years" aria-hidden="true">
+        <span class="seg"><i></i><b>NOW</b></span>
+        <span class="seg"><i></i><b>2024</b></span>
+        <span class="seg"><i></i><b>2023</b></span>
+        <span class="seg"><i></i><b>2023</b></span>
+        <span class="seg"><i></i><b>2022</b></span>
+        <span class="seg"><i></i><b>2021</b></span>
+      </div>
+
+      <!-- the ledger — figures are booked as each era passes -->
+      <aside class="ledger-card" id="ledger-card" aria-label="Figures booked so far">
+        <p class="lc-title"><span>FIGURES BOOKED</span><span id="lc-count">0/6</span></p>
+        <div class="lc-rows">
+          <p class="lc-row"><b>ON&nbsp;TIME</b><span>month-end close</span></p>
+          <p class="lc-row"><b>+25% · 96%</b><span>target · satisfaction</span></p>
+          <p class="lc-row"><b>68→94%</b><span>satisfaction lift</span></p>
+          <p class="lc-row"><b>100–200</b><span>clients daily</span></p>
+          <p class="lc-row"><b>35,000+</b><span>attendee event</span></p>
+          <p class="lc-row"><b>5–10</b><span>startup portfolio</span></p>
+        </div>
+      </aside>
 
       <div class="ledger">
 
         <article class="entry current">
           <div class="entry-rule mono"><span class="entry-period">MAY 2025 — PRESENT</span><span class="entry-badge">CURRENT</span></div>
+          <p class="era-no">Era VI · The Close</p>
           <div class="entry-grid">
             <div class="entry-main">
               <h3>Operations Associate</h3>
@@ -347,6 +375,7 @@
 
         <article class="entry">
           <div class="entry-rule mono"><span class="entry-period">JAN 2024 — APR 2025</span></div>
+          <p class="era-no">Era V · The Book of Clients</p>
           <div class="entry-grid">
             <div class="entry-main">
               <h3>Client Success Associate</h3>
@@ -366,6 +395,7 @@
 
         <article class="entry">
           <div class="entry-rule mono"><span class="entry-period">MAY 2023 — MAY 2024</span></div>
+          <p class="era-no">Era IV · The Turnaround</p>
           <div class="entry-grid">
             <div class="entry-main">
               <h3>Operations Consultant / Training Coordinator</h3>
@@ -386,6 +416,7 @@
 
         <article class="entry">
           <div class="entry-rule mono"><span class="entry-period">JAN 2023 — APR 2023</span></div>
+          <p class="era-no">Era III · The Floor</p>
           <div class="entry-grid">
             <div class="entry-main">
               <h3>Test Center Administrator</h3>
@@ -403,6 +434,7 @@
 
         <article class="entry">
           <div class="entry-rule mono"><span class="entry-period">JUN 2022 — JUN 2023</span></div>
+          <p class="era-no">Era II · The Crowd</p>
           <div class="entry-grid">
             <div class="entry-main">
               <h3>Volunteer Team Lead</h3>
@@ -421,6 +453,7 @@
 
         <article class="entry">
           <div class="entry-rule mono"><span class="entry-period">JUL 2021 — DEC 2021</span></div>
+          <p class="era-no">Era I · The Apprenticeship</p>
           <div class="entry-grid">
             <div class="entry-main">
               <h3>Business Research &amp; Client Support Intern</h3>
@@ -437,7 +470,41 @@
         </article>
 
       </div>
+
+      <!-- ── Day One vs Today — the compounding, side by side ── -->
+      <div class="compare" aria-label="Day one versus today">
+        <p class="fig-note"><b>Fig. 4</b> DAY ONE VS TODAY · WHAT FIVE YEARS COMPOUNDS INTO</p>
+        <div class="compare-panel">
+          <div class="compare-cols compare-divider">
+            <div class="compare-col">
+              <p class="cc-year mono">JUL 2021</p>
+              <h3>The Intern</h3>
+              <ul>
+                <li><b>SCOPE</b>Research &amp; support for a 5–10 startup portfolio</li>
+                <li><b>CLIENTS</b>Preparing decks and materials for founders</li>
+                <li><b>NUMBERS</b>Market research and data pulls, reviewed by others</li>
+                <li><b>TOOLS</b>Office suite &amp; a CRM login</li>
+                <li><b>CREDENTIAL</b>Commerce student</li>
+              </ul>
+            </div>
+            <div class="compare-col">
+              <p class="cc-year mono">TODAY</p>
+              <h3>The Operator</h3>
+              <ul>
+                <li><b>SCOPE</b>Owns project budgets &amp; re-forecasts for assigned accounts</li>
+                <li><b>CLIENTS</b>Primary point of contact for client engagements</li>
+                <li><b>NUMBERS</b>Accruals, variance flags &amp; audit-ready month-end close</li>
+                <li><b>TOOLS</b>Excel · Power BI · SQL · Python · CRM · AI tooling</li>
+                <li><b>CREDENTIAL</b>BComm · CIFC licensed · CFA Level I candidate</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
+
+    <!-- red band transition -->
+    <div class="band" aria-hidden="true"><span class="band-ticks"></span></div>
 
     <!-- ════════ What Others Say ════════ -->
     <section id="testimonials" class="item reveal">
@@ -521,7 +588,8 @@
       </div>
     </section>
 
-    <!-- ════════ Contact ════════ -->
+    <!-- ════════ Contact — dark ink ending ════════ -->
+    <div class="ending">
     <section id="contact" class="item reveal">
       <header class="item-head">
         <span class="item-no mono">08</span>
@@ -547,6 +615,7 @@
         </div>
       </div>
     </section>
+    </div>
 
   </main>
 
@@ -565,9 +634,7 @@
 
   <button id="back-to-top" class="mono" type="button" aria-label="Back to top">↑ TOP</button>
 
-  <button id="back-to-top" class="mono" type="button" aria-label="Back to top">↑ TOP</button>
-
-  <footer class="footer">
+  <footer class="footer ending ending-cont">
     <div class="footer-links">
       <a href="/Matin_Saiyed_Resume.pdf" download><span>Resume</span><span class="arrow" aria-hidden="true">↓</span></a>
       <a href="/cfa/index.html"><span>Study Atelier</span><span class="arrow" aria-hidden="true">→</span></a>
@@ -582,6 +649,7 @@
 
   <script src="/site.js?v=5" defer></script>
   <script src="/home.js?v=1" defer></script>
+  <script src="/story.js?v=1" defer></script>
 </body>
 
 </html>
