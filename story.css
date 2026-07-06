@@ -178,6 +178,38 @@ h1, h2, .item-head h2, .claim h2, .statement #statement-text,
 }
 .era-h .entry:last-child::after { content: none; }
 
+/* in the horizontal journey the ledger docks as a bottom band inside the
+   pinned stage (JS reparents it) — part of the composition, never over text */
+.era-h #ledger-card {
+  position: static;
+  width: auto;
+  margin: 18px 0 0;
+  margin-top: auto;               /* ride the stage floor */
+  opacity: 1; transform: none; pointer-events: auto;
+  box-shadow: none;
+  display: flex; align-items: stretch; gap: 20px;
+  padding: 10px 16px;
+}
+.era-h #ledger-card .lc-title {
+  border-bottom: 0; padding-bottom: 0; margin: 0;
+  display: flex; flex-direction: column; justify-content: center; gap: 3px;
+  white-space: nowrap;
+}
+.era-h #ledger-card .lc-rows {
+  display: flex; flex-direction: row; flex: 1;
+  justify-content: space-between; gap: 16px;
+}
+.era-h #ledger-card .lc-row {
+  border-bottom: 0;
+  border-left: 1px dashed var(--rule);
+  padding: 2px 0 2px 16px;
+  display: flex; flex-direction: column; justify-content: center; gap: 2px;
+  transform: none;
+  opacity: .18;                    /* unbooked figures stay ghosted, band stays stable */
+}
+.era-h #ledger-card .lc-row.booked { opacity: 1; }
+.era-h #ledger-card .lc-row span { text-align: left; }
+
 /* each era chapter */
 .entry { position: relative; padding-top: 46px; }
 .era-no {

@@ -73,6 +73,16 @@
     mm.add('(min-width: 900px) and (prefers-reduced-motion: no-preference)', function () {
       horizontalMode = true;
       exp.classList.add('era-h');
+
+      /* dock the ledger inside the pinned stage as a bottom band —
+         remember its home so teardown can put it back */
+      var ledgerHome = null;
+      if (ledger) {
+        ledgerHome = { parent: ledger.parentNode, next: ledger.nextSibling };
+        stage.appendChild(ledger);
+        ledger.classList.add('on');
+      }
+
       var dist = function () { return Math.max(0, track.offsetWidth - stage.clientWidth); };
       var tween = gsap.to(track, {
         x: function () { return -dist(); },
@@ -85,20 +95,44 @@
           start: 'top 84px',
           end: function () { return '+=' + dist(); },
           invalidateOnRefresh: true,
+          /* chapters settle into frame like era stops */
+          snap: { snapTo: 1 / (entries.length - 1), duration: { min: 0.15, max: 0.5 }, ease: 'power1.inOut' },
           onUpdate: function (self) {
             var idx = Math.min(entries.length - 1, Math.floor(self.progress * entries.length + 1e-4));
             lightSegs(idx, false);
             bookThrough(idx + 1);
-          },
-          onToggle: function (self) { if (ledger) ledger.classList.toggle('on', self.isActive); }
+          }
         }
       });
+
+      /* each chapter's body rides in from the right as the track carries it
+         into frame — the entrance is driven by the horizontal travel itself */
+      var chapterTweens = entries.map(function (entry) {
+        var body = entry.querySelector('.entry-grid');
+        if (!body) return null;
+        return gsap.from(body, {
+          x: 90, autoAlpha: 0, duration: 0.9, ease: 'power3.out',
+          scrollTrigger: {
+            trigger: entry,
+            containerAnimation: tween,
+            start: 'left 78%',
+            once: true
+          }
+        });
+      }).filter(Boolean);
+
       return function () {           /* teardown when leaving the breakpoint */
         horizontalMode = false;
         exp.classList.remove('era-h');
+        chapterTweens.forEach(function (t) { t.scrollTrigger && t.scrollTrigger.kill(true); t.kill(); });
         tween.scrollTrigger && tween.scrollTrigger.kill(true);
         tween.kill();
         gsap.set(track, { clearProps: 'transform' });
+        entries.forEach(function (e) { var b = e.querySelector('.entry-grid'); if (b) gsap.set(b, { clearProps: 'all' }); });
+        if (ledger && ledgerHome) {
+          ledger.classList.remove('on');
+          ledgerHome.parent.insertBefore(ledger, ledgerHome.next);
+        }
       };
     });
   }
@@ -128,9 +162,11 @@
     }
   }
 
-  /* ── Chapter headlines slide up as they enter ── */
+  /* ── Chapter headlines slide up as they enter ──
+     (in horizontal mode the chapters get track-driven entrances instead) */
   if (MOTION) {
-    document.querySelectorAll('.entry h3, .compare-panel, .band').forEach(function (el) {
+    var vertTargets = horizontalMode ? '.compare-panel, .band' : '.entry h3, .compare-panel, .band';
+    document.querySelectorAll(vertTargets).forEach(function (el) {
       gsap.fromTo(el, { autoAlpha: 0, y: 30 }, {
         autoAlpha: 1, y: 0, duration: 0.8, ease: 'power3.out',
         scrollTrigger: { trigger: el, start: 'top 86%', once: true },
