@@ -5,6 +5,48 @@ const {
   useEffect,
   useRef
 } = React;
+/* ============================================================
+   Glossy 3D-ish inline SVG icon system — replaces every emoji.
+   Icon({name,size,color,title}) renders an <svg> that references a
+   shared, self-contained sprite of glossy symbols (rounded gradient
+   "chip" badges with a top gloss highlight + a rim, plus currentColor
+   UI glyphs and gold stars). The sprite lives inline in index.html
+   (id="ti-sprite"); gradient defs are shared once, currentColor flows
+   through <use> so control glyphs adapt to their context colour.
+   Decorative by default (aria-hidden); pass `title` for a labelled img.
+   ============================================================ */
+function Icon({
+  name,
+  size = 28,
+  color,
+  title,
+  style
+}) {
+  const st = {
+    display: 'inline-block',
+    lineHeight: 0,
+    verticalAlign: 'middle',
+    flex: 'none'
+  };
+  if (color) st.color = color;
+  if (style) Object.assign(st, style);
+  const href = '#ti-' + name;
+  return React.createElement("svg", {
+    className: "ticon",
+    width: size,
+    height: size,
+    viewBox: "0 0 32 32",
+    style: st,
+    focusable: "false",
+    role: title ? 'img' : undefined,
+    'aria-label': title || undefined,
+    'aria-hidden': title ? undefined : 'true'
+  }, React.createElement("use", {
+    href: href,
+    xlinkHref: href
+  }));
+}
+window.Icon = Icon;
 function useFocusTrap(active, onClose) {
   const ref = useRef(null);
   useEffect(() => {
@@ -875,9 +917,14 @@ function Stars({
       fontSize: size
     },
     "aria-hidden": "true"
-  }, [0, 1, 2, 3, 4].map(i => React.createElement("span", {
-    key: i
-  }, "\u2605")));
+  }, [0, 1, 2, 3, 4].map(i => React.createElement(Icon, {
+    key: i,
+    name: "star",
+    size: size,
+    style: {
+      marginRight: 1
+    }
+  })));
 }
 function GoogleBadge({
   compact
@@ -1285,7 +1332,15 @@ function SeatAlert() {
     className: "serif"
   }, "Get notified when seats open."), React.createElement("p", null, "We'll email you the moment a new CELPIP, CFA or LSAT session is posted at your preferred centre.")), done ? React.createElement("div", {
     className: "sa-done"
-  }, "\u2713 You're on the list. We'll be in touch at ", React.createElement("strong", null, email), ".") : React.createElement("form", {
+  }, React.createElement(Icon, {
+    name: "check",
+    size: 16,
+    color: "#22a35a",
+    style: {
+      marginRight: 6,
+      verticalAlign: '-3px'
+    }
+  }), "You're on the list. We'll be in touch at ", React.createElement("strong", null, email), ".") : React.createElement("form", {
     className: "sa-form",
     onSubmit: submit
   }, React.createElement("select", {
@@ -1483,7 +1538,10 @@ function ExamDayChecklist() {
     }
   }, React.createElement("span", {
     className: "check-mark"
-  }, "\u2713"), React.createElement("div", null, React.createElement("h4", null, c.t), React.createElement("p", null, c.d)))))));
+  }, React.createElement(Icon, {
+    name: "check",
+    size: 14
+  })), React.createElement("div", null, React.createElement("h4", null, c.t), React.createElement("p", null, c.d)))))));
 }
 const GALLERY = [{
   cls: 'g1',
@@ -1538,17 +1596,29 @@ function CallFab() {
     rel: "noopener"
   }, React.createElement("span", {
     className: "fab-ico"
-  }, "\u2706"), " WhatsApp"), React.createElement("a", {
+  }, React.createElement(Icon, {
+    name: "chat",
+    size: 15
+  })), " WhatsApp"), React.createElement("a", {
     className: "fab-item call",
     href: "tel:+14372640311"
   }, React.createElement("span", {
     className: "fab-ico"
-  }, "\u260E"), " Call centre")), React.createElement("button", {
+  }, React.createElement(Icon, {
+    name: "phone",
+    size: 15
+  })), " Call centre")), React.createElement("button", {
     className: "fab-btn",
     onClick: () => setOpen(o => !o),
     "aria-label": "Contact",
     "aria-expanded": open
-  }, open ? '✕' : '✆'));
+  }, open ? React.createElement(Icon, {
+    name: "close",
+    size: 22
+  }) : React.createElement(Icon, {
+    name: "chat",
+    size: 22
+  })));
 }
 const GUIDES = [{
   id: 'celpip-vs-ielts',
@@ -1965,97 +2035,553 @@ function HeroParticles() {
     "aria-hidden": "true"
   });
 }
-const CITY_LL = [['Toronto', 43.7, -79.4], ['Mississauga', 43.6, -79.6], ['Calgary', 51.0, -114.1], ['Montreal', 45.5, -73.6], ['San Francisco', 37.8, -122.4], ['Chicago', 41.9, -87.6], ['Boston', 42.4, -71.1]];
-function llToV3(lat, lon, r) {
-  const phi = (90 - lat) * Math.PI / 180,
-    theta = (lon + 180) * Math.PI / 180;
-  return [-(r * Math.sin(phi) * Math.cos(theta)), r * Math.cos(phi), r * Math.sin(phi) * Math.sin(theta)];
+/* ============================================================
+   Photoreal Corporate globe. A textured Earth sphere (day map painted
+   at runtime from embedded simplified landmass vectors), real lighting,
+   a Fresnel atmosphere rim, a faint drifting cloud layer, 7 exact
+   glossy pins with pulsing rings + projected HTML labels, an auto-settle
+   that frames North America with the GTA centred, and a static
+   orthographic-globe fallback (mobile / reduced-motion / no-WebGL).
+   Textures are generated once and cached; the renderer is disposed and
+   rendering is paused when the section is off-screen or the tab hidden.
+   ============================================================ */
+
+// The 7 real centres — [name, lat, lon] at exact coordinates.
+const GLB_PINS = [
+  ['North York', 43.77, -79.41],
+  ['Mississauga', 43.589, -79.6441],
+  ['Calgary', 51.0447, -114.0719],
+  ['Montreal', 45.5019, -73.5674],
+  ['San Francisco', 37.7749, -122.4194],
+  ['Chicago', 41.8781, -87.6298],
+  ['Boston', 42.3601, -71.0589]
+];
+// Labels: North York + Mississauga (~25 km apart) merge into one GTA label.
+const GLB_LABELS = [
+  ['North York · Mississauga', 43.68, -79.53, 'down'],
+  ['Calgary', 51.0447, -114.0719, 'up'],
+  ['Montreal', 45.5019, -73.5674, 'up'],
+  ['San Francisco', 37.7749, -122.4194, 'down'],
+  ['Chicago', 41.8781, -87.6298, 'left'],
+  ['Boston', 42.3601, -71.0589, 'right']
+];
+const GLB_ANCHOR = {
+  up: 'translate(-50%,-235%)',
+  down: 'translate(-50%,155%)',
+  left: 'translate(-108%,-50%)',
+  right: 'translate(8%,-50%)'
+};
+// Same offsets as GLB_ANCHOR, expressed as fractions of the label's own size, so
+// the label's rendered box can be computed from its anchor point (px) + fx*w / fy*h.
+const GLB_ANCHOR_FRAC = {
+  up: [-0.5, -2.35], down: [-0.5, 1.55], left: [-1.08, -0.5], right: [0.08, -0.5]
+};
+// Screen-space vertical de-clutter for the crowded NE cluster (Chicago / GTA /
+// Boston / Montreal). Resets each call, then pushes the lower of any pair that
+// overlaps in X apart along Y so the pills never touch. Writes it.dy (px).
+function glbDecollide(items, pad) {
+  pad = pad == null ? 5 : pad;
+  const rect = it => ({ x: it.x + it.fx * it.w, y: it.y + it.dy + it.fy * it.h, w: it.w, h: it.h });
+  items.forEach(it => { it.dy = 0; });
+  items.sort((a, b) => (a.y + a.fy * a.h) - (b.y + b.fy * b.h));
+  for (let pass = 0; pass < 6; pass++) {
+    let moved = false;
+    for (let i = 0; i < items.length; i++) for (let j = i + 1; j < items.length; j++) {
+      const A = rect(items[i]), B = rect(items[j]);
+      const ox = Math.min(A.x + A.w, B.x + B.w) - Math.max(A.x, B.x);
+      const oy = Math.min(A.y + A.h, B.y + B.h) - Math.max(A.y, B.y);
+      if (ox > 0 && oy > -pad) {
+        const push = oy + pad;
+        if ((A.y + A.h / 2) <= (B.y + B.h / 2)) items[j].dy += push; else items[i].dy += push;
+        moved = true;
+      }
+    }
+    if (!moved) break;
+  }
 }
+
+// Simplified world landmass rings — [lon,lat]. Recognizability > accuracy.
+const GLB_LAND = [
+  [[-168,65],[-162,70],[-140,70],[-125,71],[-100,73],[-83,73],[-70,67],[-63,60],[-64,56],[-55,52],[-53,47],[-60,47],[-66,44],[-70,41],[-74,39],[-75,35],[-81,31],[-80,25],[-82,27],[-84,30],[-90,29],[-94,29],[-97,26],[-97,22],[-95,18],[-90,20],[-88,16],[-84,10],[-78,8],[-83,14],[-92,15],[-96,16],[-105,20],[-112,24],[-117,32],[-121,35],[-122,38],[-124,42],[-124,48],[-130,52],[-135,57],[-140,59],[-150,59],[-158,58],[-165,60],[-168,65]],
+  [[-45,60],[-42,66],[-30,68],[-22,70],[-19,76],[-25,80],[-40,83],[-55,83],[-62,78],[-55,72],[-50,67],[-45,60]],
+  [[-81,7],[-77,8],[-72,11],[-62,10],[-52,5],[-50,0],[-44,-2],[-38,-4],[-35,-6],[-35,-12],[-39,-16],[-41,-22],[-48,-25],[-54,-34],[-58,-39],[-62,-41],[-66,-45],[-69,-51],[-66,-55],[-71,-54],[-73,-46],[-73,-38],[-71,-30],[-71,-20],[-76,-14],[-80,-5],[-81,0],[-79,2],[-81,7]],
+  [[-16,15],[-16,20],[-12,25],[-6,30],[0,32],[10,34],[11,37],[19,32],[25,32],[32,31],[34,28],[36,22],[38,16],[43,12],[51,12],[48,6],[42,-1],[40,-8],[35,-18],[32,-25],[27,-33],[20,-35],[18,-33],[15,-27],[12,-16],[9,-2],[5,4],[-2,5],[-8,4],[-13,9],[-16,15]],
+  [[-9,37],[-9,43],[-2,43],[-1,46],[-4,48],[-1,49],[2,51],[4,52],[8,54],[8,57],[11,58],[6,60],[8,63],[12,65],[15,68],[20,70],[28,71],[40,68],[55,68],[68,73],[78,73],[95,78],[105,77],[113,74],[125,73],[140,72],[158,71],[170,68],[178,66],[172,62],[162,60],[160,54],[155,52],[143,49],[140,45],[135,43],[130,42],[128,40],[126,37],[122,39],[121,31],[115,23],[110,21],[108,16],[106,10],[100,8],[98,10],[98,16],[94,18],[90,22],[87,21],[83,18],[80,13],[77,8],[73,15],[72,21],[66,25],[60,25],[57,26],[59,22],[58,20],[52,16],[45,13],[43,12],[43,17],[42,21],[39,26],[35,29],[33,31],[36,36],[30,37],[26,40],[19,40],[13,44],[8,44],[3,43],[-2,37],[-9,37]],
+  [[114,-22],[122,-18],[130,-12],[137,-12],[142,-11],[146,-18],[151,-24],[153,-28],[150,-37],[143,-39],[135,-35],[129,-32],[123,-34],[115,-34],[113,-26],[114,-22]],
+  [[130,31],[135,34],[140,36],[142,40],[141,43],[137,36],[133,33],[130,31]],
+  [[-5,50],[-3,53],[-5,58],[-2,58],[0,53],[1,51],[-5,50]],
+  [[173,-35],[176,-38],[178,-38],[176,-41],[171,-44],[167,-46],[170,-42],[173,-38],[173,-35]],
+  [[44,-16],[50,-15],[50,-22],[46,-25],[43,-21],[44,-16]],
+  [[95,5],[106,6],[118,7],[119,1],[110,-4],[100,-2],[96,2],[95,5]],
+  [[109,1],[117,4],[119,-1],[116,-4],[110,-3],[109,1]],
+  [[131,-1],[141,-3],[147,-8],[140,-9],[132,-5],[131,-1]],
+  [[-24,64],[-18,66],[-14,65],[-19,63],[-24,64]],
+  [[80,6],[82,8],[81,9],[79,8],[80,6]],
+  [[120,18],[124,17],[126,9],[122,6],[120,12],[120,18]]
+];
+const GLB_DESERTS = [
+  [-13,35,14,30],[34,56,13,32],[55,112,34,49],[66,78,22,30],
+  [-118,-101,24,40],[118,147,-32,-18],[11,26,-30,-16],[-72,-64,-50,-35]
+];
+
+function glbClear(n) { while (n && n.firstChild) n.removeChild(n.firstChild); }
+function glbHash2(x, y) {
+  let h = x * 374761393 + y * 668265263;
+  h = (h ^ (h >> 13)) * 1274126177;
+  return ((h ^ (h >> 16)) >>> 0) / 4294967295;
+}
+function glbVnoise(x, y) {
+  const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi;
+  const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
+  const a = glbHash2(xi, yi), b = glbHash2(xi + 1, yi), c = glbHash2(xi, yi + 1), d = glbHash2(xi + 1, yi + 1);
+  return a * (1 - u) * (1 - v) + b * u * (1 - v) + c * (1 - u) * v + d * u * v;
+}
+function glbFbm(x, y) {
+  let s = 0, amp = 0.5, f = 1;
+  for (let i = 0; i < 5; i++) { s += amp * glbVnoise(x * f, y * f); f *= 2; amp *= 0.5; }
+  return s;
+}
+function glbMix(a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; }
+function glbInRing(lon, lat, ring) {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const xi = ring[i][0], yi = ring[i][1], xj = ring[j][0], yj = ring[j][1];
+    if (((yi > lat) !== (yj > lat)) && (lon < (xj - xi) * (lat - yi) / (yj - yi) + xi)) inside = !inside;
+  }
+  return inside;
+}
+function glbIsLand(lon, lat) {
+  for (let r = 0; r < GLB_LAND.length; r++) if (glbInRing(lon, lat, GLB_LAND[r])) return true;
+  return false;
+}
+// Cached land-mask grid, built once via the polygon test, so per-pixel texture
+// generation is an O(1) lookup instead of ~16 polygon tests per pixel (~5x faster build).
+let GLB_mask = null;
+const GLB_MW = 640, GLB_MH = 320;
+function glbLandMask() {
+  if (GLB_mask) return GLB_mask;
+  const m = new Uint8Array(GLB_MW * GLB_MH);
+  for (let py = 0; py < GLB_MH; py++) {
+    const lat = 90 - (py + 0.5) / GLB_MH * 180;
+    for (let px = 0; px < GLB_MW; px++) {
+      const lon = (px + 0.5) / GLB_MW * 360 - 180;
+      if (glbIsLand(lon, lat)) m[py * GLB_MW + px] = 1;
+    }
+  }
+  GLB_mask = m;
+  return m;
+}
+function glbLandAt(lon, lat) {
+  const m = glbLandMask();
+  let px = Math.floor((lon + 180) / 360 * GLB_MW);
+  let py = Math.floor((90 - lat) / 180 * GLB_MH);
+  px = ((px % GLB_MW) + GLB_MW) % GLB_MW;
+  if (py < 0) py = 0; else if (py >= GLB_MH) py = GLB_MH - 1;
+  return m[py * GLB_MW + px] === 1;
+}
+function glbBoxFalloff(lon, lat, box, fw) {
+  const dx = Math.max(box[0] - lon, lon - box[1], 0), dy = Math.max(box[2] - lat, lat - box[3], 0);
+  const d = Math.max(dx, dy), t = 1 - d / fw;
+  return t <= 0 ? 0 : t * t * (3 - 2 * t);
+}
+function glbDesert(lon, lat) { let s = 0; for (let i = 0; i < GLB_DESERTS.length; i++) s = Math.max(s, glbBoxFalloff(lon, lat, GLB_DESERTS[i], 9)); return s; }
+
+const GLB_OCEAN_DEEP = [9, 32, 60], GLB_OCEAN_SHAL = [26, 78, 122];
+const GLB_SNOW = [233, 237, 241], GLB_TAIGA = [44, 72, 50], GLB_TEMP = [70, 108, 62], GLB_TROP = [48, 112, 58], GLB_DES = [198, 178, 124];
+// Painted Earth colour (rgb) at a lon/lat — shared by the sphere texture and the fallback globe.
+function glbColorAt(lon, lat) {
+  const alat = Math.abs(lat);
+  let col;
+  if (glbLandAt(lon, lat)) {
+    let green;
+    if (alat > 66) green = GLB_SNOW;
+    else if (alat > 52) green = glbMix(GLB_TAIGA, GLB_SNOW, (alat - 52) / 14 * 0.6);
+    else if (alat > 33) green = glbMix(GLB_TEMP, GLB_TAIGA, (alat - 33) / 19 * 0.55);
+    else if (alat > 15) green = GLB_TEMP;
+    else green = GLB_TROP;
+    let noiseArid = Math.max(0, glbFbm(lon * 0.03 + 5, lat * 0.03 + 9) - 0.44) * 1.7;
+    let ds = glbDesert(lon, lat) * (0.5 + glbFbm(lon * 0.09 + 20, lat * 0.09 + 4) * 0.7);
+    let aridT = Math.max(noiseArid, ds);
+    if (alat > 50) aridT *= 0.18;
+    const base = glbMix(green, GLB_DES, Math.min(0.82, aridT));
+    const shade = 0.8 + glbFbm(lon * 0.2 + 3, lat * 0.2 + 7) * 0.36;
+    col = [base[0] * shade, base[1] * shade, base[2] * shade];
+  } else {
+    const d = 0.32 + glbFbm(lon * 0.045, lat * 0.045) * 0.55;
+    col = glbMix(GLB_OCEAN_SHAL, GLB_OCEAN_DEEP, d);
+    if (alat > 78) col = glbMix(col, GLB_SNOW, (alat - 78) / 12);
+  }
+  if (lat < -68) { const t = Math.min(1, (-68 - lat) / 14); col = glbMix(col, GLB_SNOW, 0.6 + t * 0.4); }
+  return col;
+}
+
+let GLB_earthCv = null, GLB_specCv = null, GLB_cloudCv = null;
+function glbEarthCanvas() {
+  if (GLB_earthCv) return GLB_earthCv;
+  const W = 1024, H = 512, cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d'), img = ctx.createImageData(W, H), dat = img.data;
+  for (let py = 0; py < H; py++) {
+    const lat = 90 - (py / H) * 180;
+    for (let px = 0; px < W; px++) {
+      const lon = (px / W) * 360 - 180, c = glbColorAt(lon, lat), o = (py * W + px) * 4;
+      dat[o] = c[0]; dat[o + 1] = c[1]; dat[o + 2] = c[2]; dat[o + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+  GLB_earthCv = cv;
+  return cv;
+}
+function glbSpecCanvas() {
+  if (GLB_specCv) return GLB_specCv;
+  const W = 512, H = 256, cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d'), img = ctx.createImageData(W, H), dat = img.data;
+  for (let py = 0; py < H; py++) {
+    const lat = 90 - (py / H) * 180;
+    for (let px = 0; px < W; px++) {
+      const lon = (px / W) * 360 - 180;
+      const v = glbLandAt(lon, lat) ? 26 : (Math.abs(lat) > 78 ? 60 : 165), o = (py * W + px) * 4;
+      dat[o] = v; dat[o + 1] = v; dat[o + 2] = v; dat[o + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+  GLB_specCv = cv;
+  return cv;
+}
+function glbCloudCanvas() {
+  if (GLB_cloudCv) return GLB_cloudCv;
+  const W = 768, H = 384, cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d'), img = ctx.createImageData(W, H), dat = img.data;
+  for (let py = 0; py < H; py++) {
+    const lat = 90 - (py / H) * 180;
+    for (let px = 0; px < W; px++) {
+      const lon = (px / W) * 360 - 180;
+      let n = glbFbm(lon * 0.05 + 40, lat * 0.05 + 12);
+      let cov = Math.max(0, (n - 0.52)) * 3.0;
+      cov = Math.min(1, cov) * (1 - Math.min(1, Math.abs(lat) / 88 * 0.5));
+      const v = Math.round(cov * 255), o = (py * W + px) * 4;
+      dat[o] = 255; dat[o + 1] = v; dat[o + 2] = 255; dat[o + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+  GLB_cloudCv = cv;
+  return cv;
+}
+// lon/lat -> Vector3 matching THREE.SphereGeometry UV convention (so pins align with the texture).
+function glbVec(lat, lon, r, THREE) {
+  const a = (lon + 180) * Math.PI / 180, b = (90 - lat) * Math.PI / 180;
+  return new THREE.Vector3(-r * Math.cos(a) * Math.sin(b), r * Math.cos(b), r * Math.sin(a) * Math.sin(b));
+}
+function glbRadialSprite() {
+  const s = 64, cv = document.createElement('canvas');
+  cv.width = s; cv.height = s;
+  const ctx = cv.getContext('2d'), g = ctx.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
+  g.addColorStop(0, 'rgba(255,90,70,0.95)');
+  g.addColorStop(0.4, 'rgba(224,32,32,0.55)');
+  g.addColorStop(1, 'rgba(224,32,32,0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, s, s);
+  return cv;
+}
+
+// Static orthographic globe centred on (cLat,cLon) for the fallback. Returns {canvas, pts}.
+function glbBuildOrtho(size, cLat, cLon) {
+  const cv = document.createElement('canvas');
+  cv.width = size; cv.height = size;
+  const ctx = cv.getContext('2d'), img = ctx.createImageData(size, size), dat = img.data;
+  const R = size / 2 - Math.max(6, size * 0.06), cx = size / 2, cy = size / 2;
+  const f0 = cLat * Math.PI / 180, l0 = cLon * Math.PI / 180;
+  const sf0 = Math.sin(f0), cf0 = Math.cos(f0);
+  const L = (function () { const v = [-0.45, 0.55, 0.72], m = Math.hypot(v[0], v[1], v[2]); return [v[0] / m, v[1] / m, v[2] / m]; })();
+  for (let py = 0; py < size; py++) {
+    for (let px = 0; px < size; px++) {
+      const x = (px - cx) / R, y = -(py - cy) / R, rho2 = x * x + y * y, o = (py * size + px) * 4;
+      if (rho2 > 1.28) { dat[o + 3] = 0; continue; }
+      if (rho2 > 1) {
+        const rr = Math.sqrt(rho2), a = Math.max(0, 1 - (rr - 1) / 0.28);
+        dat[o] = 150; dat[o + 1] = 186; dat[o + 2] = 232; dat[o + 3] = Math.round(a * a * 150);
+        continue;
+      }
+      const nz = Math.sqrt(1 - rho2);
+      const lat = Math.asin(Math.max(-1, Math.min(1, nz * sf0 + y * cf0))) * 180 / Math.PI;
+      let lon = (l0 + Math.atan2(x, nz * cf0 - y * sf0)) * 180 / Math.PI;
+      lon = ((lon + 180) % 360 + 360) % 360 - 180;
+      const c = glbColorAt(lon, lat);
+      const lam = Math.max(0, x * L[0] + y * L[1] + nz * L[2]);
+      const sh = 0.42 + 0.62 * lam;
+      const rim = rho2 > 0.72 ? (rho2 - 0.72) / 0.28 : 0;
+      dat[o] = Math.min(255, c[0] * sh + rim * 40);
+      dat[o + 1] = Math.min(255, c[1] * sh + rim * 60);
+      dat[o + 2] = Math.min(255, c[2] * sh + rim * 95);
+      dat[o + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+  const pts = [];
+  for (let i = 0; i < GLB_PINS.length; i++) {
+    const nm = GLB_PINS[i][0], f = GLB_PINS[i][1] * Math.PI / 180, l = GLB_PINS[i][2] * Math.PI / 180;
+    const cosc = sf0 * Math.sin(f) + cf0 * Math.cos(f) * Math.cos(l - l0);
+    const sx = cx + Math.cos(f) * Math.sin(l - l0) * R;
+    const sy = cy - (cf0 * Math.sin(f) - sf0 * Math.cos(f) * Math.cos(l - l0)) * R;
+    if (cosc > 0.02) {
+      ctx.beginPath(); ctx.arc(sx, sy, size * 0.03, 0, 6.29);
+      ctx.fillStyle = 'rgba(224,32,32,0.28)'; ctx.fill();
+      ctx.beginPath(); ctx.arc(sx, sy, size * 0.013, 0, 6.29);
+      ctx.fillStyle = '#e02020'; ctx.fill();
+      ctx.lineWidth = size * 0.006; ctx.strokeStyle = '#fff'; ctx.stroke();
+    }
+    pts.push({ name: nm, x: sx, y: sy, front: cosc > 0.05 });
+  }
+  return { canvas: cv, pts: pts };
+}
+
+function glbHasWebGL() {
+  try {
+    const c = document.createElement('canvas');
+    return !!(window.WebGLRenderingContext && (c.getContext('webgl') || c.getContext('experimental-webgl')));
+  } catch (e) { return false; }
+}
+
+function glbLabelStyle(el) {
+  el.style.cssText = 'position:absolute;transform:translate(-50%,-142%);font:600 11px/1 var(--font-mono,monospace);letter-spacing:.02em;color:#171a21;background:rgba(255,255,255,.9);border:1px solid rgba(224,32,32,.32);padding:3px 8px;border-radius:999px;white-space:nowrap;box-shadow:0 6px 16px -8px rgba(0,0,0,.4);pointer-events:none;transition:opacity .25s;will-change:transform,opacity';
+}
+
 function CorporateGlobe() {
   const ref = useMR(null);
-  const [ready, setReady] = useM(typeof THREE !== 'undefined');
+  const [mode, setMode] = useM('pending');
   useME(() => {
-    if (REDUCED || window.innerWidth < 900) return;
-    if (typeof THREE !== 'undefined') {
-      setReady(true);
-      return;
-    }
+    const small = window.innerWidth < 900;
+    if (small || REDUCED || !glbHasWebGL()) { setMode('fallback'); return; }
+    if (typeof THREE !== 'undefined') { setMode('gl'); return; }
     let live = true;
-    loadThree().then(ok => {
-      if (live && ok) setReady(true);
-    });
-    return () => {
-      live = false;
-    };
+    loadThree().then(ok => { if (live) setMode(ok && typeof THREE !== 'undefined' ? 'gl' : 'fallback'); });
+    return () => { live = false; };
   }, []);
+
+  // --- Fallback: static orthographic globe centred on North America ---
   useME(() => {
-    if (!ready || REDUCED || window.innerWidth < 900 || !ref.current || typeof THREE === 'undefined') return;
+    if (mode !== 'fallback' || !ref.current) return;
     const wrap = ref.current;
-    const S = Math.min(wrap.clientWidth, 460);
+    glbClear(wrap);
+    wrap.style.position = 'relative';
+    const S = Math.max(200, Math.min(wrap.clientWidth || 320, 440));
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const built = glbBuildOrtho(Math.round(S * dpr), 40, -95);
+    const cv = built.canvas;
+    cv.style.width = S + 'px'; cv.style.height = S + 'px';
+    cv.style.filter = 'drop-shadow(0 18px 40px rgba(20,40,80,.28))';
+    cv.setAttribute('role', 'img');
+    cv.setAttribute('aria-label', 'Globe of North America marking our 7 centres, with the Greater Toronto Area highlighted');
+    wrap.appendChild(cv);
+    const fbItems = [];
+    built.pts.forEach(p => {
+      if (!p.front || p.name === 'Mississauga') return;
+      const el = document.createElement('div');
+      glbLabelStyle(el);
+      const txt = p.name === 'North York' ? 'North York · Mississauga' : p.name;
+      el.textContent = txt;
+      const lab = GLB_LABELS.find(x => x[0] === txt);
+      const dir = (lab && lab[3]) || 'up';
+      el.style.transform = GLB_ANCHOR[dir] || GLB_ANCHOR.up;
+      const ax = p.x / dpr, ay = p.y / dpr;
+      el.style.left = ax + 'px';
+      el.style.top = ay + 'px';
+      if (p.name === 'North York') el.style.borderColor = 'rgba(224,32,32,.6)';
+      wrap.appendChild(el);
+      const fr = GLB_ANCHOR_FRAC[dir] || GLB_ANCHOR_FRAC.up;
+      fbItems.push({ el: el, x: ax, y: ay, fx: fr[0], fy: fr[1], w: el.offsetWidth, h: el.offsetHeight, dy: 0 });
+    });
+    // De-clutter the static fallback the same way the GL globe does (one pass).
+    glbDecollide(fbItems);
+    fbItems.forEach(it => { it.el.style.top = (it.y + it.dy) + 'px'; });
+    return () => { glbClear(wrap); };
+  }, [mode]);
+
+  // --- WebGL: photoreal Earth ---
+  useME(() => {
+    if (mode !== 'gl' || !ref.current || typeof THREE === 'undefined') return;
+    const wrap = ref.current;
+    glbClear(wrap);
+    wrap.style.position = 'relative';
+    const S = Math.max(220, Math.min(wrap.clientWidth || 360, 440));
     const scene = new THREE.Scene();
-    const cam = new THREE.PerspectiveCamera(45, 1, 1, 100);
-    cam.position.z = 26;
-    const renderer = new THREE.WebGLRenderer({
-      alpha: true,
-      antialias: true
-    });
+    const cam = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
+    cam.position.set(0, 0, 27);
+    let renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    } catch (e) { setMode('fallback'); return; }
     renderer.setSize(S, S);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    if (renderer.outputColorSpace !== undefined && THREE.SRGBColorSpace) renderer.outputColorSpace = THREE.SRGBColorSpace;
     wrap.appendChild(renderer.domElement);
+    renderer.domElement.style.display = 'block';
+
     const R = 9;
-    const globe = new THREE.Group();
-    scene.add(globe);
-    globe.add(new THREE.LineSegments(new THREE.WireframeGeometry(new THREE.SphereGeometry(R, 24, 16)), new THREE.LineBasicMaterial({
-      color: 0x0a0a0a,
-      transparent: true,
-      opacity: 0.10
-    })));
-    const pinGeo = new THREE.BufferGeometry();
-    pinGeo.setAttribute('position', new THREE.Float32BufferAttribute(CITY_LL.map(c => llToV3(c[1], c[2], R + 0.05)).flat(), 3));
-    globe.add(new THREE.Points(pinGeo, new THREE.PointsMaterial({
-      color: 0xe02020,
-      size: 0.85
-    })));
-    const rings = CITY_LL.map((c, i) => {
-      const ring = new THREE.Mesh(new THREE.RingGeometry(0.3, 0.36, 24), new THREE.MeshBasicMaterial({
-        color: 0xe02020,
-        transparent: true,
-        opacity: 0.7,
-        side: THREE.DoubleSide
-      }));
-      const [x, y, z] = llToV3(c[1], c[2], R + 0.06);
-      ring.position.set(x, y, z);
-      ring.lookAt(0, 0, 0);
-      ring.userData.t = i * 0.4;
-      globe.add(ring);
-      return ring;
+    const root = new THREE.Group(); scene.add(root);
+
+    const earthTex = new THREE.CanvasTexture(glbEarthCanvas());
+    if (earthTex.colorSpace !== undefined && THREE.SRGBColorSpace) earthTex.colorSpace = THREE.SRGBColorSpace;
+    if (renderer.capabilities) earthTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    const specTex = new THREE.CanvasTexture(glbSpecCanvas());
+    const earthMat = new THREE.MeshPhongMaterial({ map: earthTex, specularMap: specTex, specular: new THREE.Color(0x6688aa), shininess: 14 });
+    const earth = new THREE.Mesh(new THREE.SphereGeometry(R, 64, 48), earthMat);
+    root.add(earth);
+
+    const cloudTex = new THREE.CanvasTexture(glbCloudCanvas());
+    const clouds = new THREE.Mesh(new THREE.SphereGeometry(R * 1.012, 48, 32),
+      new THREE.MeshPhongMaterial({ color: 0xffffff, alphaMap: cloudTex, transparent: true, opacity: 0.5, depthWrite: false }));
+    root.add(clouds);
+
+    const atmoMat = new THREE.ShaderMaterial({
+      uniforms: { glowColor: { value: new THREE.Color(0x5aa0ea) } },
+      vertexShader: 'varying vec3 vN;varying vec3 vP;void main(){vN=normalize(normalMatrix*normal);vec4 mv=modelViewMatrix*vec4(position,1.0);vP=mv.xyz;gl_Position=projectionMatrix*mv;}',
+      fragmentShader: 'uniform vec3 glowColor;varying vec3 vN;varying vec3 vP;void main(){vec3 v=normalize(-vP);float f=1.0-abs(dot(vN,v));f=pow(f,2.3);gl_FragColor=vec4(glowColor,f*0.9);}',
+      side: THREE.BackSide, blending: THREE.NormalBlending, transparent: true, depthWrite: false
     });
-    globe.rotation.x = 0.45;
-    globe.rotation.y = 2.4;
-    let raf = 0;
-    const tick = () => {
-      globe.rotation.y += 0.0022;
-      rings.forEach(r => {
-        r.userData.t += 0.02;
-        const p = r.userData.t % 2 / 2;
-        r.scale.setScalar(1 + p * 2.2);
-        r.material.opacity = 0.7 * (1 - p);
+    const atmo = new THREE.Mesh(new THREE.SphereGeometry(R * 1.15, 48, 32), atmoMat);
+    scene.add(atmo);
+
+    scene.add(new THREE.AmbientLight(0xc4d0df, 1.05));
+    const sun = new THREE.DirectionalLight(0xfff4e6, 0.95);
+    sun.position.set(6, 4, 9); scene.add(sun);
+    const rimLight = new THREE.DirectionalLight(0x88aaff, 0.25);
+    rimLight.position.set(-8, -2, 3); scene.add(rimLight);
+
+    const glowTex = new THREE.CanvasTexture(glbRadialSprite());
+    const beadGeo = new THREE.SphereGeometry(0.22, 16, 12);
+    const dotGeo = new THREE.SphereGeometry(0.09, 10, 8);
+    const ringGeo = new THREE.RingGeometry(0.34, 0.46, 28);
+    const pins = GLB_PINS.map((c, i) => {
+      const pos = glbVec(c[1], c[2], R + 0.06, THREE);
+      const bead = new THREE.Mesh(beadGeo, new THREE.MeshBasicMaterial({ color: 0xe02020, transparent: true }));
+      bead.position.copy(pos);
+      const dot = new THREE.Mesh(dotGeo, new THREE.MeshBasicMaterial({ color: 0xffe2dd, transparent: true }));
+      dot.position.copy(glbVec(c[1], c[2], R + 0.19, THREE));
+      const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+      glow.position.copy(pos); glow.scale.setScalar(1.5);
+      const ring = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: 0xe02020, transparent: true, opacity: 0.7, side: THREE.DoubleSide }));
+      ring.position.copy(glbVec(c[1], c[2], R + 0.05, THREE)); ring.lookAt(0, 0, 0);
+      ring.userData.t = i * 0.5;
+      root.add(bead); root.add(dot); root.add(glow); root.add(ring);
+      return { bead: bead, dot: dot, glow: glow, ring: ring, nrm: pos.clone().normalize() };
+    });
+
+    const layer = document.createElement('div');
+    layer.style.cssText = 'position:absolute;inset:0;pointer-events:none;overflow:hidden';
+    wrap.appendChild(layer);
+    const offX = (wrap.clientWidth - S) / 2, offY = (wrap.clientHeight - S) / 2;
+    const labels = GLB_LABELS.map(l => {
+      const el = document.createElement('div'); glbLabelStyle(el); el.textContent = l[0];
+      el.style.transform = GLB_ANCHOR[l[3]] || GLB_ANCHOR.up;
+      if (l[0].indexOf('·') >= 0) el.style.borderColor = 'rgba(224,32,32,.6)';
+      layer.appendChild(el);
+      const fr = GLB_ANCHOR_FRAC[l[3]] || GLB_ANCHOR_FRAC.up;
+      return { el: el, base: glbVec(l[1], l[2], R + 0.06, THREE), fx: fr[0], fy: fr[1], w: el.offsetWidth, h: el.offsetHeight, x: 0, y: 0, dy: 0, front: false };
+    });
+
+    const nGTA = glbVec(43.68, -79.53, 1, THREE).normalize();
+    const qFace = new THREE.Quaternion().setFromUnitVectors(nGTA, new THREE.Vector3(0, 0, 1));
+    const qTilt = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), 0.4);
+    const qTarget = qTilt.clone().multiply(qFace);
+    const yAxis = new THREE.Vector3(0, 1, 0);
+    const qYaw = new THREE.Quaternion();
+    const camDir = cam.position.clone().normalize();
+    const tmp = new THREE.Vector3();
+    const INTRO = 2.6, A0 = 3.6;
+    let raf = 0, visible = true, running = false, clock = 0, last = 0;
+
+    function setYaw(a) { qYaw.setFromAxisAngle(yAxis, a); root.quaternion.copy(qTarget).multiply(qYaw); }
+    function updatePins(pulse) {
+      pins.forEach(p => {
+        tmp.copy(p.nrm).applyQuaternion(root.quaternion);
+        const front = tmp.dot(camDir);
+        const vis = Math.max(0, Math.min(1, (front - 0.02) / 0.22));
+        p.bead.material.opacity = vis; p.bead.visible = vis > 0.01;
+        p.dot.material.opacity = vis; p.dot.visible = vis > 0.01;
+        p.glow.material.opacity = vis * 0.9; p.glow.visible = vis > 0.01;
+        let ro = 0.7, rs = 1;
+        if (pulse) { p.ring.userData.t += 0.02; const ph = p.ring.userData.t % 2 / 2; rs = 1 + ph * 1.45; ro = 0.7 * (1 - ph); }
+        p.ring.scale.setScalar(rs); p.ring.material.opacity = ro * vis; p.ring.visible = vis > 0.01;
       });
-      if (!document.hidden) renderer.render(scene, cam);
-      raf = requestAnimationFrame(tick);
-    };
-    tick();
+    }
+    function updateLabels() {
+      const front = [];
+      labels.forEach(l => {
+        tmp.copy(l.base).applyQuaternion(root.quaternion);
+        const facing = tmp.dot(camDir);
+        tmp.project(cam);
+        l.x = offX + (tmp.x * 0.5 + 0.5) * S;
+        l.y = offY + (-tmp.y * 0.5 + 0.5) * S;
+        l.front = facing > 0.16;
+        l.dy = 0;
+        if (l.front) front.push(l);
+      });
+      glbDecollide(front); // keep the NE cluster's pills from overlapping
+      labels.forEach(l => {
+        l.el.style.left = l.x + 'px';
+        l.el.style.top = (l.y + l.dy) + 'px';
+        l.el.style.opacity = l.front ? '1' : '0';
+      });
+    }
+    function easeOut(x) { return 1 - Math.pow(1 - x, 3); }
+    // Full loop-pause: the rAF tick only runs while the globe is on-screen AND the
+    // tab is visible; `clock` accumulates only running time so pause/resume never jumps.
+    function step() {
+      const t = clock;
+      let a;
+      if (t < INTRO) a = A0 * (1 - easeOut(t / INTRO));
+      else a = 0.035 * Math.sin((t - INTRO) * 0.5);
+      setYaw(a);
+      clouds.rotation.y += 0.0006;
+      updatePins(true);
+      updateLabels();
+      renderer.render(scene, cam);
+    }
+    function frame(ts) {
+      if (!running) return;
+      const dt = last ? Math.min(0.05, (ts - last) / 1000) : 0;
+      last = ts; clock += dt;
+      step();
+      raf = requestAnimationFrame(frame);
+    }
+    function start() { if (running || REDUCED) return; running = true; last = 0; raf = requestAnimationFrame(frame); }
+    function stop() { if (!running) return; running = false; cancelAnimationFrame(raf); raf = 0; }
+    function sync() { if (visible && !document.hidden) start(); else stop(); }
+
+    const io = ('IntersectionObserver' in window) ? new IntersectionObserver(es => { visible = es[0].isIntersecting; sync(); }, { threshold: 0.05 }) : null;
+    if (io) io.observe(wrap);
+    const onVis = () => sync();
+    document.addEventListener('visibilitychange', onVis);
+
+    if (REDUCED) { setYaw(0); updatePins(false); updateLabels(); renderer.render(scene, cam); }
+    else { sync(); }
+
+    const onResize = () => { const ns = Math.max(220, Math.min(wrap.clientWidth || 360, 440)); renderer.setSize(ns, ns); };
+    window.addEventListener('resize', onResize);
+
     return () => {
+      stop();
       cancelAnimationFrame(raf);
+      document.removeEventListener('visibilitychange', onVis);
+      window.removeEventListener('resize', onResize);
+      if (io) io.disconnect();
+      earthTex.dispose(); specTex.dispose(); cloudTex.dispose(); glowTex.dispose();
+      earth.geometry.dispose(); earthMat.dispose();
+      clouds.geometry.dispose(); clouds.material.dispose();
+      atmo.geometry.dispose(); atmoMat.dispose();
+      beadGeo.dispose(); dotGeo.dispose(); ringGeo.dispose();
+      pins.forEach(p => { p.bead.material.dispose(); p.dot.material.dispose(); p.glow.material.dispose(); p.ring.material.dispose(); });
       renderer.dispose();
-      wrap.contains(renderer.domElement) && wrap.removeChild(renderer.domElement);
+      glbClear(wrap);
     };
-  }, [ready]);
-  if (REDUCED || window.innerWidth < 900 || !ready) return null;
+  }, [mode]);
+
   return React.createElement("div", {
     className: "globe-wrap reveal",
     ref: ref,
-    "aria-label": "Rotating globe showing our 7 centres across North America"
+    "aria-label": "Interactive globe showing our 7 test centres across North America"
   });
 }
 Object.assign(window, {
@@ -2427,7 +2953,13 @@ function PlanToggle({
     onClick: () => togglePlan(code)
   }, React.createElement("span", {
     className: "pt-box"
-  }, on ? '✓' : '+'), React.createElement("span", null, label));
+  }, on ? React.createElement(Icon, {
+    name: "check",
+    size: 13
+  }) : React.createElement(Icon, {
+    name: "plus",
+    size: 13
+  })), React.createElement("span", null, label));
 }
 function PlanBar() {
   const plan = usePlan();
@@ -2435,7 +2967,7 @@ function PlanBar() {
   const trapRef = useFocusTrap(open, () => setOpen(false));
   if (plan.length === 0) return null;
   const items = plan.map(c => EXAMS.find(e => e.code === c)).filter(Boolean);
-  const body = encodeURIComponent('My Troy Testing shortlist:\n\n' + items.map(e => `• ${e.name} (${e.org}) — ${e.fee}\n  Book: ${e.url}`).join('\n\n') + '\n\n— Sent from troytesting.com');
+  const body = encodeURIComponent('My Troy Testing shortlist:\n\n' + items.map(e => `- ${e.name} (${e.org}) - ${e.fee}\n  Book: ${e.url}`).join('\n\n') + '\n\n-- Sent from troytesting.com');
   return React.createElement(React.Fragment, null, React.createElement("button", {
     className: "plan-fab",
     onClick: () => setOpen(true),
@@ -2638,7 +3170,7 @@ function CorporatePage({
       marginBottom: 8,
       flex: 1
     }
-  }, [['⚡', '48–72 hrs', 'Deployment time'], ['🏟️', '500+', 'Max seat capacity'], ['🌎', 'North America', 'Coverage'], ['✅', 'Full service', 'Staff & tech']].map(s => React.createElement("div", {
+  }, [['bolt', '48–72 hrs', 'Deployment time'], ['venue', '500+', 'Max seat capacity'], ['globe', 'North America', 'Coverage'], ['check-badge', 'Full service', 'Staff & tech']].map(s => React.createElement("div", {
     className: "popup-stat",
     key: s[1],
     style: {
@@ -2647,7 +3179,10 @@ function CorporatePage({
     }
   }, React.createElement("div", {
     className: "ps-icon"
-  }, s[0]), React.createElement("div", {
+  }, React.createElement(Icon, {
+    name: s[0],
+    size: 32
+  })), React.createElement("div", {
     className: "ps-n",
     style: {
       color: 'var(--text)'
@@ -2929,16 +3464,30 @@ function ReviewsPage({
   }, "4.9"), React.createElement("div", {
     className: "rs-stars",
     "aria-label": "4.9 out of 5 stars"
-  }, "\u2605\u2605\u2605\u2605\u2605"), React.createElement("div", {
+  }, [0, 1, 2, 3, 4].map(i => React.createElement(Icon, {
+    key: i,
+    name: "star",
+    size: 18,
+    style: {
+      marginRight: 2
+    }
+  }))), React.createElement("div", {
     className: "rs-count"
   }, "Based on verified Google reviews")), React.createElement("div", {
     className: "rs-bars"
-  }, [['5★', 92], ['4★', 6], ['3★', 1], ['2★', 0], ['1★', 1]].map(b => React.createElement("div", {
+  }, [['5', 92], ['4', 6], ['3', 1], ['2', 0], ['1', 1]].map(b => React.createElement("div", {
     className: "rs-bar",
     key: b[0]
   }, React.createElement("span", {
     className: "rs-bl"
-  }, b[0]), React.createElement("span", {
+  }, b[0], React.createElement(Icon, {
+    name: "star",
+    size: 10,
+    color: "#F5A623",
+    style: {
+      marginLeft: 3
+    }
+  })), React.createElement("span", {
     className: "rs-track"
   }, React.createElement("span", {
     className: "rs-fill",
@@ -3315,7 +3864,7 @@ function HomePage({
   }, {
     id: 'reviews',
     k: 'Reviews',
-    d: 'Our 4.9★ Google rating and verified candidate reviews.'
+    d: 'Our 4.9-star Google rating and verified candidate reviews.'
   }, {
     id: 'centres',
     k: 'Centres',
@@ -3349,7 +3898,10 @@ function HomePage({
     className: "eyebrow-row reveal"
   }, React.createElement("span", {
     className: "tagdot"
-  }, "\u2713"), React.createElement("span", {
+  }, React.createElement(Icon, {
+    name: "check",
+    size: 13
+  })), React.createElement("span", {
     className: "eyebrow",
     style: {
       color: 'var(--text-dim)'
@@ -3559,19 +4111,19 @@ const PROGRAMS = [{
 }];
 const ONLINE_FEATURES = ['Live HD video sessions with screen sharing and digital whiteboard', 'Recorded lessons available 24/7 for review', 'Adaptive practice tests that adjust to your skill level', 'Real-time progress reports for students and parents', 'Direct messaging with your assigned tutor'];
 const ONLINE_TILES = [{
-  icon: '🎥',
+  icon: 'video',
   t: 'Live Classes',
   d: 'Real-time instruction with your tutor'
 }, {
-  icon: '📚',
+  icon: 'study',
   t: 'Study Materials',
   d: 'Worksheets, notes & resources'
 }, {
-  icon: '📊',
+  icon: 'analytics',
   t: 'Analytics',
   d: 'Track progress with detailed reports'
 }, {
-  icon: '🎓',
+  icon: 'cap',
   t: 'Certifications',
   d: 'Earn certificates upon completion'
 }];
@@ -3725,7 +4277,10 @@ function ProgramsPage({
     key: tile.t
   }, React.createElement("div", {
     className: "ot-icon"
-  }, tile.icon), React.createElement("div", {
+  }, React.createElement(Icon, {
+    name: tile.icon,
+    size: 32
+  })), React.createElement("div", {
     className: "ot-t"
   }, tile.t), React.createElement("div", {
     className: "ot-d"
@@ -3766,27 +4321,27 @@ const {
   useState: useStateT
 } = React;
 const ACCRED = [{
-  icon: '🇨🇦',
+  icon: 'flag-ca',
   name: 'CELPIP / Paragon Testing',
   kind: 'Language proficiency'
 }, {
-  icon: '📊',
+  icon: 'analytics',
   name: 'CFA Institute',
   kind: 'Financial certification'
 }, {
-  icon: '⚖️',
+  icon: 'scales',
   name: 'LSAC',
   kind: 'Law school admissions'
 }, {
-  icon: '🏠',
+  icon: 'house',
   name: 'RECO',
   kind: 'Real estate licensing'
 }, {
-  icon: '🏛️',
+  icon: 'institution',
   name: 'Law Society of Ontario',
   kind: 'Legal assessments'
 }, {
-  icon: '🏢',
+  icon: 'building',
   name: 'Corporate Clients',
   kind: 'Custom assessments'
 }];
@@ -3825,27 +4380,27 @@ const SERVICES = [{
   pts: ['Real-time candidate tracking', 'Performance analytics by cohort', 'Incident & exception reports', 'Custom reporting formats']
 }];
 const FACILITY = [{
-  icon: '🖥️',
+  icon: 'screen',
   t: 'Up to 50 Seats',
   d: 'Ergonomic workstations with high-resolution monitors and full keyboard/mouse setups at each location.'
 }, {
-  icon: '♿',
+  icon: 'accessible',
   t: 'ADA Compliant',
   d: 'Fully wheelchair-accessible premises with ramps, elevators, and accessible restrooms at all locations.'
 }, {
-  icon: '🚪',
+  icon: 'door',
   t: 'Private Accommodation Room',
   d: 'Dedicated rooms for candidates requiring extended time, distraction-free environments, or other accommodations.'
 }, {
-  icon: '📹',
+  icon: 'camera',
   t: 'Secure Environment',
   d: 'CCTV surveillance, secure lockers for personal belongings, and strict entry protocols throughout.'
 }, {
-  icon: '🛠️',
+  icon: 'tools',
   t: 'On-Site Technical Support',
   d: 'Dedicated IT staff to resolve any hardware, software, or connectivity issues immediately.'
 }, {
-  icon: '👨‍💼',
+  icon: 'proctor',
   t: 'Certified Proctors',
   d: 'Trained supervisors experienced in both standard and special-accommodation testing requirements.'
 }];
@@ -3959,17 +4514,38 @@ function TestCenterPage({
     href: "https://www.celpip.ca/take-celpip/register-for-celpip/",
     target: "_blank",
     rel: "noopener"
-  }, "\uD83C\uDDE8\uD83C\uDDE6 Book CELPIP"), React.createElement("a", {
+  }, React.createElement(Icon, {
+    name: "flag-ca",
+    size: 18,
+    style: {
+      marginRight: 7,
+      verticalAlign: '-4px'
+    }
+  }), "Book CELPIP"), React.createElement("a", {
     className: "btn ghost",
     href: "https://www.cfainstitute.org/programs/cfa-program",
     target: "_blank",
     rel: "noopener"
-  }, "\uD83D\uDCCA Book CFA"), React.createElement("a", {
+  }, React.createElement(Icon, {
+    name: "analytics",
+    size: 18,
+    style: {
+      marginRight: 7,
+      verticalAlign: '-4px'
+    }
+  }), "Book CFA"), React.createElement("a", {
     className: "btn ghost",
     href: "https://www.lsac.org/lsat/register-lsat",
     target: "_blank",
     rel: "noopener"
-  }, "\u2696\uFE0F Book LSAT"))), React.createElement("div", {
+  }, React.createElement(Icon, {
+    name: "scales",
+    size: 18,
+    style: {
+      marginRight: 7,
+      verticalAlign: '-4px'
+    }
+  }), "Book LSAT"))), React.createElement("div", {
     className: "tc-stats reveal",
     style: {
       transitionDelay: '80ms'
@@ -4119,7 +4695,10 @@ function TestCenterPage({
     }
   }, React.createElement("div", {
     className: "accred-icon"
-  }, a.icon), React.createElement("div", null, React.createElement("div", {
+  }, React.createElement(Icon, {
+    name: a.icon,
+    size: 38
+  })), React.createElement("div", null, React.createElement("div", {
     className: "accred-name"
   }, a.name), React.createElement("div", {
     className: "accred-kind"
@@ -4172,12 +4751,15 @@ function TestCenterPage({
     style: {
       transitionDelay: '120ms'
     }
-  }, [['⚡', '48–72 hrs', 'Deployment time'], ['🏟️', '500+', 'Max seat capacity'], ['🌎', 'North America', 'Coverage area'], ['✅', 'Full service', 'Staff & tech included']].map(s => React.createElement("div", {
+  }, [['bolt', '48–72 hrs', 'Deployment time'], ['venue', '500+', 'Max seat capacity'], ['globe', 'North America', 'Coverage area'], ['check-badge', 'Full service', 'Staff & tech included']].map(s => React.createElement("div", {
     className: "popup-stat",
     key: s[1]
   }, React.createElement("div", {
     className: "ps-icon"
-  }, s[0]), React.createElement("div", {
+  }, React.createElement(Icon, {
+    name: s[0],
+    size: 32
+  })), React.createElement("div", {
     className: "ps-n"
   }, s[1]), React.createElement("div", {
     className: "ps-l"
@@ -4244,7 +4826,10 @@ function TestCenterPage({
     }
   }, React.createElement("div", {
     className: "facility-icon"
-  }, f.icon), React.createElement("h3", {
+  }, React.createElement(Icon, {
+    name: f.icon,
+    size: 38
+  })), React.createElement("h3", {
     className: "serif"
   }, f.t), React.createElement("p", null, f.d)))))), React.createElement("section", {
     className: "cta-band"
