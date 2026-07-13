@@ -1940,6 +1940,21 @@ function loadThree() {
   });
   return __threeLoad;
 }
+// Lazy-load the vendored cobe globe library (self-contained WebGL, no three.js),
+// mirroring loadThree() so the ~12KB bundle isn't in the initial critical path.
+let __cobeLoad = null;
+function loadCobe() {
+  if (typeof window.createGlobe === 'function') return Promise.resolve(true);
+  if (__cobeLoad) return __cobeLoad;
+  __cobeLoad = new Promise(resolve => {
+    const s = document.createElement('script');
+    s.src = 'vendor/cobe.min.js';
+    s.onload = () => resolve(typeof window.createGlobe === 'function');
+    s.onerror = () => resolve(false);
+    document.head.appendChild(s);
+  });
+  return __cobeLoad;
+}
 function HeroParticles() {
   const ref = useMR(null);
   const [ready, setReady] = useM(typeof THREE !== 'undefined');
@@ -2042,14 +2057,19 @@ function HeroParticles() {
   });
 }
 /* ============================================================
-   Photoreal Corporate globe. A textured Earth sphere (day map painted
-   at runtime from embedded simplified landmass vectors), real lighting,
-   a Fresnel atmosphere rim, a faint drifting cloud layer, 7 exact
-   glossy pins with pulsing rings + projected HTML labels, an auto-settle
-   that frames North America with the GTA centred, and a static
-   orthographic-globe fallback (mobile / reduced-motion / no-WebGL).
-   Textures are generated once and cached; the renderer is disposed and
-   rendering is paused when the section is off-screen or the tab hidden.
+   Corporate globe — powered by the vendored cobe library (tiny
+   self-contained WebGL, no three.js). A LIGHT globe (white base, warm
+   glow) on the ivory hero-grid, 7 exact brand-red markers at real
+   coordinates, always-visible city-name labels projected each frame to
+   sit precisely over their dot, settled on North America with the GTA
+   centred (auto-spin OFF) and fully draggable (pointer/touch → phi/theta
+   offsets). Labels are projected with cobe's own shader math so they
+   track the dots while dragging; back-hemisphere labels are hidden and
+   the crowded NE cluster is de-cluttered. The rAF loop pauses when the
+   section is off-screen (IntersectionObserver) or the tab is hidden, and
+   the globe is destroyed on unmount. A static canvas-2D orthographic
+   globe (centred on North America, same red pins + labels) is the
+   fallback when WebGL is unavailable.
    ============================================================ */
 
 // The 7 real centres — [name, lat, lon] at exact coordinates.
@@ -2221,74 +2241,12 @@ function glbColorAt(lon, lat) {
   return col;
 }
 
-let GLB_earthCv = null, GLB_specCv = null, GLB_cloudCv = null;
-function glbEarthCanvas() {
-  if (GLB_earthCv) return GLB_earthCv;
-  const W = 1024, H = 512, cv = document.createElement('canvas');
-  cv.width = W; cv.height = H;
-  const ctx = cv.getContext('2d'), img = ctx.createImageData(W, H), dat = img.data;
-  for (let py = 0; py < H; py++) {
-    const lat = 90 - (py / H) * 180;
-    for (let px = 0; px < W; px++) {
-      const lon = (px / W) * 360 - 180, c = glbColorAt(lon, lat), o = (py * W + px) * 4;
-      dat[o] = c[0]; dat[o + 1] = c[1]; dat[o + 2] = c[2]; dat[o + 3] = 255;
-    }
-  }
-  ctx.putImageData(img, 0, 0);
-  GLB_earthCv = cv;
-  return cv;
-}
-function glbSpecCanvas() {
-  if (GLB_specCv) return GLB_specCv;
-  const W = 512, H = 256, cv = document.createElement('canvas');
-  cv.width = W; cv.height = H;
-  const ctx = cv.getContext('2d'), img = ctx.createImageData(W, H), dat = img.data;
-  for (let py = 0; py < H; py++) {
-    const lat = 90 - (py / H) * 180;
-    for (let px = 0; px < W; px++) {
-      const lon = (px / W) * 360 - 180;
-      const v = glbLandAt(lon, lat) ? 26 : (Math.abs(lat) > 78 ? 60 : 165), o = (py * W + px) * 4;
-      dat[o] = v; dat[o + 1] = v; dat[o + 2] = v; dat[o + 3] = 255;
-    }
-  }
-  ctx.putImageData(img, 0, 0);
-  GLB_specCv = cv;
-  return cv;
-}
-function glbCloudCanvas() {
-  if (GLB_cloudCv) return GLB_cloudCv;
-  const W = 768, H = 384, cv = document.createElement('canvas');
-  cv.width = W; cv.height = H;
-  const ctx = cv.getContext('2d'), img = ctx.createImageData(W, H), dat = img.data;
-  for (let py = 0; py < H; py++) {
-    const lat = 90 - (py / H) * 180;
-    for (let px = 0; px < W; px++) {
-      const lon = (px / W) * 360 - 180;
-      let n = glbFbm(lon * 0.05 + 40, lat * 0.05 + 12);
-      let cov = Math.max(0, (n - 0.52)) * 3.0;
-      cov = Math.min(1, cov) * (1 - Math.min(1, Math.abs(lat) / 88 * 0.5));
-      const v = Math.round(cov * 255), o = (py * W + px) * 4;
-      dat[o] = 255; dat[o + 1] = v; dat[o + 2] = 255; dat[o + 3] = 255;
-    }
-  }
-  ctx.putImageData(img, 0, 0);
-  GLB_cloudCv = cv;
-  return cv;
-}
-// lon/lat -> Vector3 matching THREE.SphereGeometry UV convention (so pins align with the texture).
-function glbVec(lat, lon, r, THREE) {
-  const a = (lon + 180) * Math.PI / 180, b = (90 - lat) * Math.PI / 180;
-  return new THREE.Vector3(-r * Math.cos(a) * Math.sin(b), r * Math.cos(b), r * Math.sin(a) * Math.sin(b));
-}
-function glbRadialSprite() {
-  const s = 64, cv = document.createElement('canvas');
-  cv.width = s; cv.height = s;
-  const ctx = cv.getContext('2d'), g = ctx.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
-  g.addColorStop(0, 'rgba(255,90,70,0.95)');
-  g.addColorStop(0.4, 'rgba(224,32,32,0.55)');
-  g.addColorStop(1, 'rgba(224,32,32,0)');
-  ctx.fillStyle = g; ctx.fillRect(0, 0, s, s);
-  return cv;
+// cobe maps a marker [lat,lng] to this 3D unit vector (mirrors cobe's internal
+// `C` fn: lat/lng→radians with lng-π, x negated). Used to project HTML labels so
+// they sit exactly over their red dot for any phi/theta.
+function glbCobeVec(lat, lng) {
+  const la = lat * Math.PI / 180, lo = lng * Math.PI / 180 - Math.PI, a = Math.cos(la);
+  return [-a * Math.cos(lo), Math.sin(la), a * Math.sin(lo)];
 }
 
 // Static orthographic globe centred on (cLat,cLon) for the fallback. Returns {canvas, pts}.
@@ -2342,11 +2300,26 @@ function glbBuildOrtho(size, cLat, cLon) {
   return { canvas: cv, pts: pts };
 }
 
+// Probe WebGL support ONCE for the whole page, and immediately free the probe's
+// GPU context (WEBGL_lose_context) so we never accumulate throwaway contexts.
+// Memoized: repeated CorporateGlobe mounts / navigations reuse the cached result
+// instead of leaking a fresh context each time (browsers cap ~16 live contexts —
+// leaking here starved cobe/three and forced the painted fallback).
+let __glbWebGL = null;
 function glbHasWebGL() {
+  if (__glbWebGL !== null) return __glbWebGL;
   try {
     const c = document.createElement('canvas');
-    return !!(window.WebGLRenderingContext && (c.getContext('webgl') || c.getContext('experimental-webgl')));
-  } catch (e) { return false; }
+    const gl = window.WebGLRenderingContext && (c.getContext('webgl') || c.getContext('experimental-webgl'));
+    if (gl) {
+      const ext = gl.getExtension('WEBGL_lose_context');
+      if (ext) ext.loseContext(); // release the probe context right away
+      __glbWebGL = true;
+    } else {
+      __glbWebGL = false;
+    }
+  } catch (e) { __glbWebGL = false; }
+  return __glbWebGL;
 }
 
 function glbLabelStyle(el) {
@@ -2357,11 +2330,11 @@ function CorporateGlobe() {
   const ref = useMR(null);
   const [mode, setMode] = useM('pending');
   useME(() => {
-    const small = window.innerWidth < 900;
-    if (small || REDUCED || !glbHasWebGL()) { setMode('fallback'); return; }
-    if (typeof THREE !== 'undefined') { setMode('gl'); return; }
+    // cobe is lightweight → render on mobile too (no <900px guard). Only WebGL is required.
+    if (!glbHasWebGL()) { setMode('fallback'); return; }
+    if (typeof window.createGlobe === 'function') { setMode('cobe'); return; }
     let live = true;
-    loadThree().then(ok => { if (live) setMode(ok && typeof THREE !== 'undefined' ? 'gl' : 'fallback'); });
+    loadCobe().then(ok => { if (live) setMode(ok && typeof window.createGlobe === 'function' ? 'cobe' : 'fallback'); });
     return () => { live = false; };
   }, []);
 
@@ -2404,182 +2377,165 @@ function CorporateGlobe() {
     return () => { glbClear(wrap); };
   }, [mode]);
 
-  // --- WebGL: photoreal Earth ---
+  // --- cobe: light WebGL globe, settled on North America, draggable ---
   useME(() => {
-    if (mode !== 'gl' || !ref.current || typeof THREE === 'undefined') return;
+    if (mode !== 'cobe' || !ref.current || typeof window.createGlobe !== 'function') return;
     const wrap = ref.current;
     glbClear(wrap);
     wrap.style.position = 'relative';
-    const S = Math.max(220, Math.min(wrap.clientWidth || 360, 440));
-    const scene = new THREE.Scene();
-    const cam = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
-    cam.position.set(0, 0, 27);
-    let renderer;
-    try {
-      renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-    } catch (e) { setMode('fallback'); return; }
-    renderer.setSize(S, S);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    if (renderer.outputColorSpace !== undefined && THREE.SRGBColorSpace) renderer.outputColorSpace = THREE.SRGBColorSpace;
-    wrap.appendChild(renderer.domElement);
-    renderer.domElement.style.display = 'block';
+    const S0 = Math.max(220, Math.min(wrap.clientWidth || 360, 440));
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
-    const R = 9;
-    const root = new THREE.Group(); scene.add(root);
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(S0 * dpr);
+    canvas.height = Math.round(S0 * dpr);
+    canvas.style.width = S0 + 'px';
+    canvas.style.height = S0 + 'px';
+    canvas.style.display = 'block';
+    canvas.style.cursor = 'grab';
+    canvas.style.touchAction = 'none'; // let the globe consume touch drags on mobile
+    canvas.style.filter = 'drop-shadow(0 18px 40px rgba(20,40,80,.18))';
+    canvas.setAttribute('role', 'img');
+    canvas.setAttribute('aria-label', 'Interactive globe of North America marking our 7 test centres, the Greater Toronto Area centred and highlighted');
+    wrap.appendChild(canvas);
 
-    const earthTex = new THREE.CanvasTexture(glbEarthCanvas());
-    if (earthTex.colorSpace !== undefined && THREE.SRGBColorSpace) earthTex.colorSpace = THREE.SRGBColorSpace;
-    if (renderer.capabilities) earthTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
-    const specTex = new THREE.CanvasTexture(glbSpecCanvas());
-    const earthMat = new THREE.MeshPhongMaterial({ map: earthTex, specularMap: specTex, specular: new THREE.Color(0x6688aa), shininess: 14 });
-    const earth = new THREE.Mesh(new THREE.SphereGeometry(R, 64, 48), earthMat);
-    root.add(earth);
-
-    const cloudTex = new THREE.CanvasTexture(glbCloudCanvas());
-    const clouds = new THREE.Mesh(new THREE.SphereGeometry(R * 1.012, 48, 32),
-      new THREE.MeshPhongMaterial({ color: 0xffffff, alphaMap: cloudTex, transparent: true, opacity: 0.5, depthWrite: false }));
-    root.add(clouds);
-
-    const atmoMat = new THREE.ShaderMaterial({
-      uniforms: { glowColor: { value: new THREE.Color(0x5aa0ea) } },
-      vertexShader: 'varying vec3 vN;varying vec3 vP;void main(){vN=normalize(normalMatrix*normal);vec4 mv=modelViewMatrix*vec4(position,1.0);vP=mv.xyz;gl_Position=projectionMatrix*mv;}',
-      fragmentShader: 'uniform vec3 glowColor;varying vec3 vN;varying vec3 vP;void main(){vec3 v=normalize(-vP);float f=1.0-abs(dot(vN,v));f=pow(f,2.3);gl_FragColor=vec4(glowColor,f*0.9);}',
-      side: THREE.BackSide, blending: THREE.NormalBlending, transparent: true, depthWrite: false
-    });
-    const atmo = new THREE.Mesh(new THREE.SphereGeometry(R * 1.15, 48, 32), atmoMat);
-    scene.add(atmo);
-
-    scene.add(new THREE.AmbientLight(0xc4d0df, 1.05));
-    const sun = new THREE.DirectionalLight(0xfff4e6, 0.95);
-    sun.position.set(6, 4, 9); scene.add(sun);
-    const rimLight = new THREE.DirectionalLight(0x88aaff, 0.25);
-    rimLight.position.set(-8, -2, 3); scene.add(rimLight);
-
-    const glowTex = new THREE.CanvasTexture(glbRadialSprite());
-    const beadGeo = new THREE.SphereGeometry(0.22, 16, 12);
-    const dotGeo = new THREE.SphereGeometry(0.09, 10, 8);
-    const ringGeo = new THREE.RingGeometry(0.34, 0.46, 28);
-    const pins = GLB_PINS.map((c, i) => {
-      const pos = glbVec(c[1], c[2], R + 0.06, THREE);
-      const bead = new THREE.Mesh(beadGeo, new THREE.MeshBasicMaterial({ color: 0xe02020, transparent: true }));
-      bead.position.copy(pos);
-      const dot = new THREE.Mesh(dotGeo, new THREE.MeshBasicMaterial({ color: 0xffe2dd, transparent: true }));
-      dot.position.copy(glbVec(c[1], c[2], R + 0.19, THREE));
-      const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
-      glow.position.copy(pos); glow.scale.setScalar(1.5);
-      const ring = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: 0xe02020, transparent: true, opacity: 0.7, side: THREE.DoubleSide }));
-      ring.position.copy(glbVec(c[1], c[2], R + 0.05, THREE)); ring.lookAt(0, 0, 0);
-      ring.userData.t = i * 0.5;
-      root.add(bead); root.add(dot); root.add(glow); root.add(ring);
-      return { bead: bead, dot: dot, glow: glow, ring: ring, nrm: pos.clone().normalize() };
-    });
-
+    // HTML label layer overlaying the globe.
     const layer = document.createElement('div');
-    layer.style.cssText = 'position:absolute;inset:0;pointer-events:none;overflow:hidden';
+    layer.style.cssText = 'position:absolute;inset:0;pointer-events:none;overflow:visible';
     wrap.appendChild(layer);
-    const offX = (wrap.clientWidth - S) / 2, offY = (wrap.clientHeight - S) / 2;
     const labels = GLB_LABELS.map(l => {
       const el = document.createElement('div'); glbLabelStyle(el); el.textContent = l[0];
       el.style.transform = GLB_ANCHOR[l[3]] || GLB_ANCHOR.up;
-      if (l[0].indexOf('·') >= 0) el.style.borderColor = 'rgba(224,32,32,.6)';
+      if (l[0].indexOf('·') >= 0) el.style.borderColor = 'rgba(224,32,32,.6)'; // merged GTA pill
       layer.appendChild(el);
       const fr = GLB_ANCHOR_FRAC[l[3]] || GLB_ANCHOR_FRAC.up;
-      return { el: el, base: glbVec(l[1], l[2], R + 0.06, THREE), fx: fr[0], fy: fr[1], w: el.offsetWidth, h: el.offsetHeight, x: 0, y: 0, dy: 0, front: false };
+      return { el: el, r: glbCobeVec(l[1], l[2]), fx: fr[0], fy: fr[1], w: el.offsetWidth, h: el.offsetHeight, x: 0, y: 0, dy: 0, front: false };
     });
 
-    const nGTA = glbVec(43.68, -79.53, 1, THREE).normalize();
-    const qFace = new THREE.Quaternion().setFromUnitVectors(nGTA, new THREE.Vector3(0, 0, 1));
-    const qTilt = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), 0.4);
-    const qTarget = qTilt.clone().multiply(qFace);
-    const yAxis = new THREE.Vector3(0, 1, 0);
-    const qYaw = new THREE.Quaternion();
-    const camDir = cam.position.clone().normalize();
-    const tmp = new THREE.Vector3();
-    const INTRO = 2.6, A0 = 3.6;
-    let raf = 0, visible = true, running = false, clock = 0, last = 0;
+    // Live canvas geometry (position + CSS size), recomputed on resize.
+    const G = { S: S0, oX: 0, oY: 0 };
+    function measure() { G.S = canvas.clientWidth || S0; G.oX = canvas.offsetLeft; G.oY = canvas.offsetTop; }
+    measure();
 
-    function setYaw(a) { qYaw.setFromAxisAngle(yAxis, a); root.quaternion.copy(qTarget).multiply(qYaw); }
-    function updatePins(pulse) {
-      pins.forEach(p => {
-        tmp.copy(p.nrm).applyQuaternion(root.quaternion);
-        const front = tmp.dot(camDir);
-        const vis = Math.max(0, Math.min(1, (front - 0.02) / 0.22));
-        p.bead.material.opacity = vis; p.bead.visible = vis > 0.01;
-        p.dot.material.opacity = vis; p.dot.visible = vis > 0.01;
-        p.glow.material.opacity = vis * 0.9; p.glow.visible = vis > 0.01;
-        let ro = 0.7, rs = 1;
-        if (pulse) { p.ring.userData.t += 0.02; const ph = p.ring.userData.t % 2 / 2; rs = 1 + ph * 1.45; ro = 0.7 * (1 - ph); }
-        p.ring.scale.setScalar(rs); p.ring.material.opacity = ro * vis; p.ring.visible = vis > 0.01;
-      });
-    }
-    function updateLabels() {
-      const front = [];
+    // Initial orientation — GTA (North York · Mississauga) dead-centre, north up.
+    // From cobe's projection, centring [lat,lng] needs theta=lat and
+    // phi = pi/2 - (lng*pi/180 - pi). Auto-spin is OFF: phi never auto-advances.
+    const CENTER_LAT = 43.68, CENTER_LNG = -79.53;
+    const phi0 = Math.PI / 2 - (CENTER_LNG * Math.PI / 180 - Math.PI);
+    const theta0 = CENTER_LAT * Math.PI / 180;
+    let phiOff = 0, thetaOff = 0;
+    const THETA_MIN = -1.4, THETA_MAX = 1.4; // clamp tilt so the poles never flip past view
+    const curPhi = () => phi0 + phiOff;
+    const curTheta = () => Math.max(THETA_MIN, Math.min(THETA_MAX, theta0 + thetaOff));
+
+    // Project every marker with cobe's OWN shader math (screen ray f = L(theta,phi)*r,
+    // where r is cobe's marker vector) so each label sits exactly over its red dot for
+    // any rotation; hide labels whose marker is on the back hemisphere (fz <= 0).
+    function updateLabels(phi, theta) {
+      const cp = Math.cos(phi), sp = Math.sin(phi), ct = Math.cos(theta), st = Math.sin(theta);
+      const S = G.S, front = [];
       labels.forEach(l => {
-        tmp.copy(l.base).applyQuaternion(root.quaternion);
-        const facing = tmp.dot(camDir);
-        tmp.project(cam);
-        l.x = offX + (tmp.x * 0.5 + 0.5) * S;
-        l.y = offY + (-tmp.y * 0.5 + 0.5) * S;
-        l.front = facing > 0.16;
+        const r = l.r;
+        const fx = cp * r[0] + sp * r[2];
+        const fy = sp * st * r[0] + ct * r[1] - cp * st * r[2];
+        const fz = -sp * ct * r[0] + st * r[1] + cp * ct * r[2];
+        l.x = G.oX + (fx * 0.8 * 0.5 + 0.5) * S; // b = 0.8*f.xy; globe disc = 80% of canvas
+        l.y = G.oY + (0.5 - fy * 0.8 * 0.5) * S;
+        l.front = fz > 0.12;
         l.dy = 0;
         if (l.front) front.push(l);
       });
-      glbDecollide(front); // keep the NE cluster's pills from overlapping
+      glbDecollide(front); // de-clutter the crowded NE cluster
       labels.forEach(l => {
         l.el.style.left = l.x + 'px';
         l.el.style.top = (l.y + l.dy) + 'px';
         l.el.style.opacity = l.front ? '1' : '0';
       });
     }
-    function easeOut(x) { return 1 - Math.pow(1 - x, 3); }
-    // Full loop-pause: the rAF tick only runs while the globe is on-screen AND the
-    // tab is visible; `clock` accumulates only running time so pause/resume never jumps.
-    function step() {
-      const t = clock;
-      let a;
-      if (t < INTRO) a = A0 * (1 - easeOut(t / INTRO));
-      else a = 0.035 * Math.sin((t - INTRO) * 0.5);
-      setYaw(a);
-      clouds.rotation.y += 0.0006;
-      updatePins(true);
-      updateLabels();
-      renderer.render(scene, cam);
-    }
-    function frame(ts) {
-      if (!running) return;
-      const dt = last ? Math.min(0.05, (ts - last) / 1000) : 0;
-      last = ts; clock += dt;
-      step();
-      raf = requestAnimationFrame(frame);
-    }
-    function start() { if (running || REDUCED) return; running = true; last = 0; raf = requestAnimationFrame(frame); }
-    function stop() { if (!running) return; running = false; cancelAnimationFrame(raf); raf = 0; }
-    function sync() { if (visible && !document.hidden) start(); else stop(); }
 
-    const io = ('IntersectionObserver' in window) ? new IntersectionObserver(es => { visible = es[0].isIntersecting; sync(); }, { threshold: 0.05 }) : null;
+    // Pointer/touch drag -> phi/theta offsets (grab-and-turn).
+    let dragging = false, sx = 0, sy = 0, sPhi = 0, sTheta = 0;
+    const SENS = 0.006; // radians per pixel dragged
+    function onDown(e) {
+      dragging = true; sx = e.clientX; sy = e.clientY; sPhi = phiOff; sTheta = thetaOff;
+      canvas.style.cursor = 'grabbing';
+      if (canvas.setPointerCapture && e.pointerId != null) { try { canvas.setPointerCapture(e.pointerId); } catch (er) {} }
+    }
+    function onMove(e) {
+      if (!dragging) return;
+      phiOff = sPhi + (e.clientX - sx) * SENS;
+      thetaOff = sTheta + (e.clientY - sy) * SENS;
+    }
+    function onUp() { dragging = false; canvas.style.cursor = 'grab'; }
+    canvas.addEventListener('pointerdown', onDown);
+    window.addEventListener('pointermove', onMove, { passive: true });
+    window.addEventListener('pointerup', onUp);
+
+    // The cobe globe — light theme on the ivory grid, brand-red (#e02020) markers.
+    // Guarded: if the WebGL context can't be created (context exhaustion / driver
+    // failure), tear down the drag listeners and degrade to the painted fallback
+    // so the section is never blank rather than throwing out of the effect.
+    let globe;
+    try {
+      globe = window.createGlobe(canvas, {
+        devicePixelRatio: dpr,
+        width: Math.round(S0 * dpr),
+        height: Math.round(S0 * dpr),
+        phi: curPhi(),
+        theta: curTheta(),
+        dark: 0,
+        diffuse: 1.2,
+        mapSamples: 16000,
+        mapBrightness: 6,
+        baseColor: [1, 1, 1],
+        markerColor: [0.878, 0.125, 0.125],
+        glowColor: [0.94, 0.93, 0.91],
+        opacity: 1,
+        markers: GLB_PINS.map(p => ({ location: [p[1], p[2]], size: 0.045 })),
+        onRender: state => {
+          const phi = curPhi(), theta = curTheta();
+          state.phi = phi;         // auto-spin OFF; phi only moves when dragged
+          state.theta = theta;
+          state.width = canvas.width;   // keep the shader resolution uniform in sync
+          state.height = canvas.height;
+          updateLabels(phi, theta);     // same phi/theta -> labels track dots exactly
+        }
+      });
+    } catch (e) {
+      canvas.removeEventListener('pointerdown', onDown);
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      glbClear(wrap);
+      setMode('fallback');
+      return;
+    }
+
+    // Pause the rAF loop when off-screen (IntersectionObserver) or tab hidden.
+    let visible = true;
+    const sync = () => { if (globe && globe.toggle) globe.toggle(visible && !document.hidden); };
+    const io = ('IntersectionObserver' in window)
+      ? new IntersectionObserver(es => { visible = es[0].isIntersecting; sync(); }, { threshold: 0.05 })
+      : null;
     if (io) io.observe(wrap);
     const onVis = () => sync();
     document.addEventListener('visibilitychange', onVis);
 
-    if (REDUCED) { setYaw(0); updatePins(false); updateLabels(); renderer.render(scene, cam); }
-    else { sync(); }
-
-    const onResize = () => { const ns = Math.max(220, Math.min(wrap.clientWidth || 360, 440)); renderer.setSize(ns, ns); };
+    const onResize = () => {
+      const ns = Math.max(220, Math.min(wrap.clientWidth || 360, 440));
+      canvas.style.width = ns + 'px'; canvas.style.height = ns + 'px';
+      if (globe && globe.resize) globe.resize(); // resize backing store + viewport
+      measure();
+    };
     window.addEventListener('resize', onResize);
 
     return () => {
-      stop();
-      cancelAnimationFrame(raf);
+      canvas.removeEventListener('pointerdown', onDown);
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
       document.removeEventListener('visibilitychange', onVis);
       window.removeEventListener('resize', onResize);
       if (io) io.disconnect();
-      earthTex.dispose(); specTex.dispose(); cloudTex.dispose(); glowTex.dispose();
-      earth.geometry.dispose(); earthMat.dispose();
-      clouds.geometry.dispose(); clouds.material.dispose();
-      atmo.geometry.dispose(); atmoMat.dispose();
-      beadGeo.dispose(); dotGeo.dispose(); ringGeo.dispose();
-      pins.forEach(p => { p.bead.material.dispose(); p.dot.material.dispose(); p.glow.material.dispose(); p.ring.material.dispose(); });
-      renderer.dispose();
+      if (globe && globe.destroy) globe.destroy();
       glbClear(wrap);
     };
   }, [mode]);
