@@ -47,6 +47,12 @@ function Icon({
   }));
 }
 window.Icon = Icon;
+/* Curated Unsplash CDN photo URL for full-bleed feature cards.
+   Same stable direct-CDN form the site already uses on .ph/.gphoto/.photo. */
+function PHOTO(id, w) {
+  return 'https://images.unsplash.com/photo-' + id + '?w=' + (w || 800) + '&q=80&auto=format&fit=crop';
+}
+window.PHOTO = PHOTO;
 function useFocusTrap(active, onClose) {
   const ref = useRef(null);
   useEffect(() => {
@@ -3170,29 +3176,24 @@ function CorporatePage({
       marginBottom: 8,
       flex: 1
     }
-  }, [['bolt', '48–72 hrs', 'Deployment time'], ['venue', '500+', 'Max seat capacity'], ['globe', 'North America', 'Coverage'], ['check-badge', 'Full service', 'Staff & tech']].map(s => React.createElement("div", {
-    className: "popup-stat",
-    key: s[1],
-    style: {
-      background: 'var(--surface)',
-      border: '1px solid var(--rule-soft)'
-    }
+  }, [['1560439514-4e9645039924', '48–72 hrs', 'Deployment time'], ['1594122230689-45899d9e6f69', '500+', 'Max seat capacity'], ['1451187580459-43490279c0fa', 'North America', 'Coverage'], ['1552581234-26160f608093', 'Full service', 'Staff & tech']].map(s => React.createElement("div", {
+    className: "popup-stat pcard",
+    key: s[1]
+  }, React.createElement("img", {
+    className: "pcard-img",
+    src: PHOTO(s[0], 800),
+    alt: "",
+    loading: "lazy",
+    decoding: "async"
+  }), React.createElement("div", {
+    className: "pcard-scrim"
+  }), React.createElement("div", {
+    className: "pcard-body"
   }, React.createElement("div", {
-    className: "ps-icon"
-  }, React.createElement(Icon, {
-    name: s[0],
-    size: 32
-  })), React.createElement("div", {
-    className: "ps-n",
-    style: {
-      color: 'var(--text)'
-    }
+    className: "ps-n"
   }, s[1]), React.createElement("div", {
-    className: "ps-l",
-    style: {
-      color: 'var(--muted)'
-    }
-  }, s[2])))), typeof CorporateGlobe !== 'undefined' && React.createElement(CorporateGlobe, null)))), React.createElement("section", {
+    className: "ps-l"
+  }, s[2]))))), typeof CorporateGlobe !== 'undefined' && React.createElement(CorporateGlobe, null)))), React.createElement("section", {
     className: "block",
     style: {
       paddingTop: 0
@@ -4111,19 +4112,19 @@ const PROGRAMS = [{
 }];
 const ONLINE_FEATURES = ['Live HD video sessions with screen sharing and digital whiteboard', 'Recorded lessons available 24/7 for review', 'Adaptive practice tests that adjust to your skill level', 'Real-time progress reports for students and parents', 'Direct messaging with your assigned tutor'];
 const ONLINE_TILES = [{
-  icon: 'video',
+  img: '1610484826967-09c5720778c7',
   t: 'Live Classes',
   d: 'Real-time instruction with your tutor'
 }, {
-  icon: 'study',
+  img: '1456513080510-7bf3a84b82f8',
   t: 'Study Materials',
   d: 'Worksheets, notes & resources'
 }, {
-  icon: 'analytics',
+  img: '1551288049-bebda4e38f71',
   t: 'Analytics',
   d: 'Track progress with detailed reports'
 }, {
-  icon: 'cap',
+  img: '1541339907198-e08756dedf3f',
   t: 'Certifications',
   d: 'Earn certificates upon completion'
 }];
@@ -4273,18 +4274,23 @@ function ProgramsPage({
       transitionDelay: '120ms'
     }
   }, ONLINE_TILES.map(tile => React.createElement("div", {
-    className: "online-tile",
+    className: "online-tile pcard",
     key: tile.t
+  }, React.createElement("img", {
+    className: "pcard-img",
+    src: PHOTO(tile.img, 800),
+    alt: "",
+    loading: "lazy",
+    decoding: "async"
+  }), React.createElement("div", {
+    className: "pcard-scrim"
+  }), React.createElement("div", {
+    className: "pcard-body"
   }, React.createElement("div", {
-    className: "ot-icon"
-  }, React.createElement(Icon, {
-    name: tile.icon,
-    size: 32
-  })), React.createElement("div", {
     className: "ot-t"
   }, tile.t), React.createElement("div", {
     className: "ot-d"
-  }, tile.d))))))), React.createElement("section", {
+  }, tile.d)))))))), React.createElement("section", {
     className: "cta-band"
   }, React.createElement("div", {
     className: "container"
@@ -4321,27 +4327,27 @@ const {
   useState: useStateT
 } = React;
 const ACCRED = [{
-  icon: 'flag-ca',
+  img: '1513258496099-48168024aec0',
   name: 'CELPIP / Paragon Testing',
   kind: 'Language proficiency'
 }, {
-  icon: 'analytics',
+  img: '1611974789855-9c2a0a7236a3',
   name: 'CFA Institute',
   kind: 'Financial certification'
 }, {
-  icon: 'scales',
+  img: '1589829545856-d10d557cf95f',
   name: 'LSAC',
   kind: 'Law school admissions'
 }, {
-  icon: 'house',
+  img: '1560518883-ce09059eeffa',
   name: 'RECO',
   kind: 'Real estate licensing'
 }, {
-  icon: 'institution',
+  img: '1589391886645-d51941baf7fb',
   name: 'Law Society of Ontario',
   kind: 'Legal assessments'
 }, {
-  icon: 'building',
+  img: '1524758631624-e2822e304c36',
   name: 'Corporate Clients',
   kind: 'Custom assessments'
 }];
@@ -4380,27 +4386,27 @@ const SERVICES = [{
   pts: ['Real-time candidate tracking', 'Performance analytics by cohort', 'Incident & exception reports', 'Custom reporting formats']
 }];
 const FACILITY = [{
-  icon: 'screen',
+  img: '1580582932707-520aed937b7b',
   t: 'Up to 50 Seats',
   d: 'Ergonomic workstations with high-resolution monitors and full keyboard/mouse setups at each location.'
 }, {
-  icon: 'accessible',
+  img: '1508847154043-be5407fcaa5a',
   t: 'ADA Compliant',
   d: 'Fully wheelchair-accessible premises with ramps, elevators, and accessible restrooms at all locations.'
 }, {
-  icon: 'door',
+  img: '1497215728101-856f4ea42174',
   t: 'Private Accommodation Room',
   d: 'Dedicated rooms for candidates requiring extended time, distraction-free environments, or other accommodations.'
 }, {
-  icon: 'camera',
+  img: '1557597774-9d273605dfa9',
   t: 'Secure Environment',
   d: 'CCTV surveillance, secure lockers for personal belongings, and strict entry protocols throughout.'
 }, {
-  icon: 'tools',
+  img: '1531482615713-2afd69097998',
   t: 'On-Site Technical Support',
   d: 'Dedicated IT staff to resolve any hardware, software, or connectivity issues immediately.'
 }, {
-  icon: 'proctor',
+  img: '1509062522246-3755977927d7',
   t: 'Certified Proctors',
   d: 'Trained supervisors experienced in both standard and special-accommodation testing requirements.'
 }];
@@ -4688,17 +4694,22 @@ function TestCenterPage({
   }, "We are proud to deliver on behalf of the world's most respected certification bodies \u2014 and for corporate and government clients.")), React.createElement("div", {
     className: "accred-grid"
   }, ACCRED.map((a, i) => React.createElement("div", {
-    className: "accred reveal",
+    className: "accred pcard reveal",
     key: a.name,
     style: {
       transitionDelay: i % 3 * 70 + 'ms'
     }
+  }, React.createElement("img", {
+    className: "pcard-img",
+    src: PHOTO(a.img, 700),
+    alt: "",
+    loading: "lazy",
+    decoding: "async"
+  }), React.createElement("div", {
+    className: "pcard-scrim"
+  }), React.createElement("div", {
+    className: "pcard-body"
   }, React.createElement("div", {
-    className: "accred-icon"
-  }, React.createElement(Icon, {
-    name: a.icon,
-    size: 38
-  })), React.createElement("div", null, React.createElement("div", {
     className: "accred-name"
   }, a.name), React.createElement("div", {
     className: "accred-kind"
@@ -4751,19 +4762,24 @@ function TestCenterPage({
     style: {
       transitionDelay: '120ms'
     }
-  }, [['bolt', '48–72 hrs', 'Deployment time'], ['venue', '500+', 'Max seat capacity'], ['globe', 'North America', 'Coverage area'], ['check-badge', 'Full service', 'Staff & tech included']].map(s => React.createElement("div", {
-    className: "popup-stat",
+  }, [['1560439514-4e9645039924', '48–72 hrs', 'Deployment time'], ['1594122230689-45899d9e6f69', '500+', 'Max seat capacity'], ['1451187580459-43490279c0fa', 'North America', 'Coverage area'], ['1552581234-26160f608093', 'Full service', 'Staff & tech included']].map(s => React.createElement("div", {
+    className: "popup-stat pcard",
     key: s[1]
+  }, React.createElement("img", {
+    className: "pcard-img",
+    src: PHOTO(s[0], 800),
+    alt: "",
+    loading: "lazy",
+    decoding: "async"
+  }), React.createElement("div", {
+    className: "pcard-scrim"
+  }), React.createElement("div", {
+    className: "pcard-body"
   }, React.createElement("div", {
-    className: "ps-icon"
-  }, React.createElement(Icon, {
-    name: s[0],
-    size: 32
-  })), React.createElement("div", {
     className: "ps-n"
   }, s[1]), React.createElement("div", {
     className: "ps-l"
-  }, s[2]))))))), React.createElement("section", {
+  }, s[2])))))))), React.createElement("section", {
     className: "block"
   }, React.createElement("div", {
     className: "container"
@@ -4819,19 +4835,24 @@ function TestCenterPage({
   }, "Each Troy Testing location is engineered around the room and the people who run it.")), React.createElement("div", {
     className: "facility-grid"
   }, FACILITY.map((f, i) => React.createElement("div", {
-    className: "facility reveal",
+    className: "facility pcard reveal",
     key: f.t,
     style: {
       transitionDelay: i % 3 * 70 + 'ms'
     }
-  }, React.createElement("div", {
-    className: "facility-icon"
-  }, React.createElement(Icon, {
-    name: f.icon,
-    size: 38
-  })), React.createElement("h3", {
+  }, React.createElement("img", {
+    className: "pcard-img",
+    src: PHOTO(f.img, 700),
+    alt: "",
+    loading: "lazy",
+    decoding: "async"
+  }), React.createElement("div", {
+    className: "pcard-scrim"
+  }), React.createElement("div", {
+    className: "pcard-body"
+  }, React.createElement("h3", {
     className: "serif"
-  }, f.t), React.createElement("p", null, f.d)))))), React.createElement("section", {
+  }, f.t), React.createElement("p", null, f.d))))))), React.createElement("section", {
     className: "cta-band"
   }, React.createElement("div", {
     className: "container"
