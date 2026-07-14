@@ -444,7 +444,6 @@ const EXAMS = [{
     'North York': 'https://www.celpip.ca/centre/troy-testing-learning-centers-toronto/',
     'Mississauga': 'https://www.celpip.ca/centre/troy-testing-learning-centers-mississauga/'
   },
-  fee: 'CA$ 290',
   duration: '3 hrs',
   seats: 'Daily seats',
   preferredCenter: 'North York'
@@ -459,7 +458,6 @@ const EXAMS = [{
     'North York': 'https://www.celpip.ca/centre/troy-testing-learning-centers-toronto/',
     'Mississauga': 'https://www.celpip.ca/centre/troy-testing-learning-centers-mississauga/'
   },
-  fee: 'CA$ 195',
   duration: '1h 10m',
   seats: 'Weekly seats',
   preferredCenter: 'North York'
@@ -470,7 +468,6 @@ const EXAMS = [{
   url: 'https://www.cfainstitute.org/programs/cfa-program',
   fam: 'CFA',
   centres: ['North York', 'Mississauga'],
-  fee: 'from US$ 940',
   duration: '4h 30m',
   seats: 'Feb / May / Aug / Nov',
   preferredCenter: 'North York or Mississauga'
@@ -481,7 +478,6 @@ const EXAMS = [{
   url: 'https://www.cfainstitute.org/programs/cfa-program',
   fam: 'CFA',
   centres: ['North York', 'Mississauga'],
-  fee: 'from US$ 940',
   duration: '4h 30m',
   seats: 'May / Aug / Nov',
   preferredCenter: 'North York or Mississauga'
@@ -492,7 +488,6 @@ const EXAMS = [{
   url: 'https://www.cfainstitute.org/programs/cfa-program',
   fam: 'CFA',
   centres: ['North York', 'Mississauga'],
-  fee: 'from US$ 940',
   duration: '4h 30m',
   seats: 'Feb / Aug',
   preferredCenter: 'North York or Mississauga'
@@ -503,7 +498,6 @@ const EXAMS = [{
   url: 'https://www.lsac.org/lsat/register-lsat',
   fam: 'LSAT',
   centres: ['North York'],
-  fee: 'US$ 238',
   duration: '3 hrs',
   seats: 'Multiple / year',
   preferredCenter: 'North York'
@@ -2470,7 +2464,6 @@ const EXAM_DETAIL = {
     intro: 'CELPIP is a fully computer-delivered English test in Canadian English, accepted by IRCC for permanent residence and by IRCC for citizenship (CELPIP-General LS). Every section — including speaking — is completed on the computer, with no live examiner.',
     format: [['Listening', '47–55 min', 'Comprehension across conversations and news items'], ['Reading', '55–60 min', 'Correspondence, diagrams, and viewpoints'], ['Writing', '53–60 min', 'An email and a survey response'], ['Speaking', '15–20 min', 'Eight recorded tasks — no live interviewer']],
     scoring: 'Reported as CELPIP levels 1–12 per skill. Map your target CRS points back to the level you actually need before booking.',
-    fees: 'CELPIP-General CA$290 · CELPIP-General LS CA$195',
     centres: ['North York', 'Mississauga'],
     bring: ['Valid passport (primary ID)', 'Confirmation email from Paragon', 'Arrive 30 minutes early']
   },
@@ -2484,7 +2477,6 @@ const EXAM_DETAIL = {
     intro: 'The CFA Program is a three-level, computer-based credential administered by Prometric on behalf of the CFA Institute. We host Levels I, II and III at our Toronto (North York) and Mississauga centres; you register through the CFA Institute and select us as your test site.',
     format: [['Level I', '2 sessions · 4h30', 'Multiple choice across the ten topic areas'], ['Level II', '2 sessions · 4h30', 'Item sets (vignettes) with multiple choice'], ['Level III', '2 sessions · 4h30', 'Constructed-response essays plus item sets']],
     scoring: 'Pass/fail per level, benchmarked against the Minimum Passing Score. Plan roughly 300 hours of study per level.',
-    fees: 'Registration from US$940–1,290 depending on window (set by CFA Institute)',
     centres: ['North York', 'Mississauga'],
     bring: ['Valid international passport', 'CFA-approved calculator', 'Prometric confirmation']
   },
@@ -2498,7 +2490,6 @@ const EXAM_DETAIL = {
     intro: 'The LSAT measures reading comprehension and logical reasoning skills central to legal study. Administered by LSAC, it is offered multiple times a year. We host LSAT candidates at our Toronto (North York) centre.',
     format: [['Logical Reasoning', '2 scored sections', 'Argument analysis and evaluation'], ['Reading Comprehension', '1 scored section', 'Dense passages with question sets'], ['Unscored section', 'variable', 'An additional experimental section'], ['Writing sample', 'separate', 'Completed online, on your own schedule']],
     scoring: 'Scored on a 120–180 scale. Most competitive schools look for 160+; know your target school\u2019s median before you book.',
-    fees: 'US$238 test fee (set by LSAC); fee waivers available',
     centres: ['North York'],
     bring: ['Government photo ID matching your registration', 'LSAC admission ticket', 'Arrive early for check-in']
   }
@@ -2573,8 +2564,6 @@ function ExamDetailPage({
   }, "Book this exam"), React.createElement("div", {
     className: "ed-fact"
   }, React.createElement("span", null, "Provider"), React.createElement("b", null, d.org)), React.createElement("div", {
-    className: "ed-fact"
-  }, React.createElement("span", null, "Fees"), React.createElement("b", null, d.fees)), React.createElement("div", {
     className: "ed-fact"
   }, React.createElement("span", null, "Centres"), React.createElement("b", null, d.centres.join(' · '))), React.createElement("a", {
     className: "btn",
@@ -2830,7 +2819,7 @@ function PlanBar() {
   const trapRef = useFocusTrap(open, () => setOpen(false));
   if (plan.length === 0) return null;
   const items = plan.map(c => EXAMS.find(e => e.code === c)).filter(Boolean);
-  const body = encodeURIComponent('My Troy Testing shortlist:\n\n' + items.map(e => `- ${e.name} (${e.org}) - ${e.fee}\n  Book: ${e.url}`).join('\n\n') + '\n\n-- Sent from troytesting.com');
+  const body = encodeURIComponent('My Troy Testing shortlist:\n\n' + items.map(e => `- ${e.name} (${e.org})\n  Book: ${e.url}`).join('\n\n') + '\n\n-- Sent from troytesting.com');
   return React.createElement(React.Fragment, null, React.createElement("button", {
     className: "plan-fab",
     onClick: () => setOpen(true),
@@ -2864,7 +2853,7 @@ function PlanBar() {
     className: "pi-name"
   }, e.name), React.createElement("div", {
     className: "pi-meta"
-  }, e.org, " \xB7 ", e.fee)), React.createElement("button", {
+  }, e.org)), React.createElement("button", {
     className: "pi-remove",
     "aria-label": `Remove ${e.name}`,
     onClick: () => togglePlan(e.code)
@@ -4645,9 +4634,9 @@ function TestCenterPage({
       className: "exam-h-meta"
     }, React.createElement("span", {
       className: "ehm"
-    }, React.createElement("i", null, "Fee"), React.createElement("b", null, ex.fee)), React.createElement("span", {
+    }, React.createElement("i", null, "Length"), React.createElement("b", null, ex.duration)), React.createElement("span", {
       className: "ehm"
-    }, React.createElement("i", null, "Length"), React.createElement("b", null, ex.duration))), React.createElement("span", {
+    }, React.createElement("i", null, "Sittings"), React.createElement("b", null, ex.seats))), React.createElement("span", {
       className: "exam-caret",
       "aria-hidden": "true"
     }, React.createElement("span", null))),
@@ -4664,7 +4653,7 @@ function TestCenterPage({
       "aria-label": ex.name + " details"
     }, React.createElement("div", {
       className: "exam-stats"
-    }, [['Fee', ex.fee], ['Duration', ex.duration], ['Availability', ex.seats], ['Centres', ex.centres.join(' · ')]].map(([k, v]) => React.createElement("div", {
+    }, [['Duration', ex.duration], ['Availability', ex.seats], ['Centres', ex.centres.join(' · ')]].map(([k, v]) => React.createElement("div", {
       key: k,
       className: "estat"
     }, React.createElement("span", {
