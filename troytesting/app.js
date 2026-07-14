@@ -3616,16 +3616,21 @@ function CentresPage({
     style: {
       transitionDelay: i % 2 * 120 + 'ms'
     }
-  }, React.createElement("a", {
-    className: "loc-map",
+  }, React.createElement("div", {
+    className: "loc-map"
+  }, React.createElement("iframe", {
+    className: "loc-map-frame",
+    src: 'https://maps.google.com/maps?q=' + encodeURIComponent((c.addr[0] + ', ' + c.addr[1]).replace(/\s*\u00b7\s*/g, ' ')) + '&z=15&output=embed',
+    title: `Map of ${c.city} centre`,
+    loading: "lazy",
+    referrerPolicy: "no-referrer-when-downgrade",
+    allowFullScreen: true
+  }), React.createElement("a", {
+    className: "loc-map-cta",
     href: c.map,
     target: "_blank",
     rel: "noopener",
     "aria-label": `Open ${c.city} in Google Maps`
-  }, React.createElement("span", {
-    className: "loc-pin"
-  }), React.createElement("span", {
-    className: "loc-map-cta"
   }, "View on Google Maps \u2197")), React.createElement("div", {
     className: "info"
   }, React.createElement("div", {
@@ -4283,29 +4288,35 @@ const {
   useState: useStateT
 } = React;
 const ACCRED = [{
-  img: '1513258496099-48168024aec0',
-  name: 'CELPIP / Paragon Testing',
-  kind: 'Language proficiency'
+  logo: 'logos/celpip.png',
+  name: 'CELPIP',
+  kind: 'Language proficiency',
+  h: 40
 }, {
-  img: '1611974789855-9c2a0a7236a3',
+  logo: 'logos/cfa-institute.png',
   name: 'CFA Institute',
-  kind: 'Financial certification'
+  kind: 'Financial certification',
+  h: 40
 }, {
-  img: '1589829545856-d10d557cf95f',
-  name: 'LSAC',
-  kind: 'Law school admissions'
+  logo: 'logos/lsac.png',
+  name: 'LSAC / LSAT',
+  kind: 'Law school admissions',
+  h: 58
 }, {
-  img: '1560518883-ce09059eeffa',
+  logo: 'logos/reco.svg',
   name: 'RECO',
-  kind: 'Real estate licensing'
+  kind: 'Real estate licensing',
+  h: 50
 }, {
-  img: '1589391886645-d51941baf7fb',
+  logo: 'logos/law-society-ontario.svg',
   name: 'Law Society of Ontario',
-  kind: 'Legal assessments'
+  kind: 'Legal assessments',
+  h: 40
 }, {
   img: '1524758631624-e2822e304c36',
   name: 'Corporate Clients',
-  kind: 'Custom assessments'
+  kind: 'Custom assessments',
+  photo: true
 }];
 const SERVICES = [{
   t: 'Test Center Setup & Management',
@@ -4678,8 +4689,8 @@ function TestCenterPage({
       transitionDelay: '120ms'
     }
   }, "We are proud to deliver on behalf of the world's most respected certification bodies \u2014 and for corporate and government clients.")), React.createElement("div", {
-    className: "accred-grid"
-  }, ACCRED.map((a, i) => React.createElement("div", {
+    className: "logo-wall"
+  }, ACCRED.map((a, i) => a.photo ? React.createElement("div", {
     className: "accred pcard reveal",
     key: a.name,
     style: {
@@ -4699,7 +4710,26 @@ function TestCenterPage({
     className: "accred-name"
   }, a.name), React.createElement("div", {
     className: "accred-kind"
-  }, a.kind))))))), React.createElement("section", {
+  }, a.kind))) : React.createElement("div", {
+    className: "logo-card reveal",
+    key: a.name,
+    style: {
+      transitionDelay: i % 3 * 70 + 'ms'
+    }
+  }, React.createElement("div", {
+    className: "logo-lockup"
+  }, React.createElement("img", {
+    className: "logo-img",
+    src: a.logo,
+    alt: a.name + " logo",
+    loading: "lazy",
+    decoding: "async",
+    style: {
+      maxHeight: a.h + 'px'
+    }
+  })), React.createElement("div", {
+    className: "logo-cap"
+  }, a.name + " · " + a.kind)))))), React.createElement("section", {
     id: "solutions",
     className: "block popup-band"
   }, React.createElement("div", {
@@ -5065,7 +5095,7 @@ function ContactPage({
     "aria-invalid": !!errors.name,
     value: form.name,
     onChange: e => set('name', e.target.value),
-    placeholder: "Priya Ramaswamy"
+    placeholder: "Jane Smith"
   }), React.createElement("div", {
     className: "err",
     role: "alert"
