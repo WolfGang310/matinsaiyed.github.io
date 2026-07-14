@@ -1210,8 +1210,19 @@ section.block {
   .hero-v2 .lead { max-width: none; }
 }
 @media (max-width: 560px) {
-  .board-cols, .board-row { grid-template-columns: 1.4fr 1fr 1.1fr; }
-  .board-cols span:nth-child(2), .bc.centre { display: none; }
+  /* Reflow the departures board into stacked rows so the Status column
+     (SEATS OPEN / FULL) is always visible and never clips off-screen. */
+  .board-cols { display: none; }
+  .board-row {
+    grid-template-columns: 1fr auto;
+    column-gap: 10px; row-gap: 8px;
+    align-items: center;
+  }
+  .bc.bexam { grid-column: 1 / -1; }
+  .bc.bexam .flap { flex-wrap: wrap; }
+  .bc.centre { display: none; }
+  .bc.when { grid-column: 1; justify-self: start; }
+  .bc.status { grid-column: 2; justify-self: end; }
   .bc { font-size: 11px; }
   .hero-v2 .hero-meta { grid-template-columns: 1fr 1fr; gap: 24px; }
 }
