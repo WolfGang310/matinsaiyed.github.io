@@ -976,6 +976,14 @@ section.block {
   will-change: opacity, transform;
 }
 .reveal.in { opacity: 1; transform: none; }
+/* Once an element has been revealed it carries a data-st attribute (set by the
+   scroll-reveal in app.js). React-owned elements (e.g. the Programs accordion)
+   have their className rewritten on interaction, which wipes the imperatively-
+   added .in class — without this rule they would fall back to opacity:0 and
+   "vanish" on click. Keying the shown state on the data-st ATTRIBUTE (which
+   React does not manage, so it survives re-renders) keeps them visible. It is
+   NOT !important, so GSAP's inline styles still play the initial fade-in. */
+.reveal[data-st] { opacity: 1; transform: none; }
 @media (prefers-reduced-motion: reduce) {
   .reveal { opacity: 1 !important; transform: none !important; transition: none; }
 }
