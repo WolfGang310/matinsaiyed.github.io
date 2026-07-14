@@ -3635,13 +3635,12 @@ function CentresPage({
     loading: "lazy",
     referrerPolicy: "no-referrer-when-downgrade",
     allowFullScreen: true
-  }), React.createElement("a", {
-    className: "loc-map-cta",
-    href: c.map,
-    target: "_blank",
-    rel: "noopener",
-    "aria-label": `Open ${c.city} in Google Maps`
-  }, "View on Google Maps \u2197")), React.createElement("div", {
+  })
+  /* No overlay CTA here. The Google embed renders its own "Open in Maps" link
+     inside the iframe (cross-origin \u2014 we cannot restyle or remove it), so ours
+     was a second, redundant button sitting right next to it. The "Directions \u2197"
+     link in the info column below points at the same listing (c.map). */
+  ), React.createElement("div", {
     className: "info"
   }, React.createElement("div", {
     className: "eyebrow"
