@@ -4370,12 +4370,6 @@ const TC_NAV = [{
   id: 'exams',
   label: 'Exams'
 }, {
-  id: 'booking',
-  label: 'Booking'
-}, {
-  id: 'availability',
-  label: 'Sessions'
-}, {
   id: 'checklist',
   label: 'Exam day'
 }, {
@@ -4661,95 +4655,7 @@ function TestCenterPage({
     }, "Book on ", ex.org, " ", React.createElement("span", {
       className: "arrow"
     })));
-  })))), React.createElement("section", {
-    id: "booking",
-    className: "block",
-    style: {
-      paddingTop: 40,
-      paddingBottom: 40
-    }
-  }, React.createElement("div", {
-    className: "container"
-  }, React.createElement("div", {
-    className: "quickbook reveal"
-  }, React.createElement("span", {
-    className: "eyebrow"
-  }, "Book your exam"), React.createElement("div", {
-    className: "quickbook-btns"
-  }, React.createElement("a", {
-    className: "btn ghost",
-    href: "https://www.celpip.ca/take-celpip/register-for-celpip/",
-    target: "_blank",
-    rel: "noopener"
-  }, React.createElement(Icon, {
-    name: "flag-ca",
-    size: 18,
-    style: {
-      marginRight: 7,
-      verticalAlign: '-4px'
-    }
-  }), "Book CELPIP"), React.createElement("a", {
-    className: "btn ghost",
-    href: "https://www.cfainstitute.org/programs/cfa-program",
-    target: "_blank",
-    rel: "noopener"
-  }, React.createElement(Icon, {
-    name: "analytics",
-    size: 18,
-    style: {
-      marginRight: 7,
-      verticalAlign: '-4px'
-    }
-  }), "Book CFA"), React.createElement("a", {
-    className: "btn ghost",
-    href: "https://www.lsac.org/lsat/register-lsat",
-    target: "_blank",
-    rel: "noopener"
-  }, React.createElement(Icon, {
-    name: "scales",
-    size: 18,
-    style: {
-      marginRight: 7,
-      verticalAlign: '-4px'
-    }
-  }), "Book LSAT"))), React.createElement("div", {
-    className: "tc-stats reveal",
-    style: {
-      transitionDelay: '80ms'
-    }
-  }, React.createElement("div", {
-    className: "tc-stat"
-  }, React.createElement("div", {
-    className: "n"
-  }, React.createElement(Counter, {
-    to: 50,
-    suffix: "+"
-  })), React.createElement("div", {
-    className: "l"
-  }, "Seats per location")), React.createElement("div", {
-    className: "tc-stat"
-  }, React.createElement("div", {
-    className: "n"
-  }, React.createElement(Counter, {
-    to: 7
-  })), React.createElement("div", {
-    className: "l"
-  }, "Active locations")), React.createElement("div", {
-    className: "tc-stat"
-  }, React.createElement("div", {
-    className: "n"
-  }, "24/7"), React.createElement("div", {
-    className: "l"
-  }, "Candidate support")), React.createElement("div", {
-    className: "tc-stat"
-  }, React.createElement("div", {
-    className: "n"
-  }, React.createElement(Counter, {
-    to: 10,
-    suffix: "+"
-  })), React.createElement("div", {
-    className: "l"
-  }, "Years experience"))))), React.createElement(AvailabilitySection, null), React.createElement(ExamDayChecklist, null), React.createElement("section", {
+  })))), React.createElement(ExamDayChecklist, null), React.createElement("section", {
     id: "centre",
     className: "block",
     style: {
