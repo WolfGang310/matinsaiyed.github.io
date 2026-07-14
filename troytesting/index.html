@@ -1497,7 +1497,7 @@ section.block {
 
 /* ── Section sub-nav (scroll-spy) ─────────────────────── */
 .section-nav {
-  position: sticky; top: 62px; z-index: 40;
+  position: sticky; top: 63px; z-index: 40;
   background: rgba(255,255,255,0.95);
   backdrop-filter: saturate(1.2) blur(10px);
   border-bottom: 1px solid var(--rule-soft);
@@ -1508,7 +1508,7 @@ section.block {
   font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.16em;
   text-transform: uppercase; color: var(--muted); white-space: nowrap; flex-shrink: 0;
 }
-.section-nav-links { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+.section-nav-links { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
 .section-nav-links::-webkit-scrollbar { display: none; }
 .section-nav-links button {
   background: none; border: none; cursor: pointer; white-space: nowrap;
@@ -1521,7 +1521,11 @@ section.block {
   content: ""; position: absolute; left: 14px; right: 14px; bottom: 2px; height: 2px;
   background: var(--accent); border-radius: 2px;
 }
-@media (max-width: 1024px) { .section-nav-label { display: none; } }
+@media (max-width: 1024px) {
+  .section-nav-label { display: none; }
+  /* 44px min tap targets for touch (spec) */
+  .section-nav-links button { min-height: 44px; display: inline-flex; align-items: center; padding-top: 0; padding-bottom: 0; }
+}
 
 /* clearer primary-nav active state */
 .nav a.active { color: var(--accent); background: transparent; }
@@ -1788,6 +1792,32 @@ mark { background: rgba(224,32,32,0.14); color: inherit; border-radius: 3px; pad
   .facility.pcard { min-height: 200px; }
 }
 
+/* ── Exams page: condensed corporate sections ─────────────────────────────
+   "Our testing services" as a compact 4-up grid (title + summary + inline
+   feature line) instead of 8 tall bullet cards; tighter "Rapid deployment"
+   list and shorter "Facility" photo tiles. Keeps all copy, cuts page height. */
+.svc-compact { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.svc-c { position: relative; background: #fff; border: 1px solid var(--rule-soft);
+  border-radius: 12px; padding: 18px 18px 16px; transition: border-color .2s, box-shadow .2s; }
+.svc-c:hover { border-color: var(--accent); box-shadow: 0 16px 34px -28px rgba(0,0,0,0.35); }
+.svc-c.featured { border-color: rgba(224,32,32,0.4);
+  background: linear-gradient(180deg, #FFF6F5 0%, #fff 100%); }
+.svc-c .svc-badge { position: static; display: inline-block; top: auto; right: auto; margin: 0 0 9px; }
+.svc-c h3 { font-family: var(--font-serif); font-weight: 460; font-size: 18px;
+  letter-spacing: -0.015em; margin: 0 0 6px; padding-right: 0; }
+.svc-c p { color: var(--text-dim); font-size: 13px; line-height: 1.5; margin: 0 0 9px; }
+.svc-c-pts { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.02em;
+  line-height: 1.55; color: var(--muted); text-transform: uppercase; }
+@media (max-width: 1024px) { .svc-compact { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 720px)  { .svc-compact { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 460px)  { .svc-compact { grid-template-columns: 1fr; } }
+
+.popup-list { grid-template-columns: 1fr 1fr; gap: 11px 22px; }
+@media (max-width: 560px) { .popup-list { grid-template-columns: 1fr; } }
+
+.facility.pcard { min-height: 172px; }
+@media (max-width: 560px) { .facility.pcard { min-height: 150px; } }
+
 /* ── Home overview cards ─────────────────────── */
 .overview-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .overview-card {
@@ -1868,5 +1898,5 @@ body:has(.mobile-menu.open) .fab { display: none; }
 <script defer src="vendor/ScrollTrigger.min.js"></script>
 <script defer src="vendor/Flip.min.js"></script>
 <script defer src="config.js"></script>
-<script defer src="app.js?v=20260713-cobe2"></script>
+<script defer src="app.js?v=20260713-examnav3"></script>
 </body></html>

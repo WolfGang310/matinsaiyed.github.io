@@ -4366,6 +4366,127 @@ const FACILITY = [{
   t: 'Certified Proctors',
   d: 'Trained supervisors experienced in both standard and special-accommodation testing requirements.'
 }];
+const TC_NAV = [{
+  id: 'exams',
+  label: 'Exams'
+}, {
+  id: 'booking',
+  label: 'Booking'
+}, {
+  id: 'availability',
+  label: 'Sessions'
+}, {
+  id: 'checklist',
+  label: 'Exam day'
+}, {
+  id: 'centre',
+  label: 'Centre'
+}, {
+  id: 'solutions',
+  label: 'Corporate'
+}, {
+  id: 'cta',
+  label: 'Contact'
+}];
+function TestCenterSubNav() {
+  const [active, setActive] = React.useState(TC_NAV[0].id);
+  const activeRef = React.useRef(TC_NAV[0].id);
+  React.useEffect(() => {
+    const ids = TC_NAV.map(n => n.id);
+    const getEls = () => ids.map(id => document.getElementById(id)).filter(Boolean);
+    let els = getEls();
+    const LINE = 150; // just below the sticky header + sub-nav
+    let raf = 0;
+    const recompute = () => {
+      raf = 0;
+      if (!els.length) return;
+      let best = els[0].id;
+      let bestTop = -Infinity;
+      let passed = false;
+      els.forEach(el => {
+        const top = el.getBoundingClientRect().top;
+        // active = the last section whose top has scrolled above the trip line
+        if (top <= LINE && top > bestTop) {
+          bestTop = top;
+          best = el.id;
+          passed = true;
+        }
+      });
+      if (!passed) best = els[0].id;
+      if (best !== activeRef.current) {
+        activeRef.current = best;
+        setActive(best);
+      }
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(recompute);
+    };
+    let io = null;
+    if ('IntersectionObserver' in window) {
+      io = new IntersectionObserver(onScroll, {
+        rootMargin: '-120px 0px 0px 0px',
+        threshold: [0, 0.15, 0.4, 0.75, 1]
+      });
+      els.forEach(el => io.observe(el));
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    recompute();
+    const t = setTimeout(() => {
+      els = getEls();
+      if (io) els.forEach(el => io.observe(el));
+      recompute();
+    }, 500);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      if (io) io.disconnect();
+      cancelAnimationFrame(raf);
+      clearTimeout(t);
+    };
+  }, []);
+  const jump = id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const start = window.pageYOffset || document.documentElement.scrollTop || 0;
+    const target = Math.max(0, el.getBoundingClientRect().top + start - 120);
+    try {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (_) {
+      window.scrollTo(0, target);
+    }
+    // Safety net for engines that ignore the object/smooth form of scroll:
+    // if nothing moved shortly after, jump to the computed offset instantly.
+    setTimeout(() => {
+      const now = window.pageYOffset || document.documentElement.scrollTop || 0;
+      if (Math.abs(now - start) < 4 && Math.abs(target - start) > 8) {
+        window.scrollTo(0, target);
+      }
+    }, 80);
+  };
+  return React.createElement("nav", {
+    className: "section-nav",
+    "aria-label": "On this page"
+  }, React.createElement("div", {
+    className: "container"
+  }, React.createElement("div", {
+    className: "section-nav-inner"
+  }, React.createElement("span", {
+    className: "section-nav-label"
+  }, "On this page"), React.createElement("div", {
+    className: "section-nav-links"
+  }, TC_NAV.map(n => React.createElement("button", {
+    key: n.id,
+    className: active === n.id ? "active" : "",
+    "aria-current": active === n.id ? "true" : undefined,
+    onClick: () => {
+      activeRef.current = n.id;
+      setActive(n.id);
+      jump(n.id);
+    }
+  }, n.label))))));
+}
+
 function TestCenterPage({
   go,
   openReserve,
@@ -4395,7 +4516,7 @@ function TestCenterPage({
   const visible = filter === 'all' ? EXAMS : EXAMS.filter(e => tagOf(e.code) === filter);
   return React.createElement("main", {
     className: "page"
-  }, React.createElement("section", {
+  }, React.createElement(TestCenterSubNav, null), React.createElement("section", {
     className: "hero",
     style: {
       paddingBottom: 40
@@ -4458,6 +4579,90 @@ function TestCenterPage({
       transitionDelay: '240ms'
     }
   }, React.createElement(PartnerBar, null)))), React.createElement("section", {
+    id: "exams",
+    className: "block",
+    style: {
+      paddingTop: 0
+    }
+  }, React.createElement("div", {
+    className: "container"
+  }, React.createElement("div", {
+    className: "section-head"
+  }, React.createElement("div", null, React.createElement("div", {
+    className: "eyebrow reveal"
+  }, "Exams we host"), React.createElement("h2", {
+    className: "serif reveal",
+    style: {
+      transitionDelay: '60ms'
+    }
+  }, "Every major exam, one clear path.")), React.createElement("div", {
+    className: "chips",
+    style: {
+      display: 'flex',
+      gap: 8,
+      flexWrap: 'wrap',
+      justifySelf: 'end',
+      alignItems: 'center'
+    }
+  }, filters.map(f => React.createElement("button", {
+    key: f.id,
+    onClick: () => setFilter(f.id),
+    style: {
+      fontFamily: 'var(--font-mono)',
+      fontSize: 11,
+      letterSpacing: '0.12em',
+      textTransform: 'uppercase',
+      padding: '8px 14px',
+      borderRadius: 999,
+      background: filter === f.id ? 'var(--accent)' : 'transparent',
+      color: filter === f.id ? 'var(--accent-ink)' : 'var(--text-dim)',
+      border: '1px solid ' + (filter === f.id ? 'var(--accent)' : 'var(--rule)'),
+      cursor: 'pointer',
+      transition: 'all .2s'
+    }
+  }, f.label)))), React.createElement("div", {
+    className: "exams"
+  }, visible.map(ex => {
+    const detailRoute = ex.code.startsWith('CELPIP') ? 'exam-celpip' : ex.code.startsWith('CFA') ? 'exam-cfa' : 'exam-lsat';
+    return React.createElement("div", {
+      key: ex.code,
+      className: `exam ${ex.featured ? 'featured' : ''}`,
+      role: "button",
+      tabIndex: 0,
+      "aria-label": `${ex.name} — book on ${ex.org}`,
+      onClick: () => openReserve(ex),
+      onKeyDown: e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          openReserve(ex);
+        }
+      }
+    }, React.createElement("div", {
+      className: "code"
+    }, ex.code), React.createElement("h4", {
+      className: "serif"
+    }, ex.name), React.createElement("div", {
+      className: "org"
+    }, ex.org), React.createElement("ul", null, React.createElement("li", null, "Fee ", React.createElement("span", null, ex.fee)), React.createElement("li", null, "Duration ", React.createElement("span", null, ex.duration)), React.createElement("li", null, "Availability ", React.createElement("span", null, ex.seats)), React.createElement("li", null, "Center ", React.createElement("span", null, ex.preferredCenter))), React.createElement("div", {
+      className: "exam-actions"
+    }, React.createElement("button", {
+      className: "exam-detail-link",
+      onClick: e => {
+        e.stopPropagation();
+        go(detailRoute);
+      }
+    }, "Exam guide \u2192"), React.createElement("div", {
+      onClick: e => e.stopPropagation()
+    }, React.createElement(PlanToggle, {
+      code: ex.code,
+      label: "Save"
+    }))), React.createElement("div", {
+      className: "reserve"
+    }, "Book on ", ex.org, " ", React.createElement("span", {
+      className: "arrow"
+    })));
+  })))), React.createElement("section", {
+    id: "booking",
     className: "block",
     style: {
       paddingTop: 40,
@@ -4544,89 +4749,8 @@ function TestCenterPage({
     suffix: "+"
   })), React.createElement("div", {
     className: "l"
-  }, "Years experience"))))), React.createElement("section", {
-    className: "block",
-    style: {
-      paddingTop: 0
-    }
-  }, React.createElement("div", {
-    className: "container"
-  }, React.createElement("div", {
-    className: "section-head"
-  }, React.createElement("div", null, React.createElement("div", {
-    className: "eyebrow reveal"
-  }, "Exams we host"), React.createElement("h2", {
-    className: "serif reveal",
-    style: {
-      transitionDelay: '60ms'
-    }
-  }, "Every major exam, one clear path.")), React.createElement("div", {
-    className: "chips",
-    style: {
-      display: 'flex',
-      gap: 8,
-      flexWrap: 'wrap',
-      justifySelf: 'end',
-      alignItems: 'center'
-    }
-  }, filters.map(f => React.createElement("button", {
-    key: f.id,
-    onClick: () => setFilter(f.id),
-    style: {
-      fontFamily: 'var(--font-mono)',
-      fontSize: 11,
-      letterSpacing: '0.12em',
-      textTransform: 'uppercase',
-      padding: '8px 14px',
-      borderRadius: 999,
-      background: filter === f.id ? 'var(--accent)' : 'transparent',
-      color: filter === f.id ? 'var(--accent-ink)' : 'var(--text-dim)',
-      border: '1px solid ' + (filter === f.id ? 'var(--accent)' : 'var(--rule)'),
-      cursor: 'pointer',
-      transition: 'all .2s'
-    }
-  }, f.label)))), React.createElement("div", {
-    className: "exams"
-  }, visible.map(ex => {
-    const detailRoute = ex.code.startsWith('CELPIP') ? 'exam-celpip' : ex.code.startsWith('CFA') ? 'exam-cfa' : 'exam-lsat';
-    return React.createElement("div", {
-      key: ex.code,
-      className: `exam ${ex.featured ? 'featured' : ''}`,
-      role: "button",
-      tabIndex: 0,
-      "aria-label": `${ex.name} — book on ${ex.org}`,
-      onClick: () => openReserve(ex),
-      onKeyDown: e => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          openReserve(ex);
-        }
-      }
-    }, React.createElement("div", {
-      className: "code"
-    }, ex.code), React.createElement("h4", {
-      className: "serif"
-    }, ex.name), React.createElement("div", {
-      className: "org"
-    }, ex.org), React.createElement("ul", null, React.createElement("li", null, "Fee ", React.createElement("span", null, ex.fee)), React.createElement("li", null, "Duration ", React.createElement("span", null, ex.duration)), React.createElement("li", null, "Availability ", React.createElement("span", null, ex.seats)), React.createElement("li", null, "Center ", React.createElement("span", null, ex.preferredCenter))), React.createElement("div", {
-      className: "exam-actions"
-    }, React.createElement("button", {
-      className: "exam-detail-link",
-      onClick: e => {
-        e.stopPropagation();
-        go(detailRoute);
-      }
-    }, "Exam guide \u2192"), React.createElement("div", {
-      onClick: e => e.stopPropagation()
-    }, React.createElement(PlanToggle, {
-      code: ex.code,
-      label: "Save"
-    }))), React.createElement("div", {
-      className: "reserve"
-    }, "Book on ", ex.org, " ", React.createElement("span", {
-      className: "arrow"
-    })));
-  })))), React.createElement("section", {
+  }, "Years experience"))))), React.createElement(AvailabilitySection, null), React.createElement(ExamDayChecklist, null), React.createElement("section", {
+    id: "centre",
     className: "block",
     style: {
       background: 'var(--surface)'
@@ -4670,6 +4794,7 @@ function TestCenterPage({
   }, a.name), React.createElement("div", {
     className: "accred-kind"
   }, a.kind))))))), React.createElement("section", {
+    id: "solutions",
     className: "block popup-band"
   }, React.createElement("div", {
     className: "container"
@@ -4698,7 +4823,7 @@ function TestCenterPage({
       lineHeight: 1.6,
       marginBottom: 24
     }
-  }, "We have the infrastructure, staff, and expertise to set up large-capacity temporary testing facilities anywhere in North America \u2014 often within 48 to 72 hours. Whether you need 50 seats or 500, we deliver a fully equipped, professionally managed exam environment at your chosen location."), React.createElement("ul", {
+  }, "Infrastructure, staff, and expertise to stand up a large-capacity testing facility anywhere in North America \u2014 often within 48\u201372 hours, from 50 seats to 500+."), React.createElement("ul", {
     className: "popup-list"
   }, React.createElement("li", null, "Rapid deployment within 48\u201372 hours of confirmed booking"), React.createElement("li", null, "Scalable capacity from 50 to 500+ concurrent test-takers"), React.createElement("li", null, "Full proctor team, technical staff, and security personnel"), React.createElement("li", null, "Computer-based, paper-based, or hybrid testing formats"), React.createElement("li", null, "Ideal for government licensing, corporate & university exams"), React.createElement("li", null, "Nationwide coverage across Canada and the United States")), React.createElement("div", {
     style: {
@@ -4754,9 +4879,9 @@ function TestCenterPage({
       transitionDelay: '120ms'
     }
   }, "A complete suite of exam delivery and management services for organizations of every size.")), React.createElement("div", {
-    className: "svc-grid"
+    className: "svc-compact"
   }, SERVICES.map((s, i) => React.createElement("div", {
-    className: `svc reveal ${s.featured ? 'featured' : ''}`,
+    className: `svc-c reveal ${s.featured ? 'featured' : ''}`,
     key: s.t,
     style: {
       transitionDelay: i % 3 * 70 + 'ms'
@@ -4765,9 +4890,9 @@ function TestCenterPage({
     className: "svc-badge"
   }, "Featured service"), React.createElement("h3", {
     className: "serif"
-  }, s.t), React.createElement("p", null, s.d), React.createElement("ul", null, s.pts.map(p => React.createElement("li", {
-    key: p
-  }, p)))))))), React.createElement(AvailabilitySection, null), React.createElement(ExamDayChecklist, null), React.createElement("section", {
+  }, s.t), React.createElement("p", null, s.d), React.createElement("div", {
+    className: "svc-c-pts"
+  }, s.pts.join(' \u00B7 '))))))), React.createElement("section", {
     className: "block",
     style: {
       background: 'var(--surface)'
@@ -4809,6 +4934,7 @@ function TestCenterPage({
   }, React.createElement("h3", {
     className: "serif"
   }, f.t), React.createElement("p", null, f.d))))))), React.createElement("section", {
+    id: "cta",
     className: "cta-band"
   }, React.createElement("div", {
     className: "container"
