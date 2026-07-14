@@ -1556,15 +1556,18 @@ function ExamDayChecklist() {
     size: 14
   })), React.createElement("div", null, React.createElement("h4", null, c.t), React.createElement("p", null, c.d)))))));
 }
+/* Captions follow the photos, not the slot names: each image lives in the grid
+   cell whose aspect ratio fits it (see .gphoto rules in index.html), so g1 is
+   the portrait check-in shot and g3 is the wide testing-room shot. */
 const GALLERY = [{
   cls: 'g1',
-  cap: 'Testing room · North York'
+  cap: 'Check-in desk · North York'
 }, {
   cls: 'g2',
-  cap: 'Check-in desk'
+  cap: 'Workstation'
 }, {
   cls: 'g3',
-  cap: 'Workstation'
+  cap: 'Testing room · North York'
 }, {
   cls: 'g4',
   cap: 'Quiet floor · Mississauga'
