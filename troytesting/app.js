@@ -429,12 +429,17 @@ function ReserveModal({
     onClick: close
   }, "Close (Esc)")));
 }
+/* `fam` groups an exam for the finder's type filter; `centres` is the real list
+   of centres that deliver it, so "Where?" can actually rule an exam out (only
+   North York runs the LSAT). Both were previously implied by string-sniffing
+   the code inside the wizard — they are data, so they live on the data. */
 const EXAMS = [{
   code: 'CELPIP-G',
   name: 'CELPIP General',
   org: 'Paragon Testing',
   url: 'https://www.celpip.ca/take-celpip/register-for-celpip/',
-  featured: true,
+  fam: 'CELPIP',
+  centres: ['North York', 'Mississauga'],
   centreUrls: {
     'North York': 'https://www.celpip.ca/centre/troy-testing-learning-centers-toronto/',
     'Mississauga': 'https://www.celpip.ca/centre/troy-testing-learning-centers-mississauga/'
@@ -448,7 +453,8 @@ const EXAMS = [{
   name: 'CELPIP General LS',
   org: 'Paragon Testing',
   url: 'https://www.celpip.ca/take-celpip/register-for-celpip/',
-  featured: true,
+  fam: 'CELPIP',
+  centres: ['North York', 'Mississauga'],
   centreUrls: {
     'North York': 'https://www.celpip.ca/centre/troy-testing-learning-centers-toronto/',
     'Mississauga': 'https://www.celpip.ca/centre/troy-testing-learning-centers-mississauga/'
@@ -462,7 +468,8 @@ const EXAMS = [{
   name: 'CFA Level I',
   org: 'CFA Institute',
   url: 'https://www.cfainstitute.org/programs/cfa-program',
-  featured: true,
+  fam: 'CFA',
+  centres: ['North York', 'Mississauga'],
   fee: 'from US$ 940',
   duration: '4h 30m',
   seats: 'Feb / May / Aug / Nov',
@@ -472,7 +479,8 @@ const EXAMS = [{
   name: 'CFA Level II',
   org: 'CFA Institute',
   url: 'https://www.cfainstitute.org/programs/cfa-program',
-  featured: true,
+  fam: 'CFA',
+  centres: ['North York', 'Mississauga'],
   fee: 'from US$ 940',
   duration: '4h 30m',
   seats: 'May / Aug / Nov',
@@ -482,7 +490,8 @@ const EXAMS = [{
   name: 'CFA Level III',
   org: 'CFA Institute',
   url: 'https://www.cfainstitute.org/programs/cfa-program',
-  featured: true,
+  fam: 'CFA',
+  centres: ['North York', 'Mississauga'],
   fee: 'from US$ 940',
   duration: '4h 30m',
   seats: 'Feb / Aug',
@@ -492,12 +501,19 @@ const EXAMS = [{
   name: 'LSAT',
   org: 'LSAC',
   url: 'https://www.lsac.org/lsat/register-lsat',
-  featured: true,
+  fam: 'LSAT',
+  centres: ['North York'],
   fee: 'US$ 238',
   duration: '3 hrs',
   seats: 'Multiple / year',
   preferredCenter: 'North York'
 }];
+/** Which family/centre an exam belongs to — the finder's only source of truth. */
+const EXAM_FAMS = [{ id: 'CELPIP', label: 'CELPIP', note: 'English proficiency' },
+                   { id: 'CFA', label: 'CFA', note: 'Finance designation' },
+                   { id: 'LSAT', label: 'LSAT', note: 'Law school admissions' }];
+const EXAM_CENTRES = ['North York', 'Mississauga'];
+const examDetailRoute = code => code.startsWith('CELPIP') ? 'exam-celpip' : code.startsWith('CFA') ? 'exam-cfa' : 'exam-lsat';
 Object.assign(window, {
   Header,
   Footer,
@@ -1134,135 +1150,10 @@ function AvailabilitySection() {
     className: "faq-empty"
   }, "No sessions match. Try a different filter."))));
 }
-function ExamWizard({
-  open,
-  close
-}) {
-  const trapRef = useFocusTrap(open, close);
-  const [step, setStep] = useF(0);
-  const [fam, setFam] = useF(null);
-  const [code, setCode] = useF(null);
-  const [centre, setCentre] = useF(null);
-  useFE(() => {
-    if (open) {
-      setStep(0);
-      setFam(null);
-      setCode(null);
-      setCentre(null);
-    }
-  }, [open]);
-  if (!open) return null;
-  const celpip = EXAMS.filter(e => e.code.startsWith('CELPIP'));
-  const cfa = EXAMS.filter(e => e.code.startsWith('CFA'));
-  const lsat = EXAMS.filter(e => e.code === 'LSAT');
-  const famExams = fam === 'CELPIP' ? celpip : fam === 'CFA' ? cfa : lsat;
-  const exam = EXAMS.find(e => e.code === code);
-  const centres = fam === 'CFA' ? ['North York', 'Mississauga'] : fam === 'LSAT' ? ['North York'] : ['North York', 'Mississauga'];
-  const stepTitles = ['Which exam?', 'Which level?', 'Which centre?', "You're set"];
-  return React.createElement("div", {
-    className: "modal-bg",
-    onClick: close
-  }, React.createElement("div", {
-    className: "modal wizard",
-    role: "dialog",
-    "aria-modal": "true",
-    "aria-label": "Find your exam",
-    ref: trapRef,
-    tabIndex: -1,
-    onClick: e => e.stopPropagation()
-  }, React.createElement("div", {
-    className: "wiz-top"
-  }, React.createElement("div", {
-    className: "eyebrow",
-    style: {
-      color: 'var(--accent)'
-    }
-  }, "Find your exam \xB7 Step ", Math.min(step + 1, 4), " of 4"), React.createElement("div", {
-    className: "wiz-dots"
-  }, [0, 1, 2, 3].map(i => React.createElement("span", {
-    key: i,
-    className: i <= step ? 'on' : ''
-  })))), React.createElement("h3", null, stepTitles[step]), step === 0 && React.createElement("div", {
-    className: "wiz-grid wiz-grid-3"
-  }, [['CELPIP', 'English language test', 'Paragon Testing'], ['CFA', 'Finance designation', 'Prometric · CFA Institute'], ['LSAT', 'Law school admissions', 'LSAC']].map(([f, d, p]) => React.createElement("button", {
-    className: "wiz-card",
-    key: f,
-    onClick: () => {
-      setFam(f);
-      setStep(1);
-    }
-  }, React.createElement("span", {
-    className: "wiz-card-t"
-  }, f), React.createElement("span", {
-    className: "wiz-card-d"
-  }, d), React.createElement("span", {
-    className: "wiz-card-p"
-  }, p)))), step === 1 && React.createElement("div", {
-    className: "wiz-list"
-  }, famExams.map(e => React.createElement("button", {
-    className: "wiz-opt",
-    key: e.code,
-    onClick: () => {
-      setCode(e.code);
-      setStep(2);
-    }
-  }, React.createElement("span", null, e.name), React.createElement("span", {
-    className: "arrow"
-  })))), step === 2 && React.createElement("div", {
-    className: "wiz-list"
-  }, centres.map(c => React.createElement("button", {
-    className: "wiz-opt",
-    key: c,
-    onClick: () => {
-      setCentre(c);
-      setStep(3);
-    }
-  }, React.createElement("span", null, c), React.createElement("span", {
-    className: "arrow"
-  })))), step === 3 && exam && React.createElement("div", {
-    className: "wiz-result"
-  }, React.createElement("div", {
-    className: "wiz-summary"
-  }, React.createElement("div", null, React.createElement("span", {
-    className: "ws-k"
-  }, "Exam"), React.createElement("span", {
-    className: "ws-v"
-  }, exam.name)), React.createElement("div", null, React.createElement("span", {
-    className: "ws-k"
-  }, "Centre"), React.createElement("span", {
-    className: "ws-v"
-  }, centre)), React.createElement("div", null, React.createElement("span", {
-    className: "ws-k"
-  }, "Provider"), React.createElement("span", {
-    className: "ws-v"
-  }, exam.org)), React.createElement("div", null, React.createElement("span", {
-    className: "ws-k"
-  }, "Fee"), React.createElement("span", {
-    className: "ws-v"
-  }, exam.fee))), React.createElement("p", {
-    className: "wiz-note"
-  }, "Book on the ", React.createElement("strong", null, exam.org), " portal and select Troy Testing \u2014 ", centre, " as your delivery location. Bring valid photo ID on the day."), React.createElement("div", {
-    className: "modal-actions"
-  }, React.createElement("a", {
-    className: "btn",
-    href: exam.centreUrls && exam.centreUrls[centre] || exam.url,
-    target: "_blank",
-    rel: "noopener"
-  }, "Continue to ", exam.org, " ", React.createElement("span", {
-    className: "arrow"
-  })), React.createElement("button", {
-    className: "btn ghost",
-    onClick: () => setStep(0)
-  }, "Start over"))), React.createElement("div", {
-    className: "wiz-foot"
-  }, step > 0 ? React.createElement("button", {
-    className: "wiz-back",
-    onClick: () => setStep(step - 1)
-  }, "\u2190 Back") : React.createElement("span", null), React.createElement("button", {
-    className: "modal-close-x",
-    onClick: close
-  }, "Close (Esc)"))));
-}
+/* ExamWizard (the 4-step "Find your exam" modal) was removed: it duplicated the
+   exam list in a popup that shared no state with the page behind it. Its job is
+   now done inline by the finder on the Exams page (#exam-finder). The .wiz-*
+   CSS stays — DiagnosticQuiz reuses it. */
 function nextCfaDate() {
   const windows = ['2026-02-16', '2026-05-20', '2026-08-18', '2026-11-17', '2027-02-15'];
   const now = Date.now();
@@ -1799,7 +1690,6 @@ Object.assign(window, {
   LangToggle,
   GoogleBadge,
   Stars,
-  ExamWizard,
   Countdown,
   SeatAlert,
   DiagnosticQuiz,
@@ -4507,27 +4397,39 @@ function TestCenterPage({
   openWizard,
   openQuiz
 }) {
-  const [filter, setFilter] = useStateT('all');
-  const filters = [{
-    id: 'all',
-    label: 'All exams'
-  }, {
-    id: 'lang',
-    label: 'CELPIP'
-  }, {
-    id: 'finance',
-    label: 'CFA'
-  }, {
-    id: 'law',
-    label: 'LSAT'
-  }];
-  const tagOf = code => {
-    if (code.startsWith('CELPIP')) return 'lang';
-    if (code.startsWith('CFA')) return 'finance';
-    if (code === 'LSAT') return 'law';
-    return 'other';
+  /* ── Exam finder state ──────────────────────────────────────────────
+     Two independent filters (type + centre) and one expanded card. The old
+     4-step wizard modal did the same job in a popup that nothing else could
+     see; this is the one place to find an exam.                          */
+  const [fam, setFam] = useStateT('all');
+  const [centre, setCentre] = useStateT('any');
+  const [openCode, setOpenCode] = useStateT(null);
+
+  const matches = e => (fam === 'all' || e.fam === fam) && (centre === 'any' || e.centres.indexOf(centre) !== -1);
+  const visible = EXAMS.filter(matches);
+  const isFiltered = fam !== 'all' || centre !== 'any';
+  const reset = () => {
+    setFam('all');
+    setCentre('any');
   };
-  const visible = filter === 'all' ? EXAMS : EXAMS.filter(e => tagOf(e.code) === filter);
+  // Counts are computed against the OTHER filter, so a chip's number tells you
+  // what you'd actually get if you clicked it — not a stale total.
+  const famCount = id => EXAMS.filter(e => (id === 'all' || e.fam === id) && (centre === 'any' || e.centres.indexOf(centre) !== -1)).length;
+  const centreCount = c => EXAMS.filter(e => (fam === 'all' || e.fam === fam) && (c === 'any' || e.centres.indexOf(c) !== -1)).length;
+  const toggleCard = code => setOpenCode(cur => cur === code ? null : code);
+
+  const chip = (active, label, count, onClick, key, disabled) => React.createElement("button", {
+    key: key,
+    type: "button",
+    className: 'fchip' + (active ? ' on' : ''),
+    "aria-pressed": active,
+    disabled: !!disabled,
+    onClick: onClick
+  }, label, React.createElement("span", {
+    className: "fchip-n",
+    "aria-hidden": "true"
+  }, count));
+
   return React.createElement("main", {
     className: "page"
   }, React.createElement(TestCenterSubNav, null), React.createElement("section", {
@@ -4609,72 +4511,105 @@ function TestCenterPage({
     style: {
       transitionDelay: '60ms'
     }
-  }, "Every major exam, one clear path.")), React.createElement("div", {
-    className: "chips",
-    style: {
-      display: 'flex',
-      gap: 8,
-      flexWrap: 'wrap',
-      justifySelf: 'end',
-      alignItems: 'center'
-    }
-  }, filters.map(f => React.createElement("button", {
-    key: f.id,
-    onClick: () => setFilter(f.id),
-    style: {
-      fontFamily: 'var(--font-mono)',
-      fontSize: 11,
-      letterSpacing: '0.12em',
-      textTransform: 'uppercase',
-      padding: '8px 14px',
-      borderRadius: 999,
-      background: filter === f.id ? 'var(--accent)' : 'transparent',
-      color: filter === f.id ? 'var(--accent-ink)' : 'var(--text-dim)',
-      border: '1px solid ' + (filter === f.id ? 'var(--accent)' : 'var(--rule)'),
-      cursor: 'pointer',
-      transition: 'all .2s'
-    }
-  }, f.label)))), React.createElement("div", {
+  }, "Every major exam, one clear path."))),
+
+  /* ── The finder ─────────────────────────────────────────────────────────
+     One inline finder replaces the old 4-step wizard modal. Two independent
+     filters; each chip carries the count you would actually get if you
+     clicked it (computed against the OTHER filter, so it is never stale), and
+     a chip that would yield nothing is disabled rather than leading to a dead
+     end. The count is aria-live so screen readers hear the list change.    */
+  React.createElement("div", {
+    className: "finder reveal",
+    id: "exam-finder"
+  }, React.createElement("div", {
+    className: "finder-row"
+  }, React.createElement("span", {
+    className: "finder-lbl",
+    id: "f-type"
+  }, "What are you taking?"), React.createElement("div", {
+    className: "finder-chips",
+    role: "group",
+    "aria-labelledby": "f-type"
+  }, chip(fam === 'all', 'All exams', famCount('all'), () => setFam('all'), 'all'), EXAM_FAMS.map(f => chip(fam === f.id, f.label, famCount(f.id), () => setFam(f.id), f.id, famCount(f.id) === 0)))), React.createElement("div", {
+    className: "finder-row"
+  }, React.createElement("span", {
+    className: "finder-lbl",
+    id: "f-centre"
+  }, "Where?"), React.createElement("div", {
+    className: "finder-chips",
+    role: "group",
+    "aria-labelledby": "f-centre"
+  }, chip(centre === 'any', 'Any centre', centreCount('any'), () => setCentre('any'), 'any'), EXAM_CENTRES.map(c => chip(centre === c, c, centreCount(c), () => setCentre(c), c, centreCount(c) === 0)))), React.createElement("div", {
+    className: "finder-foot"
+  }, React.createElement("span", {
+    className: "finder-count",
+    role: "status",
+    "aria-live": "polite"
+  }, visible.length === 0 ? 'No exams match those filters' : visible.length === EXAMS.length ? `Showing all ${EXAMS.length} exams` : `Showing ${visible.length} of ${EXAMS.length} exams`), isFiltered && React.createElement("button", {
+    type: "button",
+    className: "finder-reset",
+    onClick: reset
+  }, "Reset filters"))), visible.length === 0 ? React.createElement("div", {
+    className: "exams-empty"
+  }, React.createElement("p", null, "We don’t run that exam at that centre — try another combination."), React.createElement("button", {
+    type: "button",
+    className: "btn",
+    onClick: reset
+  }, "Show all exams")) : React.createElement("div", {
     className: "exams"
   }, visible.map(ex => {
-    const detailRoute = ex.code.startsWith('CELPIP') ? 'exam-celpip' : ex.code.startsWith('CFA') ? 'exam-cfa' : 'exam-lsat';
+    const isOpen = openCode === ex.code;
+    const panelId = `exam-panel-${ex.code}`;
     return React.createElement("div", {
       key: ex.code,
-      className: `exam ${ex.featured ? 'featured' : ''}`,
-      role: "button",
-      tabIndex: 0,
-      "aria-label": `${ex.name} — book on ${ex.org}`,
-      onClick: () => openReserve(ex),
-      onKeyDown: e => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          openReserve(ex);
-        }
-      }
-    }, React.createElement("div", {
+      className: `exam${isOpen ? ' open' : ''}`
+    },
+    /* The header is the ONLY click target, and it is a real <button> with
+       aria-expanded/aria-controls. Before, the whole card was role="button"
+       and *contained* two more buttons that had to stopPropagation to avoid
+       firing it — ambiguous to click and a mess for screen readers. */
+    React.createElement("button", {
+      type: "button",
+      className: "exam-head",
+      "aria-expanded": isOpen,
+      "aria-controls": panelId,
+      onClick: () => toggleCard(ex.code)
+    }, React.createElement("span", {
       className: "code"
-    }, ex.code), React.createElement("h4", {
-      className: "serif"
-    }, ex.name), React.createElement("div", {
+    }, ex.code), React.createElement("span", {
+      className: "exam-h-main"
+    }, React.createElement("span", {
+      className: "exam-name serif"
+    }, ex.name), React.createElement("span", {
       className: "org"
-    }, ex.org), React.createElement("ul", null, React.createElement("li", null, "Fee ", React.createElement("span", null, ex.fee)), React.createElement("li", null, "Duration ", React.createElement("span", null, ex.duration)), React.createElement("li", null, "Availability ", React.createElement("span", null, ex.seats)), React.createElement("li", null, "Center ", React.createElement("span", null, ex.preferredCenter))), React.createElement("div", {
-      className: "exam-actions"
+    }, ex.org)), React.createElement("span", {
+      className: "exam-h-meta"
+    }, React.createElement("span", null, ex.fee), React.createElement("span", {
+      className: "dot"
+    }, "·"), React.createElement("span", null, ex.duration)), React.createElement("span", {
+      className: "exam-caret",
+      "aria-hidden": "true"
+    })), React.createElement("div", {
+      id: panelId,
+      className: "exam-panel",
+      hidden: !isOpen
+    }, React.createElement("ul", null, React.createElement("li", null, "Fee ", React.createElement("span", null, ex.fee)), React.createElement("li", null, "Duration ", React.createElement("span", null, ex.duration)), React.createElement("li", null, "Availability ", React.createElement("span", null, ex.seats)), React.createElement("li", null, "Centres ", React.createElement("span", null, ex.centres.join(' · ')))), React.createElement("div", {
+      className: "exam-cta"
     }, React.createElement("button", {
-      className: "exam-detail-link",
-      onClick: e => {
-        e.stopPropagation();
-        go(detailRoute);
-      }
-    }, "Exam guide \u2192"), React.createElement("div", {
-      onClick: e => e.stopPropagation()
-    }, React.createElement(PlanToggle, {
-      code: ex.code,
-      label: "Save"
-    }))), React.createElement("div", {
-      className: "reserve"
+      type: "button",
+      className: "btn exam-book",
+      onClick: () => openReserve(ex)
     }, "Book on ", ex.org, " ", React.createElement("span", {
       className: "arrow"
-    })));
+    })), React.createElement("button", {
+      type: "button",
+      className: "exam-detail-link",
+      onClick: () => go(examDetailRoute(ex.code))
+    }, "Exam guide →"), React.createElement(PlanToggle, {
+      code: ex.code,
+      label: "Save"
+    }))));
   })))), React.createElement(ExamDayChecklist, null), React.createElement("section", {
     id: "centre",
     className: "block",
@@ -5351,7 +5286,6 @@ function hashRoute() {
 function App() {
   const [route, setRoute] = useStateA(() => hashRoute() || 'home');
   const [reserve, setReserve] = useStateA(null);
-  const [wizardOpen, setWizardOpen] = useStateA(false);
   const [quizOpen, setQuizOpen] = useStateA(false);
   const [lang, setLang] = useStateA(() => {
     try {
@@ -5378,12 +5312,26 @@ function App() {
      top of a new page after Back, not the modal owning an entry.           */
   const closeModals = () => {
     setReserve(null);
-    setWizardOpen(false);
     setQuizOpen(false);
   };
   const openReserve = exam => setReserve(exam);
-  const openWizard = () => setWizardOpen(true);
   const openQuiz = () => setQuizOpen(true);
+  /* "Find your exam" used to open a 4-step modal wizard that duplicated the
+     exam list and shared no state with it. It now takes you to the real thing:
+     the inline finder on the Exams page. Kept under the same name so all six
+     existing CTAs (header, mobile menu, hero, home) need no change.
+     The scroll is deferred because go() re-renders the page and jumps to top —
+     #exam-finder does not exist until that render lands. */
+  const openWizard = () => {
+    const scrollToFinder = () => {
+      const el = document.getElementById('exam-finder');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
+    if (route === 'test-center') scrollToFinder();else {
+      go('test-center');
+      setTimeout(scrollToFinder, 260);
+    }
+  };
 
   const go = r => {
     closeModals();
@@ -5511,9 +5459,6 @@ function App() {
     go: go
   }), reserve && React.createElement(ReserveModal, {
     exam: reserve,
-    close: closeModals
-  }), React.createElement(ExamWizard, {
-    open: wizardOpen,
     close: closeModals
   }), React.createElement(DiagnosticQuiz, {
     open: quizOpen,

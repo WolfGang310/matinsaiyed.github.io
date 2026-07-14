@@ -438,77 +438,128 @@ section.block {
 .program .link:hover .arrow { transform: translateX(3px); transition: transform .2s; }
 
 /* ── Exams ─────────────────────── */
-.exams {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+/* ── Exam finder ──────────────────────────────────────────────────────────
+   Replaces the old inline-styled chip row + the 4-step wizard modal. */
+.finder {
+  background: var(--surface); border: 1px solid var(--rule-soft);
+  border-radius: 12px; padding: 18px 20px; margin-bottom: 22px;
+  display: flex; flex-direction: column; gap: 14px;
 }
+.finder-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.finder-lbl {
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--muted); min-width: 152px;
+}
+.finder-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.fchip {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em;
+  text-transform: uppercase; padding: 8px 14px; border-radius: 999px;
+  background: transparent; color: var(--text-dim); border: 1px solid var(--rule);
+  cursor: pointer; transition: background .2s, color .2s, border-color .2s;
+}
+.fchip:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.fchip.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.fchip-n { font-size: 10px; opacity: 0.6; font-variant-numeric: tabular-nums; }
+.fchip.on .fchip-n { opacity: 0.85; }
+/* A chip that would return nothing is disabled, not a dead end. */
+.fchip:disabled { opacity: 0.32; cursor: not-allowed; }
+.finder-foot {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; padding-top: 12px; border-top: 1px solid var(--rule-soft);
+}
+.finder-count { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+.finder-reset {
+  background: none; border: 0; padding: 0; cursor: pointer;
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--accent);
+}
+.finder-reset:hover { text-decoration: underline; }
+.exams-empty {
+  text-align: center; padding: 48px 20px;
+  border: 1px dashed var(--rule); border-radius: 12px;
+}
+.exams-empty p { color: var(--text-dim); margin-bottom: 16px; }
+
+/* ── Exam list (expand-in-place, was a 4-up grid of modal triggers) ────── */
+.exams { display: flex; flex-direction: column; gap: 10px; }
 .exam {
-  background: var(--surface);
-  border: 1px solid var(--rule-soft);
-  border-radius: 4px;
-  padding: 24px;
-  display: flex; flex-direction: column;
-  min-height: 230px;
-  transition: all .2s;
-  cursor: pointer;
-  position: relative;
+  background: var(--surface); border: 1px solid var(--rule-soft);
+  border-radius: 10px; overflow: hidden;
+  transition: border-color .2s, box-shadow .2s;
 }
-.exam:hover {
-  border-color: var(--accent);
-  transform: translateY(-2px);
-  background: var(--elev);
+.exam:hover { border-color: var(--rule); }
+.exam.open { border-color: var(--accent); box-shadow: 0 6px 24px rgba(0,0,0,0.06); }
+/* The header is the only click target, and it's a real button. */
+.exam-head {
+  width: 100%; display: grid; grid-template-columns: 96px 1fr auto 20px;
+  align-items: center; gap: 16px; padding: 18px 20px;
+  background: none; border: 0; text-align: left; cursor: pointer;
+  font: inherit; color: inherit;
 }
+.exam-head:hover { background: rgba(0,0,0,0.015); }
 .exam .code {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.2em;
-  color: var(--muted);
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--accent);
 }
-.exam h4 {
-  font-family: var(--font-serif);
-  font-weight: 400;
-  font-size: 26px;
-  letter-spacing: -0.02em;
-  margin: 12px 0 4px;
-  line-height: 1.05;
+.exam-h-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.exam-name { font-size: 19px; line-height: 1.25; color: var(--text); }
+.exam .org { font-size: 12px; color: var(--text-dim); }
+.exam-h-meta {
+  display: flex; align-items: center; gap: 8px; white-space: nowrap;
+  font-family: var(--font-mono); font-size: 11px; color: var(--muted);
 }
-.exam .org {
-  font-size: 14px;
-  color: var(--text-dim);
-  margin-bottom: 20px;
+.exam-h-meta .dot { opacity: 0.5; }
+.exam-caret {
+  justify-self: end; width: 9px; height: 9px; margin-top: -4px;
+  border-right: 1.5px solid var(--text-dim); border-bottom: 1.5px solid var(--text-dim);
+  transform: rotate(45deg);
+  transition: transform .28s cubic-bezier(0.16,1,0.3,1), border-color .2s;
 }
-.exam ul {
-  list-style: none; padding: 0; margin: auto 0 20px;
-  font-size: 14px;
-  color: var(--text-dim);
+.exam.open .exam-caret { transform: rotate(-135deg); margin-top: 3px; border-color: var(--accent); }
+
+.exam-panel { padding: 4px 20px 20px; border-top: 1px solid var(--rule-soft); }
+/* The panel uses the `hidden` attribute (so it is out of the tab order and the
+   a11y tree when closed) — that rules out a height transition, so the entrance
+   is a fade/rise instead. No 0-height div that still holds focusable buttons. */
+.exam.open .exam-panel { animation: examOpen .28s cubic-bezier(0.16,1,0.3,1) both; }
+@keyframes examOpen { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+.exam-panel ul {
+  list-style: none; margin: 14px 0 0; padding: 0;
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 28px;
 }
-.exam ul li {
-  padding: 4px 0;
-  border-top: 1px dashed var(--rule-soft);
-  display: flex; justify-content: space-between;
+.exam-panel ul li {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  padding: 9px 0; border-bottom: 1px dashed var(--rule-soft);
+  font-size: 13px; color: var(--text-dim);
 }
-.exam ul li span { color: var(--muted); font-family: var(--font-mono); font-size: 11px; }
-.exam .reserve {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--accent);
-  display: inline-flex; align-items: center; gap: 8px;
+.exam-panel ul li span {
+  color: var(--text); font-family: var(--font-mono); font-size: 11px; text-align: right;
 }
-.exam .reserve .arrow { width: 12px; height: 8px; display: inline-block; position: relative; }
-.exam .reserve .arrow::before {
-  content: ""; position: absolute; inset: 0;
-  background: currentColor;
+.exam-cta { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 18px; }
+.exam-cta .plan-toggle { width: auto; margin: 0; padding: 8px 12px; }
+.exam-book .arrow { width: 12px; height: 8px; display: inline-block; position: relative; }
+.exam-book .arrow::before {
+  content: ""; position: absolute; inset: 0; background: currentColor;
   clip-path: polygon(0 45%, 70% 45%, 70% 25%, 100% 50%, 70% 75%, 70% 55%, 0 55%);
 }
-.exam:hover .reserve .arrow { transform: translateX(3px); transition: .2s; }
-.exam.featured {
-  background: linear-gradient(180deg, #FFF1F1 0%, #FFFFFF 100%);
-  border-color: rgba(224,32,32,0.35);
+@media (prefers-reduced-motion: reduce) {
+  .exam.open .exam-panel { animation: none; }
+  .exam-caret { transition: none; }
 }
-.exam.featured .code { color: var(--accent); }
+@media (max-width: 760px) {
+  .finder { padding: 16px; }
+  .finder-lbl { min-width: 0; width: 100%; }
+  .exam-head { grid-template-columns: 1fr 20px; gap: 6px 12px; padding: 16px; }
+  .exam .code       { grid-column: 1; grid-row: 1; }
+  .exam-h-main      { grid-column: 1; grid-row: 2; }
+  .exam-h-meta      { grid-column: 1; grid-row: 3; margin-top: 4px; }
+  .exam-caret       { grid-column: 2; grid-row: 1 / span 3; align-self: center; margin-top: 0; }
+  .exam.open .exam-caret { margin-top: 0; }
+  .exam-panel ul { grid-template-columns: 1fr; }
+  .exam-cta { gap: 10px; }
+  .exam-cta .btn { width: 100%; justify-content: center; }
+}
 
 /* ── Stats ─────────────────────── */
 .stats-row {
@@ -1595,7 +1646,6 @@ mark { background: rgba(224,32,32,0.14); color: inherit; border-radius: 3px; pad
 .cd-stack { display: grid; gap: 14px; }
 
 /* ── Plan (save/compare) ─────────────────────── */
-.exam-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 8px 0 14px; }
 .exam-detail-link { background: none; border: none; padding: 0; cursor: pointer; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); transition: color .2s; }
 .exam-detail-link:hover { color: var(--accent); }
 .plan-toggle { display: inline-flex; align-items: center; gap: 8px; width: 100%; background: none; border: 1px solid var(--rule); border-radius: 10px; padding: 10px 12px; cursor: pointer; font-size: 13px; color: var(--text-dim); transition: all .2s; margin-bottom: 8px; }
@@ -1603,7 +1653,6 @@ mark { background: rgba(224,32,32,0.14); color: inherit; border-radius: 3px; pad
 .plan-toggle.on { border-color: var(--accent); color: var(--text); background: rgba(224,32,32,0.04); }
 .pt-box { width: 20px; height: 20px; border-radius: 6px; display: grid; place-items: center; background: var(--surface); border: 1px solid var(--rule); font-size: 12px; color: var(--accent); flex-shrink: 0; }
 .plan-toggle.on .pt-box { background: var(--accent); color: #fff; border-color: var(--accent); }
-.exam-actions .plan-toggle { width: auto; margin: 0; padding: 6px 10px; }
 .plan-fab { position: fixed; right: 22px; bottom: 22px; z-index: 60; display: inline-flex; align-items: center; gap: 10px; background: #0A0A0A; color: #fff; border: none; border-radius: 999px; padding: 13px 20px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; box-shadow: 0 16px 32px -14px rgba(0,0,0,0.5); }
 .plan-fab:hover { background: var(--accent); }
 .plan-fab-count { background: var(--accent); color: #fff; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; }
@@ -1850,7 +1899,11 @@ mark { background: rgba(224,32,32,0.14); color: inherit; border-radius: 3px; pad
 .board-clock { color: #9A9AA2; }
 .site-footer .footer-bot { color: #9A9488; }
 /* accent-colored small labels/links on tinted (off-white) surfaces → darker red */
-.exam.featured .code, .exam .reserve, .av-go, .program .link { color: #C81919; }
+/* The exam code is 10px accent text on a tinted surface: --accent (#E02020) is
+   4.39:1 there, under the 4.5:1 WCAG AA floor for small text. #C81919 is 5.35:1.
+   Targets .exam .code directly — this used to hang off .exam.featured, which the
+   card no longer emits, so the rule had gone dead and the codes dropped below AA. */
+.exam .code, .av-go, .program .link { color: #C81919; }
 
 @media (max-width: 560px) {
   /* let the live exam board scroll rather than clip its rows */
@@ -1905,5 +1958,5 @@ body:has(.mobile-menu.open) .fab { display: none; }
 <script defer src="vendor/ScrollTrigger.min.js"></script>
 <script defer src="vendor/Flip.min.js"></script>
 <script defer src="config.js"></script>
-<script defer src="app.js?v=20260714-maps7"></script>
+<script defer src="app.js?v=20260714-finder2"></script>
 </body></html>
