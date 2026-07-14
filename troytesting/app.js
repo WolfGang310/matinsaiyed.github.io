@@ -145,6 +145,13 @@ function Header({
 }) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  // Any route change closes the mobile menu — including one driven by Back /
+  // Forward, which does not go through navTo(). Without this, pressing Back
+  // with the hamburger open navigated the page underneath and left the
+  // full-screen menu overlay stuck on top of it.
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [route]);
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
     onScroll();
@@ -5318,15 +5325,29 @@ const ROUTE_META = {
   'exam-cfa': ['CFA at Troy Testing', 'Sit CFA Levels I–III at Troy Testing’s Prometric-authorized Mississauga centre.'],
   'exam-lsat': ['LSAT at Troy Testing', 'Sit the LSAT at Troy Testing — official LSAC delivery, exam guide and booking.']
 };
+/* ── Routing ────────────────────────────────────────────────────────────
+   The URL hash is the SINGLE SOURCE OF TRUTH for which page is showing.
+
+   Two rules make back/forward work, and both were previously missing:
+
+   1. The empty hash IS a route — it's the landing entry ("/troytesting/").
+      The old handler guarded with `if (h) setRoute(h)`, and '' is falsy, so
+      pressing Back onto the entry you arrived on updated the URL but never
+      the page. That is the "Back does nothing" bug.
+
+   2. A hash that is not in ROUTES is NOT a route — it's an in-page anchor
+      (the "#main" skip-link, etc). Those must leave the current page alone.
+      Previously any unknown hash fell through to HomePage, so activating
+      "Skip to content" silently threw the user back to the home page.       */
+const ROUTES = ['home', 'programs', 'test-center', 'availability', 'reviews', 'centres', 'faq', 'guides', 'corporate', 'contact', 'exam-celpip', 'exam-cfa', 'exam-lsat'];
+/** Resolve the current hash to a route, or null if it's just a scroll target. */
+function hashRoute() {
+  const h = window.location.hash.replace(/^#/, '');
+  if (h === '') return 'home';
+  return ROUTES.indexOf(h) !== -1 ? h : null;
+}
 function App() {
-  const [route, setRoute] = useStateA(() => {
-    let saved = null;
-    try {
-      saved = localStorage.getItem('troy.route');
-    } catch (_) {}
-    const hash = window.location.hash.replace('#', '');
-    return hash || saved || 'home';
-  });
+  const [route, setRoute] = useStateA(() => hashRoute() || 'home');
   const [reserve, setReserve] = useStateA(null);
   const [wizardOpen, setWizardOpen] = useStateA(false);
   const [quizOpen, setQuizOpen] = useStateA(false);
@@ -5337,11 +5358,44 @@ function App() {
       return 'en';
     }
   });
+
+  /* ── Modals are deliberately NOT history entries ─────────────────────
+     Giving each modal its own pushState entry (so Back closes it) is
+     tempting, but it cannot be done safely here:
+       • useFocusTrap binds its own Escape handler on the modal node and does
+         not stopPropagation, so one Escape press runs BOTH that handler and
+         any window-level one — a history-consuming dismiss would fire twice
+         and traverse two entries, kicking the user off the page (or off the
+         site).
+       • history.back() is async: history.state and location still read the
+         old values on the next line, so callers that close-then-navigate
+         (the quiz's "Plan with a tutor" does `close(); go('contact')`) can't
+         see that a traversal is already queued, and land on the wrong page.
+     So: a modal is pure UI state. It is closed on any route change, which is
+     all that's actually required — the old bug was a modal being stranded on
+     top of a new page after Back, not the modal owning an entry.           */
+  const closeModals = () => {
+    setReserve(null);
+    setWizardOpen(false);
+    setQuizOpen(false);
+  };
+  const openReserve = exam => setReserve(exam);
+  const openWizard = () => setWizardOpen(true);
+  const openQuiz = () => setQuizOpen(true);
+
   const go = r => {
+    closeModals();
+    // Re-selecting the page you are already on must NOT push an entry — the
+    // duplicate would make the next Back press a dead no-op. (The header
+    // renders the active nav item as a live link, so this is a normal click.)
+    if (r === route && hashRoute() === r) {
+      window.scrollTo({
+        top: 0,
+        behavior: 'instant'
+      });
+      return;
+    }
     setRoute(r);
-    try {
-      localStorage.setItem('troy.route', r);
-    } catch (_) {}
     if (window.__pageTransition) window.__pageTransition();
     window.history.pushState(null, '', '#' + r);
     window.scrollTo({
@@ -5356,20 +5410,31 @@ function App() {
     } catch (_) {}
   };
   useEffectA(() => {
+    // Idempotent: useFocusTrap also handles Escape on the modal node and does
+    // not stopPropagation, so this can fire for the same keypress. Closing is
+    // safe to run twice; anything touching history would not be.
     const onKey = e => {
-      if (e.key === 'Escape') {
-        setReserve(null);
-        setWizardOpen(false);
-        setQuizOpen(false);
-      }
+      if (e.key === 'Escape') closeModals();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
   useEffectA(() => {
+    // Scroll is ours to manage: React swaps the page asynchronously, so the
+    // browser's own restoration lands at an offset from the outgoing page.
+    try {
+      window.history.scrollRestoration = 'manual';
+    } catch (_) {}
     const onNav = () => {
-      const h = window.location.hash.replace('#', '');
-      if (h) setRoute(h);
+      const r = hashRoute();
+      if (r === null) return; // in-page anchor, not a page change
+      // Never leave a modal stranded on top of the page we just navigated to.
+      closeModals();
+      setRoute(r);
+      window.scrollTo({
+        top: 0,
+        behavior: 'instant'
+      });
     };
     window.addEventListener('hashchange', onNav);
     window.addEventListener('popstate', onNav);
@@ -5402,11 +5467,25 @@ function App() {
     'corporate': CorporatePage,
     'contact': ContactPage
   }[route] || (examMap[route] ? null : HomePage);
-  const openWizard = () => setWizardOpen(true);
-  const openQuiz = () => setQuizOpen(true);
   return React.createElement(React.Fragment, null, React.createElement("a", {
     className: "skip-link",
-    href: "#main"
+    href: "#main",
+    // Move focus without letting "#main" land in the URL. It is not a route,
+    // so it would add a history entry that Back can only answer with a dead,
+    // no-op press — and a reload at #main would resolve to no route at all.
+    onClick: e => {
+      const m = document.getElementById('main');
+      if (!m) return;
+      e.preventDefault();
+      m.setAttribute('tabindex', '-1');
+      m.focus({
+        preventScroll: true
+      });
+      m.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
   }, "Skip to content"), React.createElement(Header, {
     route: route,
     go: go,
@@ -5419,10 +5498,10 @@ function App() {
   }, examMap[route] ? React.createElement(ExamDetailPage, {
     fam: examMap[route],
     go: go,
-    openReserve: setReserve
+    openReserve: openReserve
   }) : React.createElement(Page, {
     go: go,
-    openReserve: setReserve,
+    openReserve: openReserve,
     openWizard: openWizard,
     openQuiz: openQuiz,
     lang: lang
@@ -5430,13 +5509,13 @@ function App() {
     go: go
   }), reserve && React.createElement(ReserveModal, {
     exam: reserve,
-    close: () => setReserve(null)
+    close: closeModals
   }), React.createElement(ExamWizard, {
     open: wizardOpen,
-    close: () => setWizardOpen(false)
+    close: closeModals
   }), React.createElement(DiagnosticQuiz, {
     open: quizOpen,
-    close: () => setQuizOpen(false),
+    close: closeModals,
     go: go
   }), React.createElement(CallFab, null), React.createElement(PlanBar, null));
 }
