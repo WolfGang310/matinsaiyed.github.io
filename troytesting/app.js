@@ -381,54 +381,9 @@ function Footer({
     className: "footer-bot"
   }, React.createElement("div", null, "\xA9 2014 \u2013 2026 Troy Testing & Learning Centers"), React.createElement("div", null, "All rights reserved"))));
 }
-function ReserveModal({
-  exam,
-  close
-}) {
-  const trapRef = useFocusTrap(!!exam, close);
-  if (!exam) return null;
-  const centreUrls = exam.centreUrls || {};
-  const centreKeys = Object.keys(centreUrls);
-  return React.createElement("div", {
-    className: "modal-bg",
-    onClick: close
-  }, React.createElement("div", {
-    className: "modal",
-    role: "dialog",
-    "aria-modal": "true",
-    "aria-labelledby": "reserve-title",
-    ref: trapRef,
-    tabIndex: -1,
-    onClick: e => e.stopPropagation()
-  }, React.createElement("div", {
-    className: "eyebrow"
-  }, "Book on ", exam.org, " \xB7 ", exam.code), React.createElement("h3", {
-    id: "reserve-title"
-  }, exam.name), React.createElement("p", null, "All exam bookings are made directly with the official provider. Click through to", ' ', React.createElement("strong", null, exam.org), "'s portal to pick your date \u2014 we deliver the exam at our", ' ', exam.preferredCenter || 'Toronto or Mississauga', " center. Bring a valid ID on the day."), React.createElement("div", {
-    className: "modal-actions"
-  }, React.createElement("a", {
-    className: "btn",
-    href: exam.url,
-    target: "_blank",
-    rel: "noopener"
-  }, "Go to ", exam.org, " ", React.createElement("span", {
-    className: "arrow"
-  })), centreKeys.map(c => React.createElement("a", {
-    className: "btn ghost",
-    key: c,
-    href: centreUrls[c],
-    target: "_blank",
-    rel: "noopener"
-  }, "Book at ", c, " ", React.createElement("span", {
-    className: "arrow"
-  }))), centreKeys.length === 0 && React.createElement("button", {
-    className: "btn ghost",
-    onClick: close
-  }, "Not now")), React.createElement("button", {
-    className: "close",
-    onClick: close
-  }, "Close (Esc)")));
-}
+/* ReserveModal (the "Book on <provider>" popup) was removed: booking is now a
+   direct "Book at <centre>" link on the exam card and the exam guide, so nothing
+   opened it. You choose a location, not a vendor. */
 /* `fam` groups an exam for the finder's type filter; `centres` is the real list
    of centres that deliver it, so "Where?" can actually rule an exam out (only
    North York runs the LSAT). Both were previously implied by string-sniffing
@@ -502,6 +457,14 @@ const EXAMS = [{
   seats: 'Multiple / year',
   preferredCenter: 'North York'
 }];
+/** Where a "Book at <centre>" button goes.
+ *  CELPIP has real per-centre pages (celpip.ca/centre/troy-testing-…). CFA and
+ *  LSAT have no per-centre URL — registration only ever happens on the awarding
+ *  body's own portal — so both centre buttons resolve to that. The button is
+ *  labelled by CENTRE either way: the visitor picks a location, never a vendor.
+ *  Accepts both shapes: EXAMS entries carry `url`, EXAM_DETAIL entries `book`. */
+const bookAt = (item, centre) => (item.centreUrls && item.centreUrls[centre]) || item.url || item.book;
+
 /** Which family/centre an exam belongs to — the finder's only source of truth.
  *  `logo` is the official partner mark, shown on the finder's brand tiles. */
 const EXAM_FAMS = [{ id: 'CELPIP', label: 'CELPIP', note: 'English proficiency', logo: 'logos/celpip.png', by: 'Paragon Testing' },
@@ -512,7 +475,6 @@ const examDetailRoute = code => code.startsWith('CELPIP') ? 'exam-celpip' : code
 Object.assign(window, {
   Header,
   Footer,
-  ReserveModal,
   EXAMS,
   useReveal,
   Reveal,
@@ -709,7 +671,7 @@ function ExamBoard() {
     className: "pill-dot"
   }), STATUS_LABEL[r.status]))))), React.createElement("div", {
     className: "board-foot"
-  }, React.createElement("span", null, "Toronto \xB7 Mississauga"), React.createElement("span", null, "Book on the provider portal \u2014 we host the seat")));
+  }, React.createElement("span", null, "Toronto \xB7 Mississauga"), React.createElement("span", null, "Book at North York or Mississauga \u2014 we host the seat")));
 }
 function useReveal() {
   useEffect(() => {
@@ -887,7 +849,7 @@ const TR = {
     'hero.eyebrow': 'One of Canada’s best test centre services · CELPIP · CFA · LSAC',
     'hero.h1a': 'Sit your',
     'hero.h1b': 'exam in a room that runs like clockwork.',
-    'hero.sub': "The GTA’s top-rated CELPIP test centre on Google — and an official delivery site for CFA (Prometric) and LSAT (LSAC). You book with the provider; we run the room — quiet, on-time, every session.",
+    'hero.sub': "The GTA’s top-rated CELPIP test centre on Google — and an official delivery site for CFA (Prometric) and LSAT (LSAC). Book at North York or Mississauga; we run the room — quiet, on-time, every session.",
     'm.tests': 'Tests administered every month',
     'm.proctors': 'Certified proctors on staff',
     'm.centres': 'Centres across North America'
@@ -1095,7 +1057,7 @@ function AvailabilitySection() {
     style: {
       transitionDelay: '120ms'
     }
-  }, live ? 'Updated ' + (site.updated || 'recently') + ' — book on the provider portal; seats fill quickly.' : 'Typical availability at each centre — book on the provider portal; seats fill quickly.')), React.createElement("div", {
+  }, live ? 'Updated ' + (site.updated || 'recently') + ' — book at either centre; seats fill quickly.' : 'Typical availability at each centre — book at either centre; seats fill quickly.')), React.createElement("div", {
     className: "avail-filters reveal",
     role: "group",
     "aria-label": "Filter sessions"
@@ -2496,8 +2458,7 @@ const EXAM_DETAIL = {
 };
 function ExamDetailPage({
   fam,
-  go,
-  openReserve
+  go
 }) {
   const d = EXAM_DETAIL[fam];
   if (!d) return null;
@@ -2565,28 +2526,21 @@ function ExamDetailPage({
     className: "ed-fact"
   }, React.createElement("span", null, "Provider"), React.createElement("b", null, d.org)), React.createElement("div", {
     className: "ed-fact"
-  }, React.createElement("span", null, "Centres"), React.createElement("b", null, d.centres.join(' · '))), React.createElement("a", {
-    className: "btn",
-    href: d.book,
-    target: "_blank",
-    rel: "noopener",
-    style: {
-      width: '100%',
-      justifyContent: 'center',
-      marginTop: 16
-    }
-  }, "Register with ", d.name === 'CFA' ? 'CFA Institute' : d.name === 'LSAT' ? 'LSAC' : 'Paragon', " ", React.createElement("span", {
-    className: "arrow"
-  })), d.centreUrls && Object.keys(d.centreUrls).map(c => React.createElement("a", {
-    className: "btn ghost",
+  }, React.createElement("span", null, "Centres"), React.createElement("b", null, d.centres.join(' · '))),
+  /* One "Book at <centre>" per centre that delivers this exam — the provider-
+     branded "Register with …" button is gone. Previously only CELPIP got centre
+     buttons (it is the only family with per-centre pages); the rest now resolve
+     to the awarding body's portal via bookAt(), still labelled by centre. */
+  d.centres.map((c, i) => React.createElement("a", {
+    className: 'btn' + (i === 0 ? '' : ' ghost'),
     key: c,
-    href: d.centreUrls[c],
+    href: bookAt(d, c),
     target: "_blank",
     rel: "noopener",
     style: {
       width: '100%',
       justifyContent: 'center',
-      marginTop: 8
+      marginTop: i === 0 ? 16 : 8
     }
   }, "Book at ", c, " ", React.createElement("span", {
     className: "arrow"
@@ -3695,7 +3649,6 @@ Object.assign(window, {
 });
 function HomePage({
   go,
-  openReserve,
   openWizard,
   openQuiz,
   lang
@@ -3887,12 +3840,12 @@ function HomePage({
     style: {
       transitionDelay: '60ms'
     }
-  }, "Book with the provider. ", React.createElement("em", null, "Pick us"), " as the location."), React.createElement("p", {
+  }, "Book at ", React.createElement("em", null, "North York"), " or Mississauga."), React.createElement("p", {
     className: "reveal",
     style: {
       transitionDelay: '120ms'
     }
-  }, "Reserve with the provider and choose Troy as your location \u2014 Paragon for CELPIP, Prometric for CFA, LSAC for LSAT."), React.createElement("div", {
+  }, "Pick your centre and book your seat \u2014 CELPIP and CFA at both centres, LSAT at North York."), React.createElement("div", {
     className: "actions reveal",
     style: {
       transitionDelay: '180ms'
@@ -4383,7 +4336,6 @@ function TestCenterSubNav() {
 
 function TestCenterPage({
   go,
-  openReserve,
   openWizard,
   openQuiz
 }) {
@@ -4468,7 +4420,7 @@ function TestCenterPage({
       letterSpacing: '-0.03em',
       transitionDelay: '60ms'
     }
-  }, "Book with the provider. ", React.createElement("em", {
+  }, "Pick your centre. ", React.createElement("em", {
     style: {
       fontStyle: 'normal',
       color: 'var(--accent)'
@@ -4662,13 +4614,18 @@ function TestCenterPage({
       className: "estat-v"
     }, v)))), React.createElement("div", {
       className: "exam-cta"
-    }, React.createElement("button", {
-      type: "button",
+    },
+    /* You book a LOCATION, not a vendor. One button per centre that actually
+       delivers this exam — so the LSAT (North York only) shows exactly one. */
+    ex.centres.map(c => React.createElement("a", {
+      key: c,
       className: "btn exam-book",
-      onClick: () => openReserve(ex)
-    }, "Book on ", ex.org, " ", React.createElement("span", {
+      href: bookAt(ex, c),
+      target: "_blank",
+      rel: "noopener"
+    }, "Book at ", c, " ", React.createElement("span", {
       className: "arrow"
-    })), React.createElement("button", {
+    }))), React.createElement("button", {
       type: "button",
       className: "exam-detail-link",
       onClick: () => go(examDetailRoute(ex.code))
@@ -5351,7 +5308,6 @@ function hashRoute() {
 }
 function App() {
   const [route, setRoute] = useStateA(() => hashRoute() || 'home');
-  const [reserve, setReserve] = useStateA(null);
   const [quizOpen, setQuizOpen] = useStateA(false);
   const [lang, setLang] = useStateA(() => {
     try {
@@ -5377,10 +5333,8 @@ function App() {
      all that's actually required — the old bug was a modal being stranded on
      top of a new page after Back, not the modal owning an entry.           */
   const closeModals = () => {
-    setReserve(null);
     setQuizOpen(false);
   };
-  const openReserve = exam => setReserve(exam);
   const openQuiz = () => setQuizOpen(true);
   /* "Find your exam" used to open a 4-step modal wizard that duplicated the
      exam list and shared no state with it. It now takes you to the real thing:
@@ -5514,18 +5468,13 @@ function App() {
   }, examMap[route] ? React.createElement(ExamDetailPage, {
     fam: examMap[route],
     go: go,
-    openReserve: openReserve
   }) : React.createElement(Page, {
     go: go,
-    openReserve: openReserve,
     openWizard: openWizard,
     openQuiz: openQuiz,
     lang: lang
   })), React.createElement(Footer, {
     go: go
-  }), reserve && React.createElement(ReserveModal, {
-    exam: reserve,
-    close: closeModals
   }), React.createElement(DiagnosticQuiz, {
     open: quizOpen,
     close: closeModals,
