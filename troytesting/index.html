@@ -1682,6 +1682,12 @@ mark { background: rgba(224,32,32,0.14); color: inherit; border-radius: 3px; pad
 .prog-badges span { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-dim); border: 1px solid var(--rule); border-radius: 999px; padding: 8px 14px; }
 .prog-accordion { border-top: 1px solid var(--rule-soft); }
 .prog-item { border-bottom: 1px solid var(--rule-soft); }
+/* The programs accordion is React-managed: clicking an item re-renders it and
+   rewrites className, wiping the imperatively-added reveal ".in" class. These
+   items are revealed via the simple .in-only path (no surviving data-st to key
+   on), so after a click they fell back to .reveal{opacity:0} and VANISHED.
+   Force accordion items to stay visible regardless of the reveal class state. */
+.prog-accordion .prog-item.reveal { opacity: 1 !important; transform: none !important; }
 .prog-q { width: 100%; background: transparent; border: none; cursor: pointer; display: flex; align-items: center; gap: 20px; padding: 26px 4px; text-align: left; }
 .prog-num { font-family: var(--font-mono); font-size: 13px; color: var(--accent); letter-spacing: 0.1em; flex-shrink: 0; width: 28px; }
 .prog-head { flex: 1; display: flex; flex-direction: column; gap: 3px; }
