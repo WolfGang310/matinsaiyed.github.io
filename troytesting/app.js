@@ -508,10 +508,11 @@ const EXAMS = [{
   seats: 'Multiple / year',
   preferredCenter: 'North York'
 }];
-/** Which family/centre an exam belongs to — the finder's only source of truth. */
-const EXAM_FAMS = [{ id: 'CELPIP', label: 'CELPIP', note: 'English proficiency' },
-                   { id: 'CFA', label: 'CFA', note: 'Finance designation' },
-                   { id: 'LSAT', label: 'LSAT', note: 'Law school admissions' }];
+/** Which family/centre an exam belongs to — the finder's only source of truth.
+ *  `logo` is the official partner mark, shown on the finder's brand tiles. */
+const EXAM_FAMS = [{ id: 'CELPIP', label: 'CELPIP', note: 'English proficiency', logo: 'logos/celpip.png', by: 'Paragon Testing' },
+                   { id: 'CFA', label: 'CFA', note: 'Finance designation', logo: 'logos/cfa-institute.png', by: 'CFA Institute' },
+                   { id: 'LSAT', label: 'LSAT', note: 'Law school admissions', logo: 'logos/lsac.png', by: 'LSAC' }];
 const EXAM_CENTRES = ['North York', 'Mississauga'];
 const examDetailRoute = code => code.startsWith('CELPIP') ? 'exam-celpip' : code.startsWith('CFA') ? 'exam-cfa' : 'exam-lsat';
 Object.assign(window, {
@@ -4418,17 +4419,44 @@ function TestCenterPage({
   const centreCount = c => EXAMS.filter(e => (fam === 'all' || e.fam === fam) && (c === 'any' || e.centres.indexOf(c) !== -1)).length;
   const toggleCard = code => setOpenCode(cur => cur === code ? null : code);
 
-  const chip = (active, label, count, onClick, key, disabled) => React.createElement("button", {
-    key: key,
-    type: "button",
-    className: 'fchip' + (active ? ' on' : ''),
-    "aria-pressed": active,
-    disabled: !!disabled,
-    onClick: onClick
-  }, label, React.createElement("span", {
-    className: "fchip-n",
-    "aria-hidden": "true"
-  }, count));
+  /* A brand tile — the primary "which exam" choice. Big target, the official
+     partner mark, and the count you'd actually get. A tile that would return
+     nothing is disabled rather than a dead end. */
+  const famTile = (id, label, note, logo, by) => {
+    const n = famCount(id);
+    const active = fam === id;
+    return React.createElement("button", {
+      key: id,
+      type: "button",
+      className: 'ftile' + (active ? ' on' : ''),
+      "aria-pressed": active,
+      disabled: n === 0,
+      onClick: () => setFam(id)
+    }, React.createElement("span", {
+      className: "ftile-mark"
+    }, logo ? React.createElement("img", {
+      src: logo,
+      alt: ""
+      /* Deliberately NOT loading="lazy": the finder is a .reveal element, so it
+         sits under visibility:hidden until it scrolls in — and a lazy image in a
+         hidden subtree never even starts fetching, which would pop the logos in
+         late (or leave the tiles blank if the reveal never fires). Three small
+         marks; load them straight away. */
+    }) : React.createElement("span", {
+      className: "ftile-all"
+    }, "✲")), React.createElement("span", {
+      className: "ftile-name serif"
+    }, label), React.createElement("span", {
+      className: "ftile-note"
+    }, note), React.createElement("span", {
+      className: "ftile-n"
+    }, n, " ", n === 1 ? 'exam' : 'exams'));
+  };
+
+  /* Centre choice as a segmented control. The puck is a single element that
+     slides — three equal columns, so its offset is just the index. */
+  const centreOpts = ['any'].concat(EXAM_CENTRES);
+  const centreIdx = centreOpts.indexOf(centre);
 
   return React.createElement("main", {
     className: "page"
@@ -4523,78 +4551,127 @@ function TestCenterPage({
     className: "finder reveal",
     id: "exam-finder"
   }, React.createElement("div", {
-    className: "finder-row"
+    className: "finder-step"
   }, React.createElement("span", {
-    className: "finder-lbl",
+    className: "fstep-n"
+  }, "01"), React.createElement("h3", {
+    className: "fstep-h serif",
     id: "f-type"
-  }, "What are you taking?"), React.createElement("div", {
-    className: "finder-chips",
+  }, "Which exam are you taking?"), React.createElement("button", {
+    type: "button",
+    className: "fstep-help",
+    onClick: openQuiz
+  }, "Not sure? Take the 60-second quiz →")), React.createElement("div", {
+    className: "ftiles",
     role: "group",
     "aria-labelledby": "f-type"
-  }, chip(fam === 'all', 'All exams', famCount('all'), () => setFam('all'), 'all'), EXAM_FAMS.map(f => chip(fam === f.id, f.label, famCount(f.id), () => setFam(f.id), f.id, famCount(f.id) === 0)))), React.createElement("div", {
-    className: "finder-row"
+  }, famTile('all', 'All exams', 'Everything we host', null), EXAM_FAMS.map(f => famTile(f.id, f.label, f.note, f.logo, f.by))), React.createElement("div", {
+    className: "finder-step"
   }, React.createElement("span", {
-    className: "finder-lbl",
+    className: "fstep-n"
+  }, "02"), React.createElement("h3", {
+    className: "fstep-h serif",
     id: "f-centre"
-  }, "Where?"), React.createElement("div", {
-    className: "finder-chips",
+  }, "Where will you sit it?")), React.createElement("div", {
+    className: "fseg",
     role: "group",
-    "aria-labelledby": "f-centre"
-  }, chip(centre === 'any', 'Any centre', centreCount('any'), () => setCentre('any'), 'any'), EXAM_CENTRES.map(c => chip(centre === c, c, centreCount(c), () => setCentre(c), c, centreCount(c) === 0)))), React.createElement("div", {
+    "aria-labelledby": "f-centre",
+    style: {
+      '--seg-i': centreIdx < 0 ? 0 : centreIdx
+    }
+  }, React.createElement("span", {
+    className: "fseg-puck",
+    "aria-hidden": "true"
+  }), centreOpts.map(c => {
+    const n = centreCount(c);
+    return React.createElement("button", {
+      key: c,
+      type: "button",
+      className: 'fseg-b' + (centre === c ? ' on' : ''),
+      "aria-pressed": centre === c,
+      disabled: n === 0,
+      onClick: () => setCentre(c)
+    }, c === 'any' ? 'Any centre' : c, React.createElement("span", {
+      className: "fseg-n"
+    }, n));
+  })), React.createElement("div", {
     className: "finder-foot"
   }, React.createElement("span", {
     className: "finder-count",
     role: "status",
     "aria-live": "polite"
-  }, visible.length === 0 ? 'No exams match those filters' : visible.length === EXAMS.length ? `Showing all ${EXAMS.length} exams` : `Showing ${visible.length} of ${EXAMS.length} exams`), isFiltered && React.createElement("button", {
+  }, React.createElement("b", null, visible.length), " ", visible.length === 1 ? 'exam' : 'exams', visible.length === EXAMS.length ? ' — everything we host' : ' match'), isFiltered && React.createElement("button", {
     type: "button",
     className: "finder-reset",
     onClick: reset
-  }, "Reset filters"))), visible.length === 0 ? React.createElement("div", {
+  }, "Reset"))), visible.length === 0 ? React.createElement("div", {
     className: "exams-empty"
-  }, React.createElement("p", null, "We don’t run that exam at that centre — try another combination."), React.createElement("button", {
+  }, React.createElement("p", {
+    className: "serif"
+  }, "Nothing matches that pairing."), React.createElement("button", {
     type: "button",
     className: "btn",
     onClick: reset
   }, "Show all exams")) : React.createElement("div", {
-    className: "exams"
-  }, visible.map(ex => {
+    className: "exams",
+    key: fam + '|' + centre /* remount on filter change so the stagger replays */
+  }, visible.map((ex, i) => {
     const isOpen = openCode === ex.code;
     const panelId = `exam-panel-${ex.code}`;
     return React.createElement("div", {
       key: ex.code,
-      className: `exam${isOpen ? ' open' : ''}`
-    },
-    /* The header is the ONLY click target, and it is a real <button> with
-       aria-expanded/aria-controls. Before, the whole card was role="button"
-       and *contained* two more buttons that had to stopPropagation to avoid
-       firing it — ambiguous to click and a mess for screen readers. */
-    React.createElement("button", {
+      className: `exam${isOpen ? ' open' : ''}`,
+      style: {
+        '--i': i
+      }
+    }, React.createElement("button", {
       type: "button",
       className: "exam-head",
       "aria-expanded": isOpen,
       "aria-controls": panelId,
       onClick: () => toggleCard(ex.code)
     }, React.createElement("span", {
-      className: "code"
-    }, ex.code), React.createElement("span", {
+      className: "exam-rail",
+      "aria-hidden": "true"
+    }), React.createElement("span", {
       className: "exam-h-main"
     }, React.createElement("span", {
+      className: "code"
+    }, ex.code), React.createElement("span", {
       className: "exam-name serif"
     }, ex.name), React.createElement("span", {
       className: "org"
     }, ex.org)), React.createElement("span", {
       className: "exam-h-meta"
-    }, React.createElement("span", null, ex.fee), React.createElement("span", {
-      className: "dot"
-    }, "·"), React.createElement("span", null, ex.duration)), React.createElement("span", {
+    }, React.createElement("span", {
+      className: "ehm"
+    }, React.createElement("i", null, "Fee"), React.createElement("b", null, ex.fee)), React.createElement("span", {
+      className: "ehm"
+    }, React.createElement("i", null, "Length"), React.createElement("b", null, ex.duration))), React.createElement("span", {
       className: "exam-caret",
       "aria-hidden": "true"
-    })), React.createElement("div", {
+    }, React.createElement("span", null))),
+    /* Wrapper animates 0fr -> 1fr so the panel slides open. `inert` (not the
+       `hidden` attribute, which cannot animate) keeps a closed panel out of
+       the tab order and the a11y tree. */
+    React.createElement("div", {
+      className: "exam-wrap",
+      inert: isOpen ? undefined : ''
+    }, React.createElement("div", {
       id: panelId,
       className: "exam-panel",
-      hidden: !isOpen
-    }, React.createElement("ul", null, React.createElement("li", null, "Fee ", React.createElement("span", null, ex.fee)), React.createElement("li", null, "Duration ", React.createElement("span", null, ex.duration)), React.createElement("li", null, "Availability ", React.createElement("span", null, ex.seats)), React.createElement("li", null, "Centres ", React.createElement("span", null, ex.centres.join(' · ')))), React.createElement("div", {
+      role: "region",
+      "aria-label": ex.name + " details"
+    }, React.createElement("div", {
+      className: "exam-stats"
+    }, [['Fee', ex.fee], ['Duration', ex.duration], ['Availability', ex.seats], ['Centres', ex.centres.join(' · ')]].map(([k, v]) => React.createElement("div", {
+      key: k,
+      className: "estat"
+    }, React.createElement("span", {
+      className: "estat-k"
+    }, k), React.createElement("span", {
+      className: "estat-v"
+    }, v)))), React.createElement("div", {
       className: "exam-cta"
     }, React.createElement("button", {
       type: "button",
@@ -4609,7 +4686,7 @@ function TestCenterPage({
     }, "Exam guide →"), React.createElement(PlanToggle, {
       code: ex.code,
       label: "Save"
-    }))));
+    })))));
   })))), React.createElement(ExamDayChecklist, null), React.createElement("section", {
     id: "centre",
     className: "block",
