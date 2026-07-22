@@ -1,0 +1,1 @@
+import{j as t,o}from"./index-CsXejPlS.js";import"./vendor-icons-Dl_7WBu_.js";function e({className:a,...r}){return t.jsx("div",{"data-slot":"card",className:o("flex flex-col gap-6 rounded-xl border bg-card py-6 text-card-foreground shadow-sm",a),...r})}function n({className:a,...r}){return t.jsx("div",{"data-slot":"card-content",className:o("px-6",a),...r})}export{e as C,n as a};
