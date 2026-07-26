@@ -56,17 +56,15 @@
       ['Target Achievement', 97], ['Negotiation', 88], ['Upselling', 85], ['Cross-selling', 82]] },
     { label: 'OPERATIONS', v: 86, skills: [
       ['Service Quality', 98], ['Knowledge Base', 97], ['Follow-up', 95], ['Response Time', 94], ['Process Automation', 85]] },
-    { label: 'FIN. PRODUCTS', v: 90, skills: [
-      ['Mutual Funds', 95], ['RRSP / TFSA', 90], ['Regulatory Compliance', 88], ['GICs', 85]] },
     { label: 'DISCOVERY', v: 87, skills: [
       ['Needs Assessment', 93], ['Solution Design', 88], ['Strategic Planning', 85], ['Consulting', 80]] },
     { label: 'TECHNICAL', v: 83, skills: [
       ['Excel', 95], ['Salesforce CRM', 88], ['Power BI', 85], ['SQL', 82], ['Python', 78]] }
   ];
   var TOP_SKILLS = [
-    ['Target Achievement', 97], ['Client Retention', 95], ['Mutual Funds', 95], ['Excel', 95],
-    ['Needs Assessment', 93], ['Active Listening', 92], ['RRSP / TFSA', 90], ['Salesforce CRM', 88],
-    ['Regulatory Compliance', 88], ['Power BI', 85]
+    ['Service Quality', 98], ['Target Achievement', 97], ['Knowledge Base', 97], ['Client Retention', 95],
+    ['Follow-up', 95], ['Excel', 95], ['Response Time', 94], ['Needs Assessment', 93],
+    ['Active Listening', 92], ['Communication', 90]
   ];
 
   var skillsRows = document.getElementById('skills-rows');
