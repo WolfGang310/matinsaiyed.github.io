@@ -2,3 +2,4 @@ User-agent: *
 Allow: /
 
 Sitemap: https://matinsaiyed.com/sitemap.xml
+Sitemap: https://matinsaiyed.com/troytesting/sitemap.xml

@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Did T+1 settlement increase settlement fails? — Matin Saiyed</title>
+<meta name="description" content="6.5 million fail records from the U.S. clearing house, tested around the 2024 move to one-day settlement.">
+<link rel="canonical" href="https://matinsaiyed.com/work/t1-settlement-fails.html">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+<meta name="theme-color" content="#f8f6f1">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Did T+1 settlement increase settlement fails? — Matin Saiyed">
+<meta property="og:description" content="6.5 million fail records from the U.S. clearing house, tested around the 2024 move to one-day settlement.">
+<meta property="og:url" content="https://matinsaiyed.com/work/t1-settlement-fails.html">
+<meta property="og:image" content="https://matinsaiyed.com/assets/og.png">
+<meta property="og:site_name" content="Matin Saiyed">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Did T+1 settlement increase settlement fails? — Matin Saiyed">
+<meta name="twitter:description" content="6.5 million fail records from the U.S. clearing house, tested around the 2024 move to one-day settlement.">
+<meta name="twitter:image" content="https://matinsaiyed.com/assets/og.png">
+<script>(function(){var t=null;try{t=localStorage.getItem('ms-theme3')}catch(e){}document.documentElement.dataset.theme=t==='dark'?'dark':'light';document.documentElement.classList.add('js')})();</script>
+<link rel="stylesheet" href="/fonts/fonts.css?v=1">
+<link rel="stylesheet" href="/v3.css?v=10">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="top"><div class="wrap">
+  <a class="brand" href="/">Matin Saiyed<i>.</i></a>
+  <nav class="nav" aria-label="Sections">
+    <a href="/work/" aria-current="page">Work</a><a href="/#experience">Experience</a><a href="/#background">Background</a><a href="/#contact">Contact</a>
+  </nav>
+  <button id="theme" class="theme" type="button" aria-label="Switch theme">☾</button>
+  <a class="btn sm" href="/resume/">Résumé</a>
+</div></header>
+<main id="main">
+<div class="wrap proj">
+  <a class="crumb" href="/work/">← All work</a>
+  <p style="margin-top:26px"><span class="ev">Research paper · public data <span class="pill">AI-assisted build</span></span></p>
+  <h1>Did T+1 settlement increase settlement fails?</h1>
+  <p class="sum">In May 2024 North American markets halved the time allowed to settle a trade. Operations teams expected more failed settlements. This study tests whether that happened, using every fail reported by the U.S. clearing house over nearly five years.</p>
+  <div class="jump"><a class="btn sm" href="/research/t1-settlement-fails/paper.pdf">Read the paper (PDF)</a></div>
+  <div class="meta"><div><span class="k">Type</span><span class="v">Operations research · working paper</span></div><div><span class="k">Method</span><span class="v">Interrupted time series · Newey–West errors · placebo dates · duration analysis</span></div><div><span class="k">Data</span><span class="v">SEC fails-to-deliver files · market volume · VIX</span></div><div><span class="k">Built with</span><span class="v">Python: pandas, statsmodels, scipy</span></div></div>
+<div class="bigs"><div class="fig" data-rv><b>6.5M</b><span>fail records analysed</span></div><div class="fig" data-rv><b>+5%</b><span>estimated change in fails at T+1</span></div><div class="fig" data-rv><b>p = 0.41</b><span>not distinguishable from zero</span></div><div class="fig" data-rv><b>+3.4 pts</b><span>more fails lasting into a second day</span></div></div><figure class="stage" data-rv style="margin-left:0;margin-right:0"><div style="background:#fff;border-radius:12px;padding:14px"><img src="/research/t1-settlement-fails/figures/fig2_its.png" alt="Interrupted time-series fit around the T+1 transition" loading="lazy" style="width:100%;height:auto;display:block"></div><figcaption style="color:var(--soft);margin-top:14px;font-size:15px">Outstanding fails in the year before and after the change. The post-transition data sit on the line the earlier trend predicted.</figcaption></figure><figure class="stage" data-rv style="margin-left:0;margin-right:0"><div style="background:#fff;border-radius:12px;padding:14px"><img src="/research/t1-settlement-fails/figures/fig4_duration.png" alt="How long fails stay open, before and after T+1" loading="lazy" style="width:100%;height:auto;display:block"></div><figcaption style="color:var(--soft);margin-top:14px;font-size:15px">Fails are short-lived either way: about half clear within a day and fewer than one in seven reaches day five.</figcaption></figure><div class="cols"><div class="col" data-rv><h2>The question</h2><p>Did cutting the settlement cycle from two days to one increase failed settlements?</p></div><div class="col" data-rv><h2>The method</h2><p>A segmented regression on daily fails, twelve months either side of the change, controlling for trading volume, volatility and calendar effects. The same model is run on 117 placebo dates.</p></div><div class="col res" data-rv><h2>The finding</h2><p>Two different measures, two answers. The stock of fails (their value, their number, and the share five or more days old) shows no detectable change. Short persistence does change: a new fail became about 3.4 points more likely to still be open on day two.</p></div></div><div style="max-width:70ch;margin-top:44px" data-rv><h2 style="font:500 32px/1.15 var(--serif);letter-spacing:-.02em;margin-bottom:14px">What it means for an operations team</h2><p style="color:var(--soft);margin-top:12px"><b style="color:var(--ink)">The raw numbers mislead.</b> Average fails were 23% higher in the year after T+1. Trading volume was higher too, and fails were already rising. Once those are accounted for, the change is +5% with a confidence interval that spans zero.</p><p style="color:var(--soft);margin-top:12px"><b style="color:var(--ink)">Ageing and second-day persistence are different measures.</b> “Ageing” here means fails still open after five settlement days, which is where control problems start; it did not change. “Second-day persistence” means a new fail surviving one extra day; it rose. Fails that used to be repaired inside the settlement window now cross it by a day and are then cleared, so prevention has to happen on trade date.</p><p style="color:var(--soft);margin-top:12px"><b style="color:var(--ink)">Measure ageing, not counts.</b> The daily count of fails moves with volume and the calendar, and more than doubles after quarterly index rebalancing. The share of fails ageing past a threshold is stable and a better control metric.</p><p style="color:var(--soft);margin-top:12px"><b style="color:var(--ink)">The limits are stated.</b> Clearing-house data are net positions. A firm can have more internal breaks without its net position changing, so this cannot speak to client-level fails.</p></div><section class="std" id="built" style="padding-top:30px"><h2>How it was built</h2><div><p><b>AI did the building.</b> The data pipeline, the statistical analysis, the figures and the paper was produced by Claude, an AI model made by Anthropic, working at my direction. I asked for an empirical study on real public data with a paper, code and data; Claude chose the question and the method, wrote the Python and drafted the paper.</p><p><b>My role</b> was to set the brief, read the result and decide what is published. I can explain what the study asks and what it found. I am still working through the statistical methods and do not present them as my own technique.</p></div></section><div class="stage" data-rv><h2 style="font:500 26px var(--serif);margin-bottom:6px">Read it, open it, re-run it</h2><p style="color:var(--soft);max-width:70ch;margin-bottom:18px">Everything needed to check the work is here. The paper is generated by a script from the results file, so no number is typed by hand.</p><div style="display:flex;flex-wrap:wrap;gap:10px"><a class="btn" href="/research/t1-settlement-fails/paper.pdf">Read the paper (PDF)</a><a class="btn ghost" href="/research/t1-settlement-fails/analysis.py">Analysis code</a><a class="btn ghost" href="/research/t1-settlement-fails/data/daily_fails.csv">Daily data (CSV)</a><a class="btn ghost" href="/research/t1-settlement-fails/README.md">How to reproduce</a></div><p class="syn">Public data only. No client or employer information is used. Not investment advice; views are my own.</p></div>
+  
+  <a class="next" href="/work/air-canada-valuation.html" data-rv><div><span>NEXT</span><b>Air Canada: five linked models, built by hand</b></div><span class="btn ghost sm">Open →</span></a>
+</div>
+
+<div class="wrap">
+  <section id="contact" style="padding-top:0"><div class="contact" data-rv>
+    <div><h2>Let’s talk.</h2><p>Open to permanent roles in client onboarding, wealth operations and finance operations in the Greater Toronto Area. Email is the fastest way to reach me.</p></div>
+    <div class="links"><span class="mailrow"><a href="mailto:matinsaiyed310@gmail.com">matinsaiyed310@gmail.com</a><button type="button" class="copy" data-copy="matinsaiyed310@gmail.com" aria-label="Copy email address">Copy</button></span><span class="copied" role="status" aria-live="polite"></span><a href="tel:+16478709976">+1 (647) 870-9976</a><a href="https://linkedin.com/in/matinsaiyed" rel="noopener">linkedin.com/in/matinsaiyed ↗</a></div>
+  </div></section>
+  <footer><span>© 2026 Matin Saiyed · Mississauga, ON</span><span>Models marked “synthetic data” use invented figures.</span></footer>
+</div>
+</main>
+<script src="/v3.js?v=10" defer></script>
+</body>
+</html>

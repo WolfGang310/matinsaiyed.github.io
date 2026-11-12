@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Do bank stocks react to Bank of Canada rate changes? — Matin Saiyed</title>
+<meta name="description" content="An event study of the Big Six banks around all 32 policy-rate changes from 2010 to 2025. Working paper, code and data.">
+<link rel="canonical" href="https://matinsaiyed.com/work/boc-rate-changes-bank-stocks.html">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+<meta name="theme-color" content="#f8f6f1">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Do bank stocks react to Bank of Canada rate changes? — Matin Saiyed">
+<meta property="og:description" content="An event study of the Big Six banks around all 32 policy-rate changes from 2010 to 2025. Working paper, code and data.">
+<meta property="og:url" content="https://matinsaiyed.com/work/boc-rate-changes-bank-stocks.html">
+<meta property="og:image" content="https://matinsaiyed.com/assets/og.png">
+<meta property="og:site_name" content="Matin Saiyed">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Do bank stocks react to Bank of Canada rate changes? — Matin Saiyed">
+<meta name="twitter:description" content="An event study of the Big Six banks around all 32 policy-rate changes from 2010 to 2025. Working paper, code and data.">
+<meta name="twitter:image" content="https://matinsaiyed.com/assets/og.png">
+<script>(function(){var t=null;try{t=localStorage.getItem('ms-theme3')}catch(e){}document.documentElement.dataset.theme=t==='dark'?'dark':'light';document.documentElement.classList.add('js')})();</script>
+<link rel="stylesheet" href="/fonts/fonts.css?v=1">
+<link rel="stylesheet" href="/v3.css?v=10">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="top"><div class="wrap">
+  <a class="brand" href="/">Matin Saiyed<i>.</i></a>
+  <nav class="nav" aria-label="Sections">
+    <a href="/work/" aria-current="page">Work</a><a href="/#experience">Experience</a><a href="/#background">Background</a><a href="/#contact">Contact</a>
+  </nav>
+  <button id="theme" class="theme" type="button" aria-label="Switch theme">☾</button>
+  <a class="btn sm" href="/resume/">Résumé</a>
+</div></header>
+<main id="main">
+<div class="wrap proj">
+  <a class="crumb" href="/work/">← All work</a>
+  <p style="margin-top:26px"><span class="ev">Research paper · public data <span class="pill">AI-assisted build</span></span></p>
+  <h1>Do bank stocks react to Bank of Canada rate changes?</h1>
+  <p class="sum">It is widely believed that higher interest rates are good for bank shareholders. This study tests that on every change in the Bank of Canada’s policy rate over fifteen years and finds no reaction large enough to detect.</p>
+  <div class="jump"><a class="btn sm" href="/research/boc-bank-event-study/paper.pdf">Read the paper (PDF)</a></div>
+  <div class="meta"><div><span class="k">Type</span><span class="v">Empirical finance · working paper</span></div><div><span class="k">Method</span><span class="v">Event study · market model · HC3 regressions · placebo tests</span></div><div><span class="k">Data</span><span class="v">Bank of Canada Valet API · adjusted daily prices</span></div><div><span class="k">Built with</span><span class="v">Python: pandas, statsmodels, scipy</span></div></div>
+<div class="bigs"><div class="fig" data-rv><b>32</b><span>rate changes, 2010–2025</span></div><div class="fig" data-rv><b>0.05%</b><span>mean two-day abnormal return</span></div><div class="fig" data-rv><b>t = 0.18</b><span>not distinguishable from zero</span></div><div class="fig" data-rv><b>0.6 pts</b><span>smallest average effect it could detect</span></div></div><figure class="stage" data-rv style="margin-left:0;margin-right:0"><div style="background:#fff;border-radius:12px;padding:14px"><img src="/research/boc-bank-event-study/figures/fig2_car_path.png" alt="Cumulative abnormal return around rate announcements" loading="lazy" style="width:100%;height:auto;display:block"></div><figcaption style="color:var(--soft);margin-top:14px;font-size:15px">Average cumulative abnormal return of an equal-weighted Big Six portfolio, from five days before to ten days after each announcement. It never leaves its confidence band.</figcaption></figure><figure class="stage" data-rv style="margin-left:0;margin-right:0"><div style="background:#fff;border-radius:12px;padding:14px"><img src="/research/boc-bank-event-study/figures/fig3_surprise.png" alt="Abnormal return against the two-year yield surprise" loading="lazy" style="width:100%;height:auto;display:block"></div><figcaption style="color:var(--soft);margin-top:14px;font-size:15px">Even when the announcement surprised the bond market, bank shares did not respond in a consistent direction.</figcaption></figure><div class="cols"><div class="col" data-rv><h2>The question</h2><p>Do bank shares rise when the Bank of Canada raises rates and fall when it cuts? And does it depend on how surprised the market was?</p></div><div class="col" data-rv><h2>The method</h2><p>A market model is estimated for each event on the prior 250 trading days. Abnormal returns are tested three ways, then regressed on the same-day move in the two-year Government of Canada yield.</p></div><div class="col res" data-rv><h2>The finding</h2><p>None that this study can detect. The average reaction is 0.05%, and hikes and cuts are indistinguishable. An effect smaller than about 0.6 percentage points would not show up in a sample this size, so the finding is “no large reaction”, not “no reaction”.</p></div></div><div style="max-width:70ch;margin-top:44px" data-rv><h2 style="font:500 32px/1.15 var(--serif);letter-spacing:-.02em;margin-bottom:14px">What the result does and does not show</h2><p style="color:var(--soft);margin-top:12px"><b style="color:var(--ink)">It puts a number on a common belief.</b> The slope of bank returns on the yield surprise is 0.0046% per basis point with a t-statistic of 0.27.</p><p style="color:var(--soft);margin-top:12px"><b style="color:var(--ink)">The first result was wrong, and the paper says so.</b> The first pass showed announcement days were 16 times more volatile than normal. Removing three dates in March 2020 took that to 0.85. The paper reports both.</p><p style="color:var(--soft);margin-top:12px"><b style="color:var(--ink)">It says what it cannot rule out.</b> A power calculation shows the sample could detect an average effect of about 0.6 percentage points. Anything smaller is beyond its reach, and the paper says so.</p></div><section class="std" id="built" style="padding-top:30px"><h2>How it was built</h2><div><p><b>AI did the building.</b> The data pipeline, the statistical analysis, the figures and the paper was produced by Claude, an AI model made by Anthropic, working at my direction. I asked for an empirical study on real public data with a paper, code and data; Claude chose the question and the method, wrote the Python and drafted the paper.</p><p><b>My role</b> was to set the brief, read the result and decide what is published. I can explain what the study asks and what it found. I am still working through the statistical methods and do not present them as my own technique.</p></div></section><div class="stage" data-rv><h2 style="font:500 26px var(--serif);margin-bottom:6px">Read it, open it, re-run it</h2><p style="color:var(--soft);max-width:70ch;margin-bottom:18px">Everything needed to check the work is here. The paper is generated by a script from the results file, so no number is typed by hand.</p><div style="display:flex;flex-wrap:wrap;gap:10px"><a class="btn" href="/research/boc-bank-event-study/paper.pdf">Read the paper (PDF)</a><a class="btn ghost" href="/research/boc-bank-event-study/analysis.py">Analysis code</a><a class="btn ghost" href="/research/boc-bank-event-study/results/events.csv">Event-level results (CSV)</a><a class="btn ghost" href="/research/boc-bank-event-study/README.md">How to reproduce</a></div><p class="syn">Public data only. No client or employer information is used. Not investment advice; views are my own.</p></div>
+  
+  <a class="next" href="/work/cn-rail-valuation.html" data-rv><div><span>NEXT</span><b>Valuing Canadian National Railway</b></div><span class="btn ghost sm">Open →</span></a>
+</div>
+
+<div class="wrap">
+  <section id="contact" style="padding-top:0"><div class="contact" data-rv>
+    <div><h2>Let’s talk.</h2><p>Open to permanent roles in client onboarding, wealth operations and finance operations in the Greater Toronto Area. Email is the fastest way to reach me.</p></div>
+    <div class="links"><span class="mailrow"><a href="mailto:matinsaiyed310@gmail.com">matinsaiyed310@gmail.com</a><button type="button" class="copy" data-copy="matinsaiyed310@gmail.com" aria-label="Copy email address">Copy</button></span><span class="copied" role="status" aria-live="polite"></span><a href="tel:+16478709976">+1 (647) 870-9976</a><a href="https://linkedin.com/in/matinsaiyed" rel="noopener">linkedin.com/in/matinsaiyed ↗</a></div>
+  </div></section>
+  <footer><span>© 2026 Matin Saiyed · Mississauga, ON</span><span>Models marked “synthetic data” use invented figures.</span></footer>
+</div>
+</main>
+<script src="/v3.js?v=10" defer></script>
+</body>
+</html>

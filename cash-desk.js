@@ -11,7 +11,7 @@
   var CY0 = 26, CY1 = 238, CMAX = 400;   /* cash panel, $k domain 0..400 */
   var ZERO = 330, FH = 58;               /* net-flow panel: zero line y, half-height */
   var COLW = (X1 - X0) / 13;
-  var MONO9 = "font:500 9px 'IBM Plex Mono',monospace;letter-spacing:0.1em;";
+  var MONO9 = "font:500 12px 'IBM Plex Mono',monospace;letter-spacing:0.1em;";
   function yCash(v) { var t = Math.max(0, Math.min(CMAX, v)) / CMAX; return CY1 - t * (CY1 - CY0); }
   function yFlow(v) { return ZERO - (v / FMAX) * FH; }
   function fmt(v) { return (v < 0 ? '−$' + Math.abs(v) : '$' + v) + 'k'; }
@@ -28,7 +28,7 @@
     _btn(label) {
       var b = document.createElement('button');
       b.type = 'button'; b.textContent = label;
-      b.style.cssText = "font:600 10px 'IBM Plex Mono',monospace;letter-spacing:0.14em;background:none;border:1px solid var(--rule);color:var(--faint);padding:8px 13px;cursor:pointer;";
+      b.style.cssText = "font:600 12px 'IBM Plex Mono',monospace;letter-spacing:0.14em;background:none;border:1px solid var(--rule);color:var(--faint);padding:8px 13px;cursor:pointer;";
       return b;
     }
     _read(label, align) {
@@ -37,7 +37,7 @@
       var v = document.createElement('b');
       v.style.cssText = "font:600 20px 'IBM Plex Mono',monospace;color:var(--ink);font-variant-numeric:tabular-nums;line-height:1;";
       var l = document.createElement('span');
-      l.style.cssText = "font:500 9px 'IBM Plex Mono',monospace;letter-spacing:0.12em;color:var(--faint);";
+      l.style.cssText = "font:500 12px 'IBM Plex Mono',monospace;letter-spacing:0.12em;color:var(--faint);";
       l.textContent = label;
       d.appendChild(v); d.appendChild(l); d._v = v;
       return d;
@@ -99,7 +99,7 @@
         var cx = X0 + COLW * i + COLW / 2;
         var b = mk('rect', { x: (cx - 13).toFixed(1), width: 26, y: ZERO, height: 1, fill: 'var(--ink)' });
         svg.appendChild(b); self._bars.push(b);
-        var vl = mk('text', { x: cx.toFixed(1), y: ZERO, 'text-anchor': 'middle', fill: 'var(--soft)', style: "font:500 8.5px 'IBM Plex Mono',monospace;" });
+        var vl = mk('text', { x: cx.toFixed(1), y: ZERO, 'text-anchor': 'middle', fill: 'var(--soft)', style: "font:500 12px 'IBM Plex Mono',monospace;" });
         svg.appendChild(vl); self._vlbls.push(vl);
         var wl = mk('text', { x: cx.toFixed(1), y: 414, 'text-anchor': 'middle', fill: 'var(--faint)', style: MONO9 });
         wl.textContent = 'W' + (i + 1);
@@ -114,7 +114,7 @@
       }
       this._minDot = mk('circle', { r: 5, fill: 'var(--red)' });
       svg.appendChild(this._minDot);
-      this._minLbl = mk('text', { 'text-anchor': 'middle', fill: 'var(--red)', style: "font:600 10.5px 'IBM Plex Mono',monospace;letter-spacing:0.06em;" });
+      this._minLbl = mk('text', { 'text-anchor': 'middle', fill: 'var(--red)', style: "font:600 12px 'IBM Plex Mono',monospace;letter-spacing:0.06em;" });
       svg.appendChild(this._minLbl);
 
       /* hit rects last (on top) */

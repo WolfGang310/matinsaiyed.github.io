@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Book Transfer Control Tower — Matin Saiyed</title>
+<meta name="description" content="A simulation of one invented 420-household book transfer: is the deadline at risk, and what would change the answer?">
+<link rel="canonical" href="https://matinsaiyed.com/work/book-transfer-control-tower.html">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+<meta name="theme-color" content="#f8f6f1">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Book Transfer Control Tower — Matin Saiyed">
+<meta property="og:description" content="A simulation of one invented 420-household book transfer: is the deadline at risk, and what would change the answer?">
+<meta property="og:url" content="https://matinsaiyed.com/work/book-transfer-control-tower.html">
+<meta property="og:image" content="https://matinsaiyed.com/assets/og.png">
+<meta property="og:site_name" content="Matin Saiyed">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Book Transfer Control Tower — Matin Saiyed">
+<meta name="twitter:description" content="A simulation of one invented 420-household book transfer: is the deadline at risk, and what would change the answer?">
+<meta name="twitter:image" content="https://matinsaiyed.com/assets/og.png">
+<script>(function(){var t=null;try{t=localStorage.getItem('ms-theme3')}catch(e){}document.documentElement.dataset.theme=t==='dark'?'dark':'light';document.documentElement.classList.add('js')})();</script>
+<link rel="stylesheet" href="/fonts/fonts.css?v=1">
+<link rel="stylesheet" href="/v3.css?v=10">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="top"><div class="wrap">
+  <a class="brand" href="/">Matin Saiyed<i>.</i></a>
+  <nav class="nav" aria-label="Sections">
+    <a href="/work/" aria-current="page">Work</a><a href="/#experience">Experience</a><a href="/#background">Background</a><a href="/#contact">Contact</a>
+  </nav>
+  <button id="theme" class="theme" type="button" aria-label="Switch theme">☾</button>
+  <a class="btn sm" href="/resume/">Résumé</a>
+</div></header>
+<main id="main">
+<div class="wrap proj">
+  <a class="crumb" href="/work/">← All work</a>
+  <p style="margin-top:26px"><span class="ev">Interactive model <span class="pill">AI-assisted build</span> <span class="pill syn">Synthetic data</span></span></p>
+  <h1>Book Transfer Control Tower</h1>
+  <p class="sum">Part-way through a book transfer, is the deadline at risk, and what would change the answer? A simulation of one invented 420-household book that you can re-staff, stress and re-order.</p>
+  <div class="jump"><a class="btn sm" href="#try">Try the model</a></div>
+  <div class="meta"><div><span class="k">Type</span><span class="v">Interactive model</span></div><div><span class="k">Data</span><span class="v">Synthetic: one invented book of 420 households</span></div><div><span class="k">Method</span><span class="v">Queue simulation · 240 runs per scenario</span></div><div><span class="k">Built</span><span class="v">November 2026, with AI assistance</span></div></div>
+<div class="brief" data-rv><div><h2>The problem</h2><p>When an advisor’s book moves between institutions, hundreds of households have to land by a fixed date and some transfers reject. A team lead needs to know mid-way whether the deadline is at risk.</p></div><div><h2>My contribution</h2><p>The question comes from my onboarding work, where I rank households by assets, age and rejection status. The model and its code were built with Claude, an AI model, at my direction.</p></div><div><h2>The result</h2><p>On this invented book the chance of finishing on time is about 100% with seven analysts and about 0% with five, and a rise in rejections from 15% to 25% cuts it to roughly 40% at seven. These are the model’s numbers, not a real firm’s.</p></div></div><div class="stage" id="try" data-rv style="margin-top:36px"><p class="syn" style="margin:0 0 18px"><span class="pill syn">Synthetic data</span> Every household, dollar and rejection below is invented. No client or employer information is used.</p><div id="lab-tower"></div></div><section class="std" id="context" style="padding-top:30px"><h2>Context</h2><div><p>A transfer is finished when the assets have landed, not when the paperwork has been sent. Rejected transfers come back days later for a reason nobody planned for, so the remaining work is uncertain even when the remaining count is known.</p><p>This is the planning question behind the daily case lists I build at work, set up as a model so the reasoning can be inspected.</p></div></section><section class="std" id="it" style="padding-top:30px"><h2>How to read it</h2><div><ul><li><b>Completion</b> is measured in assets: the book is finished when 99% of its dollars have landed. Households done is shown beside it because the two can diverge.</li><li><b>Capacity</b> is analysts × 2 households a day. A processed household either lands or is rejected; a rejected one returns to the queue 3 to 7 days later and can be rejected again.</li><li><b>The forecast</b> runs the remaining days 240 times. The shaded band is the middle 80% of runs, and “chance of finishing on time” is the share of runs that finish by day 45.</li><li><b>Largest-first</b> lands assets sooner because a few households hold most of the dollars. It does not finish more households, and the smallest ones wait longest.</li></ul></div></section><section class="std" id="choice" style="padding-top:30px"><h2>A design choice</h2><div><p><b>Simulate, or divide?</b> The quick estimate is open households divided by daily capacity. It gives one finishing day and no sense of risk. The model simulates instead, because rejections re-enter the queue at random and it is the spread of outcomes that tells a team lead whether to ask for help.</p><p>The cost is that a simulation needs assumptions a division does not, and they are listed beside the controls so they can be challenged.</p></div></section><section class="std" id="built" style="padding-top:30px"><h2>How it was built</h2><div><p><b>AI did the building.</b> This model was produced by Claude, an AI model made by Anthropic, working at my direction. I asked for a project grounded in my onboarding work; Claude proposed the design, wrote the JavaScript and generated the invented book.</p><p><b>My role</b> was to set the brief, review the result against how the work actually runs, and ask for the changes that made it explainable: visible assumptions, a baseline to compare against, and limits stated on the page.</p></div></section><section class="std" id="validation" style="padding-top:30px"><h2>Validation</h2><div><ul><li>The random number generator is seeded, so the same settings and seed always reproduce the same result. The seed is shown under the chart.</li><li>The model was tested at its limits: fewest and most analysts, lowest and highest rejection rate, both queue orders, and blank, non-numeric and out-of-range entries.</li><li>I am working through the code so that I can explain each assumption without notes. Until I have, treat the specific percentages as the model’s output, not my estimate.</li></ul></div></section><section class="std" id="limitations" style="padding-top:30px"><h2>Limitations</h2><div><ul><li>The book is invented. Household sizes, start dates and the mix of rejection reasons are inputs chosen for the model, not measurements.</li><li>Capacity is a fixed number per analyst. Real cases differ in effort, and people are not interchangeable.</li><li>Rejections are independent and equally likely for every household. In practice some account types reject far more often.</li><li>It models one book in isolation, with no competing work and no service-level commitments to smaller clients.</li><li>Any recommendation holds only inside these assumptions.</li></ul></div></section><section class="std" id="artifacts" style="padding-top:30px"><h2>Artifacts</h2><div><div class="files"><a href="/lab.js"><b>Model source code (tower function)</b><span>JavaScript · 44 KB</span><span>11 Nov 2026</span></a></div><p style="margin-top:12px">Use “Copy link to this scenario” inside the model to share exact settings.</p></div></section>
+  
+  <a class="next" href="/work/month-end-close.html" data-rv><div><span>NEXT</span><b>Month-end close as a critical path</b></div><span class="btn ghost sm">Open →</span></a>
+</div>
+
+<div class="wrap">
+  <section id="contact" style="padding-top:0"><div class="contact" data-rv>
+    <div><h2>Let’s talk.</h2><p>Open to permanent roles in client onboarding, wealth operations and finance operations in the Greater Toronto Area. Email is the fastest way to reach me.</p></div>
+    <div class="links"><span class="mailrow"><a href="mailto:matinsaiyed310@gmail.com">matinsaiyed310@gmail.com</a><button type="button" class="copy" data-copy="matinsaiyed310@gmail.com" aria-label="Copy email address">Copy</button></span><span class="copied" role="status" aria-live="polite"></span><a href="tel:+16478709976">+1 (647) 870-9976</a><a href="https://linkedin.com/in/matinsaiyed" rel="noopener">linkedin.com/in/matinsaiyed ↗</a></div>
+  </div></section>
+  <footer><span>© 2026 Matin Saiyed · Mississauga, ON</span><span>Models marked “synthetic data” use invented figures.</span></footer>
+</div>
+</main>
+<script src="/lab.js?v=10" defer></script>
+<script src="/v3.js?v=10" defer></script>
+</body>
+</html>

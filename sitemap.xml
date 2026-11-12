@@ -1,13 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://matinsaiyed.com/</loc>
-    <changefreq>monthly</changefreq>
-    <priority>1.0</priority>
-  </url>
-  <url>
-    <loc>https://matinsaiyed.com/troytesting/</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
+  <url><loc>https://matinsaiyed.com/</loc></url>
+  <url><loc>https://matinsaiyed.com/work/</loc></url>
+  <url><loc>https://matinsaiyed.com/resume/</loc></url>
+  <url><loc>https://matinsaiyed.com/work/book-onboarding.html</loc></url>
+  <url><loc>https://matinsaiyed.com/work/three-way-match.html</loc></url>
+  <url><loc>https://matinsaiyed.com/work/onboarding-queue.html</loc></url>
+  <url><loc>https://matinsaiyed.com/work/receivables-dso.html</loc></url>
+  <url><loc>https://matinsaiyed.com/work/cash-desk.html</loc></url>
+  <url><loc>https://matinsaiyed.com/work/smart-city-contract.html</loc></url>
+  <url><loc>https://matinsaiyed.com/work/test-centre-turnaround.html</loc></url>
+  <url><loc>https://matinsaiyed.com/work/book-transfer-control-tower.html</loc></url>
+  <url><loc>https://matinsaiyed.com/work/month-end-close.html</loc></url>
+  <url><loc>https://matinsaiyed.com/work/fifth-centre-business-case.html</loc></url>
+  <url><loc>https://matinsaiyed.com/work/boc-rate-changes-bank-stocks.html</loc></url>
+  <url><loc>https://matinsaiyed.com/work/cn-rail-valuation.html</loc></url>
+  <url><loc>https://matinsaiyed.com/work/t1-settlement-fails.html</loc></url>
+  <url><loc>https://matinsaiyed.com/work/air-canada-valuation.html</loc></url>
+  <url><loc>https://matinsaiyed.com/troytesting/</loc></url>
 </urlset>
